@@ -23,6 +23,7 @@ int main() {
 			return -1;
 		}
 	}
+	print("new changes");
 	sleep(10);
 
 	return 0;
