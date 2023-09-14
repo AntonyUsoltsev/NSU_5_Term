@@ -5,41 +5,55 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <malloc.h>
 
 
 void *mythread(void *arg) {
-    int local_var = 1;
-    static int st_local_var = 2;
-    const int const_loc_var = 3;
     printf("mythread [%d %d %d]: Hello from mythread!\n", getpid(), getppid(), gettid());
-    return NULL;
+    //// int result = 42
+    ////  return (void *) result; так не будет рабоать потому что по заврешении потока его стек разрушится
+//    int *ret_val = malloc(sizeof(int));
+//    if (ret_val == NULL) {
+//        fprintf(stderr, "Bad malloc\n");
+//        return NULL;
+//    }
+//    *ret_val = 42;
+    char* ret_str = malloc(sizeof (char) * 12);
+    if (ret_str == NULL) {
+        fprintf(stderr, "Bad malloc\n");
+        return NULL;
+    }
+    strcpy(ret_str, "hello world");
+    return (void *) ret_str;
 }
+
+//a: pthread_join(tid, &thread_result);
+
+//b: необходимо выделить динамически память для return value
 
 
 int main() {
     pthread_t tid;
-    pthread_t tid_arr[5];
     int err;
 
-    printf("main [%d %d %d]: Hello from main!\n", getpid(), getppid(), gettid());
-    sleep(15);
-    for (int i = 0; i < 5; i++) {
-        //err = pthread_create(&tid, NULL, mythread, NULL);
+    printf("main [%d %d %d]: Hello from main!\n", getpid(), getppid(), gettid());;
 
-        err = pthread_create(&tid_arr[i], NULL, mythread, &tid_arr[i]);
-        printf("in main create new thread with tid %ld\n", tid_arr[i]);
-        if (err) {
-            printf("main: pthread_create() failed: %s\n", strerror(err));
-            return -1;
-        }
-        sleep(5);
+    err = pthread_create(&tid, NULL, mythread, NULL);
+    printf("in main create new thread with tid %ld\n", tid);
+    if (err) {
+        printf("main: pthread_create() failed: %s\n", strerror(err));
+        return -1;
     }
-    printf("new changes");
-    sleep(30); // для того чтобы успел выполнится второй поток
+//  void *thread_result = malloc(sizeof(int));
+    void *thread_result = malloc(sizeof(char) * 12);
 
+    pthread_join(tid, &thread_result);
+
+//  printf("Thread returned: %d\n", *(int *) thread_result);
+    printf("Thread returned: %s\n", (char*) thread_result);
+
+    free(thread_result);
     return 0;
 }
 

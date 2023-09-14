@@ -62,7 +62,6 @@ int main() {
         }
         sleep(5);
     }
-    printf("new changes");
     sleep(30); // для того чтобы успел выполнится второй поток
 
     return 0;
