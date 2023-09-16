@@ -11,14 +11,12 @@ public class Sender {
     /**
      * ID number to identify the running app
      */
-    private static final  String appID = UUID.randomUUID().toString();
-
+    private static final String appID = UUID.randomUUID().toString();
 
     /**
      * Some key that allows to distinguish packets from others on the network
      */
     private static final String packetKey = "web_lab";
-
 
     /**
      * <p>In send mode sends UDP-messages to the multicast group.</p>
@@ -27,7 +25,7 @@ public class Sender {
      * @param port   Sending port
      */
     @SuppressWarnings({"deprecation"})
-    public static void Send(InetAddress ipAddr, Integer port)  {
+    public static void Send(InetAddress ipAddr, Integer port) {
         try (MulticastSocket muSocket = new MulticastSocket(port)) {
 
             muSocket.joinGroup(ipAddr);                                        // 224.0.0.0 -- 239.255.255.255

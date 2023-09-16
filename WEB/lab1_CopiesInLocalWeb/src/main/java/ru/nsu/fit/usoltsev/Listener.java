@@ -12,7 +12,6 @@ public class Listener {
 
     private static final Map<String, Long> knownApps = new HashMap<>();
 
-
     /**
      * <p>In receive mode listen to the multicast group and monitors
      * the appearance and disappearance of other copies of the application.
@@ -75,7 +74,6 @@ public class Listener {
             knownApps.replace(senderId, System.currentTimeMillis());
         }
     }
-
 
     /**
      * Print map with live apps

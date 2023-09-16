@@ -3,14 +3,6 @@ package ru.nsu.fit.usoltsev;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-
-// prog args :  1: [-L, -l] to listen, [-S, -s] to send
-//              2: [<String>] ip-addr
-//                    in range 224.0.0.0 -- 239.255.255.255 for IPv4
-//                    in range FF02::1/
-//              3: [<Integer>] port
-
-
 public class Main {
     public static void main(String[] args) {
         try {
@@ -29,6 +21,5 @@ public class Main {
         } catch (IllegalArgumentException | UnknownHostException exc) {
             System.err.println(exc.getMessage());
         }
-
     }
 }
