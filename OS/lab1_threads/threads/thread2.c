@@ -30,7 +30,7 @@ void *mythread(void *arg) {
 
 //a: pthread_join(tid, &thread_result);
 
-//b: необходимо выделить динамически память для return value
+/////b: необходимо выделить динамически память для return value ????
 
 
 int main() {

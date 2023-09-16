@@ -16,9 +16,10 @@ void *mythread(void *arg) {
     printf("mythread [%d %d %d]: Hello from mythread!\n", getpid(), getppid(), gettid());
     pthread_t tid = pthread_self();
     printf("tid insise thread = %ld\n", tid);
-    printf("Result of comparission: == : %d, equals: %d\n", tid == *(pthread_t *) arg,pthread_equal(tid, *(pthread_t *) arg));
-    printf("Var adresses: local %p, static_local %p, const_local %p, global %p\n", &local_var, &st_local_var, &const_loc_var, &global_var);
-    local_var ++;
+    printf("Result of comparission: == : %d, equals: %d\n", tid == *(pthread_t *) arg, pthread_equal(tid, *(pthread_t *) arg));
+    printf("Var adresses: local %p, static_local %p, const_local %p, global %p\n", &local_var, &st_local_var,
+           &const_loc_var, &global_var);
+    local_var++;
     global_var *= 2;
     printf("local + 1 = %d, global * 2 = %d\n", local_var, global_var);
 
