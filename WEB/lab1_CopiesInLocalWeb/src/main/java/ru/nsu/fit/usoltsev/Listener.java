@@ -8,8 +8,14 @@ import java.util.*;
 
 public class Listener {
 
+    /**
+     * Time after which the application will be considered inactive (if sending packets stops)
+     */
     private static final int LiveTime = 5000;
 
+    /**
+     * A table that stores the application ID and the time of last packet send
+     */
     private static final Map<String, Long> knownApps = new HashMap<>();
 
     /**
@@ -34,7 +40,7 @@ public class Listener {
                 DatagramPacket inputPacket = new DatagramPacket(inputBuff, inputBuff.length);
 
                 try {
-                    muSocket.receive(inputPacket);                                                 // cause IOException
+                    muSocket.receive(inputPacket);                              // cause IOException
                     packetKey = new String(Arrays.copyOfRange(inputPacket.getData(), 0, 7));
                     senderId = new String(Arrays.copyOfRange(inputPacket.getData(), 7, 43));
                 } catch (IOException ioexc) {
@@ -61,7 +67,8 @@ public class Listener {
      * @param packetKey key of packet to check rightness
      */
     private static void modifyAppsMap(String senderId, String packetKey) {
-        boolean appDeleted = knownApps.entrySet().removeIf(entry -> (System.currentTimeMillis() - entry.getValue()) > LiveTime);
+        boolean appDeleted = knownApps.entrySet().removeIf(entry ->
+                (System.currentTimeMillis() - entry.getValue()) > LiveTime);
         if (appDeleted) {
             printHashMap();
         }
