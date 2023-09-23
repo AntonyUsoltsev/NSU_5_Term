@@ -52,7 +52,7 @@ void* thread_func_3(){
     int signo;
     sigemptyset(&mask);
     sigaddset(&mask, SIGQUIT);
-    pthread_sigmask(SIG_SETMASK, &mask, NULL);
+    //pthread_sigmask(SIG_SETMASK, &mask, NULL);
     printf("Wait SIGQUIT\n");
     int err = sigwait(&mask, &signo);
     if (err){
@@ -64,6 +64,7 @@ void* thread_func_3(){
     if (signo == SIGQUIT){
         printf("Received SIGQUIT\n");
     }
+    return NULL;
 }
 
 // struct sigaction - это структура, используемая для определения настроек и обработчика сигнала (signal handler)
@@ -109,12 +110,20 @@ int main() {
         return -1;
     }
 
-    printf("tid1 = %ld, tid2 = %ld, tid3 = %ld\n", tid_1, tid_2, tid_3);
+    //printf("tid1 = %ld, tid2 = %ld, tid3 = %ld\n", tid_1, tid_2, tid_3);
     pthread_join(tid_1, NULL);
     pthread_join(tid_2, NULL);
+    pthread_kill(tid_3, SIGQUIT);
+    sleep(1);
+    pthread_kill(tid_3, SIGQUIT);
+    sleep(1);
+    pthread_kill(tid_3, SIGQUIT);
     pthread_join(tid_3, NULL);
+
 
     return 0;
 }
+
+
 
 
