@@ -53,22 +53,43 @@ int mythread_startup(void *arg) {
     return 0;
 }
 
-void *create_stack(off_t size, int thread_num) {
+int create_stack(void** stack, off_t size, int thread_num) {
     char stack_file[128];
     int stack_fd;
-    void *stack;
-
     snprintf(stack_file, sizeof(stack_file), "stack-%d", thread_num);
-    // проверить что все ок
 
     stack_fd = open(stack_file, O_RDWR | O_CREAT, 0660);
-    ftruncate(stack_fd, 0);
-    ftruncate(stack_fd, size);
+    if(stack_fd == -1){
+        printf("create_stack: failed to open file");
+        return -1;
+    }
 
-    stack = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, stack_fd, 0);
-    close(stack_fd);
-    memset(stack, 0x7f, size);
-    return stack;
+    int err = ftruncate(stack_fd, 0);
+    if (err == -1){
+        printf("create_stack: failed to ftruncate");
+        return -1;
+    }
+
+    err = ftruncate(stack_fd, size);
+    if (err == -1){
+        printf("create_stack: failed to ftruncate");
+        return -1;
+    }
+
+    *stack = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, stack_fd, 0);
+    if(*stack == MAP_FAILED){
+        printf("create_stack: failed mmap");
+        return -1;
+    }
+
+    err = close(stack_fd);
+    if (err == -1){
+        printf("create_stack: failed mmap");
+        return -1;
+    }
+
+    memset(*stack, 0x7f, size);
+    return 1;
 }
 
 int mythread_create(mythread_t *mytid, start_routine_t start_routine, void *arg) {
@@ -76,8 +97,12 @@ int mythread_create(mythread_t *mytid, start_routine_t start_routine, void *arg)
 
     printf("mythread_create: creating thread %d\n", thread_num);
 
-
-    void *child_stack = create_stack(STACK_SIZE, thread_num);
+    void *child_stack = NULL;
+    int err = create_stack(&child_stack,STACK_SIZE, thread_num);
+    if(err == -1){
+        printf("mythread_create: failed to create stack");
+        return -1;
+    }
     mprotect(child_stack + PAGE, STACK_SIZE - PAGE, PROT_READ | PROT_WRITE);
 
     mythread_struct_t *mythread = (mythread_struct_t *) (child_stack + STACK_SIZE - sizeof(mythread_struct_t));
@@ -92,15 +117,16 @@ int mythread_create(mythread_t *mytid, start_routine_t start_routine, void *arg)
 
     child_stack = (void *) mythread;
     printf("mythread_create: child stack %p, mythreas_struct %p \n", child_stack, mythread);
-    int child_pid = clone(mythread_startup, child_stack,
-                          CLONE_VM | CLONE_FILES | CLONE_THREAD | CLONE_SIGHAND | SIGCHLD, (void *) mythread);
+
+    int child_pid = clone(mythread_startup, child_stack,CLONE_VM | CLONE_FILES | CLONE_THREAD | CLONE_SIGHAND | SIGCHLD, (void *) mythread);
     if (child_pid == -1) {
         printf("clone failed: %s \n", strerror(errno));
         return -1;
     }
-    *mytid = mythread;
-    return 0;
 
+    *mytid = mythread;
+
+    return 0;
 }
 
 int mythread_join(mythread_t mytid, void **retval) {
@@ -117,15 +143,17 @@ int mythread_join(mythread_t mytid, void **retval) {
     return 0;
 }
 
-
-
 int main() {
     mythread_t mytid;
     void *retval;
 
     printf("main [%d %d %d]: Hello from main!\n", getpid(), getppid(), gettid());
 
-    mythread_create(&mytid, mythread, "Hello from main");
+    int err = mythread_create(&mytid, mythread, "Hello from main");
+    if(err == -1){
+        printf("thread create failed\n");
+    }
+
     mythread_join(mytid, &retval);
 
     printf("main [%d %d %d] thread returned '%s'\n", getpid(), getppid(), gettid(), (char *) retval);
