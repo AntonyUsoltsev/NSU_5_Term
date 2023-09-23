@@ -1,0 +1,57 @@
+import string;
+import ds/array;
+
+
+// 1 part
+convert(intArr:[int]) -> [string] {
+    // convertArr:[string] = map(intArr, \i->cast(i : int -> string)); 
+
+    convertArr:[string] = map(intArr, \i -> i2s(i));
+    {convertArr};
+
+}
+
+// 2 part
+arrSumm(intArr : [int]) -> int{
+    sum : int = fold(intArr, 0, \x, y -> x + y);
+    {sum};
+}
+
+// 3 part
+fib_recursive(n : int) -> [int]{
+    if (n <= 0) {
+        { [0]};
+    }
+    else{
+        if(n == 1){
+            { [0]};
+        }
+        else{
+            if(n == 2){
+                { [0, 1]};
+            }
+            else{
+                fibPrev : [int] = fib_recursive(n - 1);
+                {arrayPush(fibPrev, fibPrev[length(fibPrev) - 1] + fibPrev[length(fibPrev) - 2])};
+                // refArrayPush(ref fibPrev, fibPrev[length(fibPrev) - 1] + fibPrev[length(fibPrev) - 2]);
+                // {fibPrev};
+            }
+        }
+    }
+}
+
+fib_tail_recursive(n : int) -> [int]{
+    
+} 
+
+main(){
+    arr:[int] = [1, 2, 3, 4, 5, 6];
+
+    strArr:[string] = convert(arr);
+    println(strArr);
+
+    sum : int = arrSumm(arr);
+    println(sum);
+
+    println(fib_recursive(6));
+}
