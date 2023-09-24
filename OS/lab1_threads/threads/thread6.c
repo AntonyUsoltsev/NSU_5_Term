@@ -1,5 +1,4 @@
 #define _GNU_SOURCE
-
 #include <sched.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -8,7 +7,6 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-
 
 #define PAGE 4096
 #define STACK_SIZE (PAGE * 8)
@@ -116,7 +114,7 @@ int mythread_create(mythread_t *mytid, start_routine_t start_routine, void *arg)
     thread_num++;
 
     child_stack = (void *) mythread;
-    printf("mythread_create: child stack %p, mythreas_struct %p \n", child_stack, mythread);
+    printf("mythread_create: child stack %p, mythread_struct %p \n", child_stack, mythread);
 
     int child_pid = clone(mythread_startup, child_stack,CLONE_VM | CLONE_FILES | CLONE_THREAD | CLONE_SIGHAND | SIGCHLD, (void *) mythread);
     if (child_pid == -1) {
@@ -130,7 +128,7 @@ int mythread_create(mythread_t *mytid, start_routine_t start_routine, void *arg)
 }
 
 int mythread_join(mythread_t mytid, void **retval) {
-    // wait untill thread ends
+    // wait until thread ends
     mythread_struct_t *mythread = mytid;
     printf("mythread_join: waiting for the thread %d finish\n", mythread->mythread_id);
     while (!mythread->exited) {
@@ -159,4 +157,3 @@ int main() {
     printf("main [%d %d %d] thread returned '%s'\n", getpid(), getppid(), gettid(), (char *) retval);
     return 0;
 }
-
