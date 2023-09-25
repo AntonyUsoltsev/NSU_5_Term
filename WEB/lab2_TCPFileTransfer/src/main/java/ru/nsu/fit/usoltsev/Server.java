@@ -7,47 +7,50 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
-public class Server {
+public class Server implements Constants{
 
     public static void main(String[] args) {
 
-        if (args.length != 1 || Integer.parseInt(args[0]) < 1 || Integer.parseInt(args[0]) > 65535) {  // 65535 = Short.MAX_VALUE * 2 + 1
+        if (args.length != 1 || Integer.parseInt(args[0]) < MIN_PORT_NUMBER ||
+                Integer.parseInt(args[0]) > MAX_PORT_NUMBER) {  // 65535 = Short.MAX_VALUE * 2 + 1
             log.warn("Incorrect port number");
             throw new IllegalArgumentException("Incorrect port number");
         }
 
-        createDirectory();
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
-        ThreadPoolExecutor executor  = (ThreadPoolExecutor) Executors.newCachedThreadPool();;
         try (ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]))) {
+
+            createDirectory();
+
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                executor.submit(new ClientHandler(clientSocket));
+                Future<Boolean> future = executor.submit(new ClientHandler(clientSocket));
+                log.info("Data receive " + ((future.get() == SUCCESS) ? "success" : "fail"));
+                clientSocket.close();
             }
 
-        } catch (IOException | IllegalArgumentException exc) {
+        } catch (IOException | IllegalArgumentException | InterruptedException | ExecutionException exc) {
             System.err.println(exc.getMessage());
-        }
-        finally {
+            exc.printStackTrace(System.err);
+        } finally {
             executor.shutdown();
         }
     }
 
-    public static void createDirectory(){
-        try {
-            Files.createDirectories(Path.of("./src/main/resources/uploads"));
-            if (Files.exists(Path.of("./src/main/resources/uploads"))) {
-                System.out.println("Directory created");
-            } else {
-                System.err.println("Directory didnt create");
-            }
-        }
-        catch (IOException ioexc){
-            System.err.println(ioexc.getMessage());
+    public static void createDirectory() throws IOException {
+        Path dir = Path.of("./src/main/resources/uploads");
+        Files.createDirectories(dir);
+        if (Files.exists(dir)) {
+            log.info("Directory created");
+        } else {
+            log.warn("Directory didnt create");
         }
     }
 }
