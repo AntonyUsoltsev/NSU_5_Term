@@ -15,6 +15,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Slf4j
 public class Server implements Constants{
 
+    /**
+     * Create thread pool, waiting income clients and append it to client-handler thread
+     */
     public static void main(String[] args) {
 
         if (args.length != 1 || Integer.parseInt(args[0]) < MIN_PORT_NUMBER ||
@@ -44,6 +47,10 @@ public class Server implements Constants{
         }
     }
 
+    /**
+     * Create an upload directory
+     * @throws IOException if it was not possible to create directory
+     */
     public static void createDirectory() throws IOException {
         Path dir = Path.of("./src/main/resources/uploads");
         Files.createDirectories(dir);

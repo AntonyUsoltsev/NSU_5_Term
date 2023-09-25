@@ -9,12 +9,21 @@ import java.util.concurrent.Callable;
 @Slf4j
 public class ClientHandler implements Callable<Boolean>, Constants {
 
+    /**
+     * Socket with which this handler works
+     */
     private final Socket clientSocket;
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
 
+    /**
+     * Create file with same name as send file from client, and then receive file data
+     * and also count the speed of file transfer
+     *
+     * @return SUCCESS == 1 if file receive done correctly, else return FAIL == 0
+     */
     @Override
     public Boolean call() {
         log.info("New client connected");
@@ -38,7 +47,15 @@ public class ClientHandler implements Callable<Boolean>, Constants {
         }
     }
 
-    private void receiveData(FileOutputStream file, InputStream inputStream, FileInfo fileInfo) throws IOException {
+    /**
+     * Receive file data from client-socket and write it to result file
+     *
+     * @param fileOutputStream output file stream into which write input data
+     * @param inputStream input client-socket stream
+     * @param fileInfo FileInfo object
+     * @throws IOException if it was not possible to read/write data from/to stream
+     */
+    private void receiveData(FileOutputStream fileOutputStream, InputStream inputStream, FileInfo fileInfo) throws IOException {
         int bytesRead;
         long allBytesRead = 0, prevBytesRead = 0;
         byte[] buffer = new byte[BUFFER_SIZE];
@@ -46,7 +63,7 @@ public class ClientHandler implements Callable<Boolean>, Constants {
         long curTime, prevTime = System.currentTimeMillis(), startTime = System.currentTimeMillis();
 
         while ((bytesRead = inputStream.read(buffer)) != -1 && allBytesRead != fileInfo.fileSize()) {
-            file.write(buffer, 0, bytesRead);
+            fileOutputStream.write(buffer, 0, bytesRead);
             allBytesRead += bytesRead;
 
             curTime = System.currentTimeMillis();
