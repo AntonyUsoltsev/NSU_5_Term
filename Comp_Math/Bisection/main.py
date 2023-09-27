@@ -8,7 +8,8 @@ def bisection(l_border, r_border):
         sys.exit()
     mid = (r_border + l_border) / 2
     if abs(f(mid)) < eps:
-        return round((r_border + l_border) / 2, len(str(eps)))
+       # return round((r_border + l_border) / 2, len(str(eps)))
+       return (r_border + l_border) / 2
     elif f(mid) < -eps:
         return bisection(mid, r_border) if (f(l_border) < 0 < f(r_border)) else bisection(l_border, mid)
     elif f(mid) > eps:
