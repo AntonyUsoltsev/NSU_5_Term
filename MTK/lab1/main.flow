@@ -1,57 +1,141 @@
 import string;
 import ds/array;
+import ds/tree;
 
 
 // 1 part
-convert(intArr:[int]) -> [string] {
+convert(intArr : [int]) -> [string] {
     // convertArr:[string] = map(intArr, \i->cast(i : int -> string)); 
 
-    convertArr:[string] = map(intArr, \i -> i2s(i));
+    convertArr : [string] = map(intArr, \i -> i2s(i));
     {convertArr};
 
 }
 
+
 // 2 part
 arrSumm(intArr : [int]) -> int{
-    sum : int = fold(intArr, 0, \x, y -> x + y);
+    sum : int = fold(intArr, 0, \x, curSumm -> curSumm + x);
     {sum};
 }
 
+
 // 3 part
 fib_recursive(n : int) -> [int]{
-    if (n <= 0) {
-        { [0]};
-    }
-    else{
-        if(n == 1){
-            { [0]};
-        }
-        else{
-            if(n == 2){
-                { [0, 1]};
-            }
-            else{
-                fibPrev : [int] = fib_recursive(n - 1);
-                {arrayPush(fibPrev, fibPrev[length(fibPrev) - 1] + fibPrev[length(fibPrev) - 2])};
-                // refArrayPush(ref fibPrev, fibPrev[length(fibPrev) - 1] + fibPrev[length(fibPrev) - 2]);
-                // {fibPrev};
-            }
-        }
+    if (n <= 0){
+        {[]};
+    }else if (n == 1){
+        {[0]};
+    }else if (n == 2){
+        {[0, 1]};
+    }else{
+        fibPrev : [int] = fib_recursive(n - 1);
+        {arrayPush(fibPrev, fibPrev[length(fibPrev) - 1] + fibPrev[length(fibPrev) - 2])};
     }
 }
 
 fib_tail_recursive(n : int) -> [int]{
-    
+     if(n <= 0){
+        {[]};
+    }else if(n == 1){
+        {[0]};
+    }else if (n == 2){
+        {[0, 1]};
+    }else{
+        {fib_tail_2(n, [0,1])};
+    }
 } 
 
+fib_tail_2(n : int, arr : [int])-> [int]{
+    if (n <= 2){
+        {arr};
+    }else{
+        {fib_tail_2(n - 1, arrayPush(arr, arr[length(arr) - 1] + arr[length(arr) - 2]))};
+    }
+    
+}
+
+fib_reference(n: int) -> [int]{
+    if (n <= 0){
+        {[]};
+    }else if (n == 1){
+        {[0]};
+    }else if (n == 2){
+        {[0, 1]};
+    }else{
+        fibPrev : ref [int] = ref fib_reference(n - 1);
+        refArrayPush(fibPrev, ^fibPrev[length(^fibPrev) - 1] + ^fibPrev[length(^fibPrev) - 2]);
+        {^fibPrev};
+    }
+}
+
+
+// 4 part
+inds(arr : [int], m : int) -> [Pair<int, int>]{
+    pairs : [Pair<int, int>] = 
+        foldi(arr, [], \i, curPairs_1, value_1 -> 
+            foldi(arr, curPairs_1, \j, curPairs_2, value_2 ->
+                if (value_1 + value_2 == m && i <= j){
+                    {arrayPush(curPairs_2, Pair(i, j))};
+                }
+                else{
+                    {curPairs_2};
+                }
+            )
+        );
+    {pairs};
+  
+}
+inds_tree(arr : [int], m : int) -> [Pair<int, int>]{
+  
+    // pairArr : [Pair<int, int>] = foldi(arr, [], \i, curPairs, value1 ->arrayPush(curPairs, Pair(arr[i], i)));
+
+    // tree = pairs2tree(pairArr);
+
+    tree : Tree<int, int> = foldi(arr, makeTree(), \i, curTree, arr_i -> setTree(curTree, arr_i, i));
+
+    pairs : [Pair<int, int>] = foldi(arr, [], \i, curPairs, value1 ->{
+
+        value : Maybe<int> = lookupTree(tree, m - arr[i]);
+
+        retval : int = value ?? value : -1;
+
+        if (retval != -1 && i <= retval){
+            {arrayPush(curPairs, Pair(i, retval))};
+        }
+        else{
+            curPairs;
+        }
+    }
+    )
+
+    {pairs}
+    
+}
+
+
+
+
+
 main(){
-    arr:[int] = [1, 2, 3, 4, 5, 6];
+    arr:[int] = [0, 1, 2, 3, 4, 5, 6];
 
-    strArr:[string] = convert(arr);
-    println(strArr);
+    println(convert(arr));
 
-    sum : int = arrSumm(arr);
-    println(sum);
+    println(arrSumm(arr));
 
-    println(fib_recursive(6));
+    fibCount : int = 8;
+    println(fib_recursive(fibCount));
+
+    println(fib_tail_recursive(fibCount));
+
+    println(fib_reference(fibCount));
+
+    findSum : int = 6;
+
+    println(inds(arr, findSum));
+
+    println(inds_tree(arr, findSum));
+
+    {}
 }
