@@ -26,11 +26,11 @@ tasks.withType(JavaCompile) {
 
 application {
     mainModule = 'ru.nsu.fit.usoltsev'
-    mainClass = 'ru.nsu.fit.usoltsev.HelloApplication'
+    mainClass = 'ru.nsu.fit.usoltsev.Main'
 }
 
 javafx {
-    version = '17.0.6'
+    version = '19.0.2'
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.media']
 }
 
@@ -41,6 +41,21 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+
+//    compileOnly 'org.projectlombok:lombok:1.18.30'
+//    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+//
+//    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+//    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+//
+//    implementation 'org.slf4j:slf4j-api:2.0.0'
+//    implementation 'org.slf4j:slf4j-simple:2.0.0'
+//
+//    implementation 'com.google.protobuf:protobuf-java:3.19.6'
+//
+//    implementation('org.controlsfx:controlsfx:11.1.2')
+//    implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
+
 }
 
 test {
