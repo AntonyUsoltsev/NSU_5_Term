@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.Button?>
+
+
+<AnchorPane stylesheets="@startMenu.css"  xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1">
+    <TextField id="widhtValue" fx:id="widhtValue" layoutX="356.0" layoutY="109.0"/>
+    <TextField id="rowsValue" fx:id="rowsValue" layoutX="356.0" layoutY="187.0"/>
+    <TextField id="foodCount" fx:id="foodCount" layoutX="356.0" layoutY="270.0"/>
+    <Text layoutX="356.0" layoutY="98.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Height == Width"/>
+    <Text layoutX="356.0" layoutY="172.0" strokeType="OUTSIDE" strokeWidth="0.0"
+          text="Enter Rows count == Columns count" wrappingWidth="216.14459228515625"/>
+    <Text layoutX="356.0" layoutY="255.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Food count"/>
+    <Button fx:id="okButton" layoutX="430.0" layoutY="342.0" mnemonicParsing="false" prefHeight="42.0"
+            prefWidth="44.0"/>
+</AnchorPane>
+

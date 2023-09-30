@@ -1,0 +1,8 @@
+#okButton {
+    -fx-background-image: url(Ok.png);
+}
+
+.button {
+    -fx-background-color: transparent;
+    -fx-background-size: contain;
+}

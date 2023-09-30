@@ -7,7 +7,7 @@ import ru.nsu.fit.usoltsev.GameConstants;
 
 import java.util.List;
 
-public class SnakeView implements GameConstants {
+public class SnakeView extends GameConstants {
     public void drawSnake( GraphicsContext gc, Light.Point snakeHead, List<Light.Point> snakeBody) {
         gc.setFill(Color.BLUE);
         gc.fillRoundRect(snakeHead.getX() * SQUARE_SIZE, snakeHead.getY() * SQUARE_SIZE, SQUARE_SIZE - 1, SQUARE_SIZE - 1, SQUARE_SIZE * 0.7, SQUARE_SIZE * 0.7);

@@ -4,7 +4,7 @@ import javafx.scene.Scene;
 import ru.nsu.fit.usoltsev.GameConstants;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
 
-public class SnakeControl implements GameConstants {
+public class SnakeControl extends GameConstants {
 
     SnakeModel snakeModel;
     SnakeControl(Scene scene, SnakeModel snakeModel) {

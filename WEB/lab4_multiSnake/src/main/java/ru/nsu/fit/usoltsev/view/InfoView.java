@@ -6,7 +6,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import ru.nsu.fit.usoltsev.GameConstants;
 
-public class InfoView implements GameConstants {
+public class InfoView extends GameConstants {
     public void drawScore(GraphicsContext gc, int score) {
         gc.setFill(Color.RED);
         gc.setFont(new Font("Digital-7", 30));

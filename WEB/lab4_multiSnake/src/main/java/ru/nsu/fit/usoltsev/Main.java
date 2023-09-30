@@ -1,30 +1,25 @@
 package ru.nsu.fit.usoltsev;
 
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Application;
-
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.effect.Light;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import ru.nsu.fit.usoltsev.controller.GameControl;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStream;
+import java.util.Objects;
 
-import java.util.List;
 
-
-public class Main extends Application implements GameConstants {
+public class Main extends Application {
 
     public GraphicsContext gc;
 
@@ -36,18 +31,40 @@ public class Main extends Application implements GameConstants {
         stage.setTitle("Snake");
         Image icon = new Image("ru/nsu/fit/usoltsev/snakeIcon.png");
         stage.getIcons().add(icon);
-        Group root = new Group();
-        Canvas canvas = new Canvas(WIDTH, HEIGHT);
-        root.getChildren().add(canvas);
-        Scene scene = new Scene(root);
+        AnchorPane root = FXMLLoader.load(Objects.requireNonNull(Main.class.getResource("snakeMenu.fxml")));
+        GameConstants gameConstants = new GameConstants();
 
+        TextField widhtValue = (TextField) root.lookup("#widhtValue");
+        TextField rowsValue = (TextField) root.lookup("#rowsValue");
+        TextField foodCount = (TextField) root.lookup("#foodCount");
+        Button okButton = (Button) root.lookup("#okButton");
+        Scene scene = new Scene(root);
+        okButton.setOnAction(event -> {
+            if (widhtValue.getText().equals("")) {
+                widhtValue.setPromptText("INSERT HEIGHT!");
+            } else if (rowsValue.getText().equals("")) {
+                rowsValue.setPromptText("INSERT ROWS!");
+            } else if (foodCount.getText().equals("")) {
+                foodCount.setPromptText("INSERT FOOD COUNT!");
+            } else {
+                gameConstants.setConstants(Integer.parseInt(widhtValue.getText()), Integer.parseInt(widhtValue.getText()),
+                        Integer.parseInt(rowsValue.getText()), Integer.parseInt(rowsValue.getText()), Integer.parseInt(foodCount.getText()));
+
+                root.getChildren().clear();
+                Canvas canvas = new Canvas(Integer.parseInt(widhtValue.getText()), Integer.parseInt(widhtValue.getText()));
+
+                root.getChildren().add(canvas);
+
+                gc = canvas.getGraphicsContext2D();
+                GameControl gameControl = new GameControl(gc, scene);
+                gameControl.startGame();
+            }
+        });
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
-        gc = canvas.getGraphicsContext2D();
-        GameControl gameControl = new GameControl(gc, scene);
-        gameControl.startGame();
     }
+
     public static void main(String[] args) {
         launch();
     }

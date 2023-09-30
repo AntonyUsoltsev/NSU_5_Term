@@ -12,7 +12,7 @@ import ru.nsu.fit.usoltsev.view.SnakeView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SnakeModel implements GameConstants {
+public class SnakeModel extends GameConstants {
 
     private final List<Light.Point> snakeBody = new ArrayList<>();
 
