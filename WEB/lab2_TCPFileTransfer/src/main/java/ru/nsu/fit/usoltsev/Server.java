@@ -12,8 +12,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static ru.nsu.fit.usoltsev.Constants.*;
+
 @Slf4j
-public class Server implements Constants{
+public class Server {
 
     /**
      * Create thread pool, waiting income clients and append it to client-handler thread
@@ -21,7 +23,7 @@ public class Server implements Constants{
     public static void main(String[] args) {
 
         if (args.length != 1 || Integer.parseInt(args[0]) < MIN_PORT_NUMBER ||
-                Integer.parseInt(args[0]) > MAX_PORT_NUMBER) {  // 65535 = Short.MAX_VALUE * 2 + 1
+                Integer.parseInt(args[0]) > MAX_PORT_NUMBER) {
             log.warn("Incorrect port number");
             throw new IllegalArgumentException("Incorrect port number");
         }
@@ -34,21 +36,23 @@ public class Server implements Constants{
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                log.info("New client connected");
                 Future<Boolean> future = executor.submit(new ClientHandler(clientSocket));
                 log.info("Data receive " + ((future.get() == SUCCESS) ? "success" : "fail"));
                 clientSocket.close();
             }
 
-        } catch (IOException | IllegalArgumentException | InterruptedException | ExecutionException exc) {
+        } catch (IOException | RuntimeException | InterruptedException | ExecutionException exc) {
             System.err.println(exc.getMessage());
             exc.printStackTrace(System.err);
-        } finally {
-            executor.shutdown();
         }
+
+        executor.shutdown();
     }
 
     /**
      * Create an upload directory
+     *
      * @throws IOException if it was not possible to create directory
      */
     public static void createDirectory() throws IOException {
@@ -58,6 +62,7 @@ public class Server implements Constants{
             log.info("Directory created");
         } else {
             log.warn("Directory didnt create");
+            throw new RuntimeException("Directory didn't create");
         }
     }
 }

@@ -4,10 +4,10 @@ package ru.nsu.fit.usoltsev;
 /**
  * Interface with used constants
  */
-public interface Constants {
-    int MIN_PORT_NUMBER = 1;
-    int MAX_PORT_NUMBER = 65536;
-    int BUFFER_SIZE = 64; // in bytes
-    Boolean SUCCESS = true;
-    Boolean FAIL = false;
+public final class Constants {
+    public static int MIN_PORT_NUMBER = 1;
+    public static int MAX_PORT_NUMBER = 65536; // 65535 = Short.MAX_VALUE * 2 + 1
+    public static int BUFFER_SIZE = 128; // in bytes
+    public static Boolean SUCCESS = true;
+    public static Boolean FAIL = false;
 }

@@ -6,13 +6,23 @@ import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.Callable;
 
+import static ru.nsu.fit.usoltsev.Constants.*;
+
 @Slf4j
-public class ClientHandler implements Callable<Boolean>, Constants {
+public class ClientHandler implements Callable<Boolean> {
 
     /**
      * Socket with which this handler works
      */
     private final Socket clientSocket;
+
+    /**
+     * allBytesRead - all bytes read from socket in current time
+     * prevBytesRead - bytes read from socket in previous time (~3s ago)
+     */
+    private long allBytesRead = 0, prevBytesRead = 0;
+
+    private long curTime, prevTime, startTime;
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
@@ -26,20 +36,23 @@ public class ClientHandler implements Callable<Boolean>, Constants {
      */
     @Override
     public Boolean call() {
-        log.info("New client connected");
         try (InputStream inputStream = clientSocket.getInputStream();
+             OutputStream outputStream = clientSocket.getOutputStream();
              ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
 
             FileInfo fileInfo = (FileInfo) objectInputStream.readObject();
 
-            FileOutputStream fileOutputStream = new FileOutputStream("./src/main/resources/uploads/" + fileInfo.fileName());
             log.info("Create file, start receiving data");
 
-            receiveData(fileOutputStream, inputStream, fileInfo);
+            receiveData(inputStream, fileInfo);
 
-            fileOutputStream.close();
+            clientSocket.shutdownInput();
+
+            String successMsg = "success";
+            outputStream.write(successMsg.getBytes());
 
             return SUCCESS;
+
         } catch (IOException | ClassNotFoundException e) {
             System.err.println(e.getMessage());
             e.printStackTrace(System.err);
@@ -50,33 +63,40 @@ public class ClientHandler implements Callable<Boolean>, Constants {
     /**
      * Receive file data from client-socket and write it to result file
      *
-     * @param fileOutputStream output file stream into which write input data
      * @param inputStream input client-socket stream
-     * @param fileInfo FileInfo object
+     * @param fileInfo    FileInfo object
      * @throws IOException if it was not possible to read/write data from/to stream
      */
-    private void receiveData(FileOutputStream fileOutputStream, InputStream inputStream, FileInfo fileInfo) throws IOException {
-        int bytesRead;
-        long allBytesRead = 0, prevBytesRead = 0;
-        byte[] buffer = new byte[BUFFER_SIZE];
+    private void receiveData(InputStream inputStream, FileInfo fileInfo) throws IOException {
+        String filePath = "./src/main/resources/uploads/" + fileInfo.fileName();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
+            int bytesRead;
+            byte[] buffer = new byte[BUFFER_SIZE];
+            startTime = System.currentTimeMillis();
+            prevTime = startTime;
+            while ((bytesRead = inputStream.read(buffer)) != -1 || allBytesRead != fileInfo.fileSize()) {
 
-        long curTime, prevTime = System.currentTimeMillis(), startTime = System.currentTimeMillis();
+                fileOutputStream.write(buffer, 0, bytesRead);
 
-        while ((bytesRead = inputStream.read(buffer)) != -1 && allBytesRead != fileInfo.fileSize()) {
-            fileOutputStream.write(buffer, 0, bytesRead);
-            allBytesRead += bytesRead;
+                allBytesRead += bytesRead;
 
-            curTime = System.currentTimeMillis();
-            if (curTime - prevTime > 3000) {
-                long speed = ((allBytesRead - prevBytesRead) * 1000) / (curTime - prevTime);
-                System.out.println("Current speed = " + speed + " byte/s; Appr wait time = "
-                        + (fileInfo.fileSize() - allBytesRead) / speed + "s");
-                prevBytesRead = allBytesRead;
-                prevTime = curTime;
+                curTime = System.currentTimeMillis();
+
+                speedCount(fileInfo);
             }
-
+            curTime = System.currentTimeMillis();
+            System.out.println("Total speed = " + (allBytesRead * 1000) / (curTime - startTime) + " byte/s");
         }
-        curTime = System.currentTimeMillis();
-        System.out.println("Total speed = " + (allBytesRead * 1000) / (curTime - startTime) + " byte/s");
+    }
+
+    private void speedCount(FileInfo fileInfo) {
+
+        if (curTime - prevTime > 3000) {
+            long speed = ((allBytesRead - prevBytesRead) * 1000) / (curTime - prevTime);
+            System.out.println("Current speed = " + speed + " byte/s; Appr wait time = "
+                    + (fileInfo.fileSize() - allBytesRead) / speed + "s");
+            prevBytesRead = allBytesRead;
+            prevTime = curTime;
+        }
     }
 }

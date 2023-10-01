@@ -5,12 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Arrays;
+
+import static ru.nsu.fit.usoltsev.Constants.*;
 
 /**
  * Establishes a connection to the server, sends it the file name and its size, and then the file itself
  */
 @Slf4j
-public class Client implements Constants {
+public class Client {
     public static void main(String[] args) {
         try {
             if (args.length != 3) {
@@ -27,7 +30,6 @@ public class Client implements Constants {
 
             sendData(filePath, ipAddr, port);
 
-            log.info("Data send completed");
         } catch (IOException | IllegalArgumentException ioExc) {
             System.err.println(ioExc.getMessage());
             ioExc.printStackTrace(System.err);
@@ -38,14 +40,15 @@ public class Client implements Constants {
      * Create client socket, create FileInfo object, serialize it and send to the server and then send file data
      *
      * @param filePath path to the send file
-     * @param ipAddr ip address of the server
-     * @param port port of the server
+     * @param ipAddr   ip address of the server
+     * @param port     port of the server
      * @throws IOException if it was not possible to create a socket, open an input stream, serialize object
-     * or read data from a file
+     *                     or read data from a file
      */
     private static void sendData(String filePath, InetAddress ipAddr, int port) throws IOException {
         try (Socket client = new Socket(ipAddr, port);
-             OutputStream outputStream = client.getOutputStream()) {
+             OutputStream outputStream = client.getOutputStream();
+             InputStream inputStream = client.getInputStream()) {
 
             File sendfile = new File(filePath);
             String fileName = sendfile.getName();
@@ -61,6 +64,15 @@ public class Client implements Constants {
             byte[] buffer = new byte[BUFFER_SIZE];
             while ((bytesRead = fileDataStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
+            }
+            client.shutdownOutput();
+
+            int successBytesRead = inputStream.read(buffer);
+            String successMsg = new String(Arrays.copyOf(buffer, successBytesRead));
+            if (successMsg.equals("success")) {
+                log.info("Data send completed");
+            } else {
+                log.error("Data send failed on server");
             }
         }
     }
