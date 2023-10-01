@@ -1,6 +1,7 @@
 package ru.nsu.fit.usoltsev;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -67,13 +68,24 @@ public class Client {
             }
             client.shutdownOutput();
 
-            int successBytesRead = inputStream.read(buffer);
-            String successMsg = new String(Arrays.copyOf(buffer, successBytesRead));
-            if (successMsg.equals("success")) {
-                log.info("Data send completed");
-            } else {
-                log.error("Data send failed on server");
-            }
+            receiveAnswer(inputStream);
+        }
+    }
+
+    /**
+     * Receive success-answer from server
+     *
+     * @param inputStream socket input stream
+     * @throws IOException if it was not possible read data from a socket
+     */
+    private static void receiveAnswer(@NotNull InputStream inputStream) throws IOException {
+        byte[] successBuffer = new byte[BUFFER_SIZE];
+        int successBytesRead = inputStream.read(successBuffer);
+        String successMsg = new String(Arrays.copyOf(successBuffer, successBytesRead));
+        if (successMsg.equals("success")) {
+            log.info("Data send completed");
+        } else {
+            log.error("Data send failed on server");
         }
     }
 }
