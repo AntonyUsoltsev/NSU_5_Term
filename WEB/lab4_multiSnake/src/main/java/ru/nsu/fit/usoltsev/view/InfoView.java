@@ -15,7 +15,7 @@ public class InfoView {
 
     public void drawGameOver(GraphicsContext gc) {
         gc.setFill(Color.RED);
-        gc.setFont(new Font("Arial", 70));
+        gc.setFont(new Font("Arial", (double) WIDTH / 10));
         gc.fillText("Game over", (double) WIDTH / 4, (double) HEIGHT / 2);
     }
 }

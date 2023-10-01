@@ -53,10 +53,13 @@ public class Main extends Application {
                     root.getChildren().clear();
                     Canvas canvas = new Canvas(width, height);
                     root.getChildren().add(canvas);
+
                     stage.setX(Screen.getPrimary().getVisualBounds().getWidth() / 2 - (double) width / 2);
                     stage.setY(Screen.getPrimary().getVisualBounds().getHeight() / 2 - (double) height / 2);
                     stage.sizeToScene();
+
                     gc = canvas.getGraphicsContext2D();
+
                     GameControl gameControl = new GameControl(gc, scene);
                     gameControl.startGame();
 

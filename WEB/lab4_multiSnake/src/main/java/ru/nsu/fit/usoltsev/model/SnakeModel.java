@@ -2,6 +2,7 @@ package ru.nsu.fit.usoltsev.model;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
@@ -42,10 +43,10 @@ public class SnakeModel {
 
     public void changeDirection(KeyEvent keyCode) {
         switch (keyCode.getCode()) {
-            case RIGHT -> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
-            case LEFT -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
-            case DOWN -> curDirection = (curDirection != UP ? DOWN : UP);
-            case UP -> curDirection = (curDirection != DOWN ? UP : DOWN);
+            case D -> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
+            case A -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
+            case S -> curDirection = (curDirection != UP ? DOWN : UP);
+            case W -> curDirection = (curDirection != DOWN ? UP : DOWN);
         }
 
     }
