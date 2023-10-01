@@ -5,14 +5,14 @@ import javafx.scene.effect.Light;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 
-import ru.nsu.fit.usoltsev.GameConstants;
 import ru.nsu.fit.usoltsev.view.SnakeView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SnakeModel extends GameConstants {
+public class SnakeModel {
 
     private final List<Light.Point> snakeBody = new ArrayList<>();
 
@@ -27,7 +27,7 @@ public class SnakeModel extends GameConstants {
     private Light.Point snakeHead;
     private int curDirection = RIGHT;
 
-    private SnakeView snakeView;
+    private final SnakeView snakeView;
 
     public SnakeModel() {
         snakeView = new SnakeView();

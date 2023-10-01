@@ -2,9 +2,9 @@ package ru.nsu.fit.usoltsev.view;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import ru.nsu.fit.usoltsev.GameConstants;
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 
-public class BackgroundView extends GameConstants {
+public class BackgroundView {
     public void drawBackground(GraphicsContext gc) {
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLUMNS; j++) {

@@ -4,14 +4,13 @@ import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import ru.nsu.fit.usoltsev.GameConstants;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
-import java.util.ArrayList;
+
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 import java.util.List;
 
-public class FoodModel extends  GameConstants {
+public class FoodModel {
 
     private final Point2D[] foods = new Point2D[FOOD_COUNT];
     private final Image[] foodsImages = new Image[FOOD_COUNT];

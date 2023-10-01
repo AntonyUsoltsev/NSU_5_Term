@@ -8,13 +8,13 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.util.Duration;
-import ru.nsu.fit.usoltsev.GameConstants;
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 import ru.nsu.fit.usoltsev.model.FoodModel;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
 import ru.nsu.fit.usoltsev.view.BackgroundView;
 import ru.nsu.fit.usoltsev.view.InfoView;
 
-public class GameControl extends GameConstants {
+public class GameControl  {
     private boolean gameOver;
     private int score;
     public GraphicsContext gc;
