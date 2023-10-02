@@ -69,6 +69,10 @@ public class ClientHandler implements Callable<Boolean> {
      */
     private void receiveData(InputStream inputStream, FileInfo fileInfo) throws IOException {
         String filePath = "./src/main/resources/uploads/" + fileInfo.fileName();
+        File receiveFile = new File(filePath);
+        if(receiveFile.exists()){
+            throw new IOException("Receive file already exists");
+        }
         try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
             int bytesRead;
             byte[] buffer = new byte[BUFFER_SIZE];
@@ -85,15 +89,14 @@ public class ClientHandler implements Callable<Boolean> {
                 speedCount(fileInfo);
             }
             curTime = System.currentTimeMillis();
-            System.out.println("Total speed = " + (allBytesRead * 1000) / (curTime - startTime) + " byte/s");
+            System.out.println("Total speed = " + (allBytesRead * 1000) / (1024 * 1024 * (curTime - startTime)) + " MB/s");
         }
     }
 
     private void speedCount(FileInfo fileInfo) {
-
         if (curTime - prevTime > 3000) {
             long speed = ((allBytesRead - prevBytesRead) * 1000) / (curTime - prevTime);
-            System.out.println("Current speed = " + speed + " byte/s; Appr wait time = "
+            System.out.println("Current speed = " + speed / (1024 * 1024) + " MB/s; Appr wait time = "
                     + (fileInfo.fileSize() - allBytesRead) / speed + "s");
             prevBytesRead = allBytesRead;
             prevTime = curTime;

@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 import static ru.nsu.fit.usoltsev.Constants.*;
 
@@ -53,9 +54,15 @@ public class Client {
 
             File sendfile = new File(filePath);
             String fileName = sendfile.getName();
-            FileInputStream fileDataStream = new FileInputStream(sendfile);
+            if (sendfile.length() >= TERABYTE){
+                throw new RuntimeException("Bad file size");
+            }
+            if (fileName.getBytes(StandardCharsets.UTF_8).length >= MAX_FILE_NAME_SIZE){
+                throw new RuntimeException("Bad file name size");
+            }
 
-            FileInfo fileInfo = new FileInfo(fileName, sendfile.length());
+            FileInputStream fileDataStream = new FileInputStream(sendfile);
+            FileInfo fileInfo = new FileInfo(new String(fileName.getBytes(), StandardCharsets.UTF_8), sendfile.length());
 
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
             objectOutputStream.writeObject(fileInfo);
