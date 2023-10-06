@@ -7,18 +7,20 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane fx:id="back" stylesheets="@startMenu.css" xmlns="http://javafx.com/javafx/19.0.2" xmlns:fx="http://javafx.com/fxml/1">
-    <ImageView fitHeight="190.0" fitWidth="601.0" layoutX="-113.0" layoutY="-18.0" pickOnBounds="true" preserveRatio="true">
-        <Image url="@snakeFont.png" />
+<AnchorPane fx:id="back" prefHeight="381.0" prefWidth="566.0" stylesheets="@startMenu.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
+    <ImageView fitHeight="190.0" fitWidth="601.0" layoutX="-131.0" layoutY="-18.0" pickOnBounds="true" preserveRatio="true">
+        <Image url="@pictures/snakeFont.png"/>
     </ImageView>
-    <ImageView fitHeight="190.0" fitWidth="601.0" layoutX="77.0" layoutY="133.0" pickOnBounds="true" preserveRatio="true">
-        <Image url="@snakeIcon.png" />
+    <ImageView fitHeight="190.0" fitWidth="601.0" layoutX="76.0" layoutY="146.0" pickOnBounds="true" preserveRatio="true">
+        <Image url="@pictures/snakeIcon.png"/>
     </ImageView>
-    <TextField id="widthValue" fx:id="widthValue" layoutX="349.0" layoutY="85.0" text="800" />
-    <TextField id="rowsValue" fx:id="rowsValue" layoutX="349.0" layoutY="168.0" promptText="20" text="20" />
-    <TextField id="foodCount" fx:id="foodCount" layoutX="349.0" layoutY="246.0" promptText="5" text="5" />
-    <Text layoutX="349.0" layoutY="74.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Height == Width" />
-    <Text layoutX="349.0" layoutY="153.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Rows count == Columns count" wrappingWidth="216.14459228515625" />
-    <Text layoutX="348.0" layoutY="233.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Food count" />
-    <Button fx:id="okButton" layoutX="355.0" layoutY="290.0" mnemonicParsing="false" prefHeight="51.0" prefWidth="151.0" />
+    <TextField id="widthValue" fx:id="widthValue" layoutX="349.0" layoutY="58.0" text="800"/>
+    <TextField id="rowsValue" fx:id="rowsValue" layoutX="348.0" layoutY="126.0" promptText="20" text="20"/>
+    <TextField id="foodCount" fx:id="foodCount" layoutX="349.0" layoutY="192.0" promptText="5" text="5"/>
+    <Text layoutX="349.0" layoutY="47.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Height == Width"/>
+    <Text layoutX="348.0" layoutY="111.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Rows count == Columns count" wrappingWidth="216.14459228515625"/>
+    <Text layoutX="348.0" layoutY="179.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Food count"/>
+    <Button fx:id="okButton" layoutX="347.0" layoutY="306.0" mnemonicParsing="false" prefHeight="51.0" prefWidth="151.0"/>
+    <TextField id="timeDelay" fx:id="timeDelay" layoutX="349.0" layoutY="266.0" promptText="130" text="130"/>
+    <Text layoutX="348.0" layoutY="254.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Time delay" wrappingWidth="106.3140869140625"/>
 </AnchorPane>

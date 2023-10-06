@@ -23,7 +23,7 @@ public class Main extends Application {
     public void start(Stage stage) throws IOException {
 
         stage.setTitle("Snake");
-        Image icon = new Image("ru/nsu/fit/usoltsev/snakeIcon.png");
+        Image icon = new Image("ru/nsu/fit/usoltsev/pictures/snakeIcon.png");
         stage.getIcons().add(icon);
 
         AnchorPane root = FXMLLoader.load(Objects.requireNonNull(Main.class.getResource("snakeMenu.fxml")));
@@ -32,36 +32,55 @@ public class Main extends Application {
         TextField widthValue = (TextField) root.lookup("#widthValue");
         TextField rowsValue = (TextField) root.lookup("#rowsValue");
         TextField foodCountValue = (TextField) root.lookup("#foodCount");
+        TextField timeDelay = (TextField) root.lookup("#timeDelay");
         Button okButton = (Button) root.lookup("#okButton");
 
         okButton.setOnAction(event -> {
             if (widthValue.getText().isEmpty()) {
-                widthValue.setPromptText("INSERT HEIGHT!");
+                widthValue.setPromptText("Insert height");
             } else if (rowsValue.getText().isEmpty()) {
-                rowsValue.setPromptText("INSERT ROWS!");
+                rowsValue.setPromptText("Insert rows count");
             } else if (foodCountValue.getText().isEmpty()) {
-                foodCountValue.setPromptText("INSERT FOOD COUNT!");
+                foodCountValue.setPromptText("Insert food count!");
+            } else if (timeDelay.getText().isEmpty()) {
+                timeDelay.setPromptText("Insert time delay!");
             } else {
                 try {
                     int width = Integer.parseInt(widthValue.getText());
                     int height = width;
                     int rows = Integer.parseInt(rowsValue.getText());
                     int columns = rows;
-                    int foodCount = Integer.parseInt(foodCountValue.getText());
-                    GameConstants.setConstants(width, height, rows, columns, foodCount);
+                    int time = Integer.parseInt(timeDelay.getText());
 
-                    root.getChildren().clear();
-                    Canvas canvas = new Canvas(width, height);
-                    root.getChildren().add(canvas);
+                    if (width % rows != 0) {
+                        rowsValue.clear();
+                        rowsValue.setPromptText("Must be multiple of width");
+                    } else if (width <= 0) {
+                        widthValue.clear();
+                        widthValue.setPromptText("Must be > 0");
+                    }else if (rows <= 0) {
+                        rowsValue.clear();
+                        rowsValue.setPromptText("Must be > 0");
+                    }else if (time <= 0) {
+                        timeDelay.clear();
+                        timeDelay.setPromptText("Must be > 0");
+                    } else {
+                        int foodCount = Integer.parseInt(foodCountValue.getText());
+                        GameConstants.setConstants(width, height, rows, columns, foodCount, time);
 
-                    stage.setX(Screen.getPrimary().getVisualBounds().getWidth() / 2 - (double) width / 2);
-                    stage.setY(Screen.getPrimary().getVisualBounds().getHeight() / 2 - (double) height / 2);
-                    stage.sizeToScene();
+                        root.getChildren().clear();
+                        Canvas canvas = new Canvas(width, height);
+                        root.getChildren().add(canvas);
 
-                    gc = canvas.getGraphicsContext2D();
+                        stage.setX(Screen.getPrimary().getVisualBounds().getWidth() / 2 - (double) width / 2);
+                        stage.setY(Screen.getPrimary().getVisualBounds().getHeight() / 2 - (double) height / 2);
+                        stage.sizeToScene();
 
-                    GameControl gameControl = new GameControl(gc, scene);
-                    gameControl.startGame();
+                        gc = canvas.getGraphicsContext2D();
+
+                        GameControl gameControl = new GameControl(gc, scene);
+                        gameControl.startGame();
+                    }
 
                 } catch (NumberFormatException ex) {
                     ex.printStackTrace(System.err);

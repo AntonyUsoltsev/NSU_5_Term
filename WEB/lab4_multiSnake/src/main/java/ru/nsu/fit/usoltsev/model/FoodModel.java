@@ -1,38 +1,35 @@
 package ru.nsu.fit.usoltsev.model;
 
-import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.scene.image.Image;
 import ru.nsu.fit.usoltsev.view.FoodView;
-import ru.nsu.fit.usoltsev.view.InfoView;
-
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class FoodModel {
 
-    private final HashMap<Integer, Integer> foods = new HashMap<>();
-    private final int[][] foodsCoords = new int[ROWS][COLUMNS];
-    private final Image foodsImages =  new Image("ru/nsu/fit/usoltsev/apple.png");
-    private final FoodView foodView;
+    //TODO: maybe use Point2D -- bad idea, hash map is O(1) but Point compare (?)
+    private final HashMap<Integer, Integer> foodsMap = new HashMap<>();
 
-    private final String[] foodImageNames = {"ru/nsu/fit/usoltsev/apple.png", "ru/nsu/fit/usoltsev/watermelon.png",
-            "ru/nsu/fit/usoltsev/orange.png", "ru/nsu/fit/usoltsev/strawberry.png"};
+    //TODO: matrix for all game
+    //TODO: Redraw field based on matrix ??
+    private final int[][] foodsCoords = new int[ROWS][COLUMNS];
+    private final List<Integer> freeSquares = new ArrayList<>(ROWS * COLUMNS);
+
+    private final Image foodsImages = new Image("ru/nsu/fit/usoltsev/pictures/apple.png");
+    private final FoodView foodView;
 
     public FoodModel() {
         foodView = new FoodView();
-//        for (int i = 0; i < FOOD_COUNT; i++) {
-//            foodsImages[i] = new Image("ru/nsu/fit/usoltsev/apple.png");
-//        }
+        for (int i = 0; i < ROWS * COLUMNS; i++) {
+            freeSquares.add(i);
+        }
     }
-
-//    public Point2D[] getFoods() {
-//        return foods;
-//    }
 
     public int[][] getFoodsCoords() {
         return foodsCoords;
@@ -44,35 +41,36 @@ public class FoodModel {
         }
     }
 
-    public void eraseOneFood(int foodX, int foodY){
+    public void eraseOneFood(int foodX, int foodY) {
         foodsCoords[foodX][foodY] = 0;
-        foods.remove(foodY * COLUMNS + foodX);
+        freeSquares.add(foodY * COLUMNS + foodX);
+        foodsMap.remove(foodY * COLUMNS + foodX);
     }
 
     public void generateOneFood(List<Light.Point> snakeBody) {
         start:
+        //TODO: fix loop when it is no free space
         while (true) {
-            int foodX = (int) (Math.random() * ROWS);
-            int foodY = (int) (Math.random() * COLUMNS);
-            for (Light.Point snake : snakeBody) {
-                if (snake.getX() == foodX && snake.getY() == foodY  || foodsCoords[foodX][foodY] == 1) {
-                    continue start;
+            if (freeSquares.size() > snakeBody.size()) {
+                Integer foodCoords = freeSquares.get((int) (Math.random() * freeSquares.size()));
+                int foodX = foodCoords % COLUMNS;
+                int foodY = foodCoords / COLUMNS;
+                for (Light.Point snake : snakeBody) {
+                    if (snake.getX() == foodX && snake.getY() == foodY) {
+                        continue start;
+                    }
                 }
+                freeSquares.remove(foodCoords);
+                foodsCoords[foodX][foodY] = FOOD;
+                foodsMap.put(foodCoords, FOOD);
             }
-            foodsCoords[foodX][foodY] = 1;
-            foods.put(foodY * COLUMNS + foodX, 1);
-            // foodsImages[i] = new Image(foodImageNames[(int) (Math.random() * 10) % 4]);
             break;
         }
     }
 
     public void drawFood(GraphicsContext gc) {
-        for (var pair : foods.entrySet()) {
-            foodView.drawFood(foodsImages, pair.getKey() % COLUMNS, pair.getKey() / COLUMNS, gc);
+        for (var pair : foodsMap.entrySet()) {
+            foodView.drawFood(foodsImages, pair.getKey() % COLUMNS,  pair.getKey() / COLUMNS, gc);
         }
     }
-
-//    public void drawOneFood(GraphicsContext gc, int foodX, int foodY){
-//        foodView.drawFood(foodsImages, foodX, foodY, gc);
-//    }
 }

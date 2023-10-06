@@ -3,7 +3,6 @@ package ru.nsu.fit.usoltsev.controller;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.util.Duration;
@@ -37,8 +36,7 @@ public class GameControl {
 
         snakeModel.setSnakeBody();
 
-
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(130), e -> run()));
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> run()));
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
     }
@@ -52,11 +50,14 @@ public class GameControl {
         backgroundView.drawBackground(gc);
         foodModel.drawFood(gc);
 
+
+
         snakeModel.snakeMovement();
         snakeModel.drawSnake(gc);
-        gameOver = snakeModel.snakeCrush();
 
         eatFood();
+
+        gameOver = snakeModel.snakeCrush();
 
         infoView.drawScore(gc, score);
     }
@@ -66,12 +67,11 @@ public class GameControl {
         int snakeX = (int) snakeModel.getSnakeHead().getX();
         int snakeY = (int) snakeModel.getSnakeHead().getY();
 
-        if (foods[snakeX][snakeY] == 1) {
-            snakeModel.raiseUp();
-            score += 10;
+        if (foods[snakeX][snakeY] == FOOD) {
+            score += FOOD_SCORE;
             foodModel.eraseOneFood(snakeX, snakeY);
             foodModel.generateOneFood(snakeModel.getSnakeBody());
-
+            snakeModel.raiseUp();
         }
     }
 

@@ -2,7 +2,6 @@ package ru.nsu.fit.usoltsev.model;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
@@ -36,17 +35,17 @@ public class SnakeModel {
 
     public void setSnakeBody() {
         for (int i = 0; i < 3; i++) {
-            snakeBody.add(new Light.Point(5, (double) ROWS / 2, 0, Color.BLUE));
+            snakeBody.add(new Light.Point(5, ROWS / 2, 0, Color.BLUE));
         }
         snakeHead = snakeBody.get(0);
     }
 
     public void changeDirection(KeyEvent keyCode) {
         switch (keyCode.getCode()) {
-            case D -> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
-            case A -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
-            case S -> curDirection = (curDirection != UP ? DOWN : UP);
-            case W -> curDirection = (curDirection != DOWN ? UP : DOWN);
+            case D, RIGHT -> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
+            case A, LEFT -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
+            case S, DOWN -> curDirection = (curDirection != UP ? DOWN : UP);
+            case W, UP -> curDirection = (curDirection != DOWN ? UP : DOWN);
         }
 
     }
