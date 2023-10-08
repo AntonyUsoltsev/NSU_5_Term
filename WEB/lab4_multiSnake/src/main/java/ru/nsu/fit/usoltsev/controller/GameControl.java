@@ -13,6 +13,7 @@ import ru.nsu.fit.usoltsev.view.BackgroundView;
 import ru.nsu.fit.usoltsev.view.InfoView;
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 @Slf4j
 public class GameControl {
     private boolean gameOver;
@@ -33,6 +34,8 @@ public class GameControl {
     }
 
     public void startGame() {
+
+
         foodModel.generateFood(snakeModel.getSnakeBody());
 
         snakeModel.setSnakeBody();

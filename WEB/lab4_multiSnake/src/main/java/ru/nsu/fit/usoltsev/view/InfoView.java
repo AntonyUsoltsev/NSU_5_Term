@@ -4,7 +4,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
-import static ru.nsu.fit.usoltsev.GameConstants.*;
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 
 public class InfoView {
     public void drawScore(GraphicsContext gc, int score) {

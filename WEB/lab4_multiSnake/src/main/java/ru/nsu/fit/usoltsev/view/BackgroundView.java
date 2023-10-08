@@ -2,7 +2,7 @@ package ru.nsu.fit.usoltsev.view;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import static ru.nsu.fit.usoltsev.GameConstants.*;
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 
 public class BackgroundView {
     public void drawBackground(GraphicsContext gc) {

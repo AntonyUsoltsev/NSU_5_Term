@@ -6,6 +6,7 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.*;
 
 import java.util.ArrayList;
