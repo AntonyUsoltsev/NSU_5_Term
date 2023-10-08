@@ -7,6 +7,7 @@ import javafx.scene.paint.Color;
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
 
+import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.SnakeView;
 
 import java.util.ArrayList;
@@ -14,16 +15,10 @@ import java.util.List;
 
 public class SnakeModel {
 
+    @Getter
     private final List<Light.Point> snakeBody = new ArrayList<>();
 
-    public List<Light.Point> getSnakeBody() {
-        return snakeBody;
-    }
-
-    public Light.Point getSnakeHead() {
-        return snakeHead;
-    }
-
+    @Getter
     private Light.Point snakeHead;
     private int curDirection = RIGHT;
 

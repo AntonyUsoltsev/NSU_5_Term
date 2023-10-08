@@ -6,13 +6,14 @@ import javafx.animation.Timeline;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.util.Duration;
+import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.model.FoodModel;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
 import ru.nsu.fit.usoltsev.view.BackgroundView;
 import ru.nsu.fit.usoltsev.view.InfoView;
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
-
+@Slf4j
 public class GameControl {
     private boolean gameOver;
     private int score;
@@ -39,6 +40,7 @@ public class GameControl {
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> run()));
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+        log.info("Timeline started");
     }
 
     public void run() {
@@ -49,8 +51,6 @@ public class GameControl {
 
         backgroundView.drawBackground(gc);
         foodModel.drawFood(gc);
-
-
 
         snakeModel.snakeMovement();
         snakeModel.drawSnake(gc);

@@ -11,6 +11,8 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    jcenter()
+    google()
 }
 
 ext {
@@ -30,7 +32,7 @@ application {
 }
 
 javafx {
-    version = '19.0.2'
+    version = '20.0.1'
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.media']
 }
 
@@ -39,28 +41,29 @@ dependencies {
         exclude(group: 'org.openjfx')
     }
 
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 
-//    compileOnly 'org.projectlombok:lombok:1.18.30'
-//    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-//
-//    testCompileOnly 'org.projectlombok:lombok:1.18.30'
-//    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
-//
-//    implementation 'org.slf4j:slf4j-api:2.0.0'
-//    implementation 'org.slf4j:slf4j-simple:2.0.0'
-//
-//    implementation 'com.google.protobuf:protobuf-java:3.19.6'
-//
-//    implementation('org.controlsfx:controlsfx:11.1.2')
-//    implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
+    implementation 'com.google.protobuf:protobuf-java:3.19.6'
+
+    compileOnly 'org.projectlombok:lombok:1.18.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.26'
+    implementation 'org.projectlombok:lombok:1.18.26'
+
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'org.slf4j:slf4j-log4j12:2.0.7'
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
+
+    implementation('org.controlsfx:controlsfx:11.1.2')
+    implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
 
 }
 
 test {
     useJUnitPlatform()
 }
+
 
 jlink {
     imageZip = project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip")

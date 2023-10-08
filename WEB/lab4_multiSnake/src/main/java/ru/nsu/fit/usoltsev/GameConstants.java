@@ -1,10 +1,11 @@
 package ru.nsu.fit.usoltsev;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public final class GameConstants {
-    public static int WIDTH;
-    public static int HEIGHT;
-    public static int ROWS;
-    public static int COLUMNS;
+    public static int WIDTH, HEIGHT;
+    public static int ROWS, COLUMNS;
     public static int SQUARE_SIZE;
     public static int FOOD_COUNT;
     public static int TIME_DELAY;

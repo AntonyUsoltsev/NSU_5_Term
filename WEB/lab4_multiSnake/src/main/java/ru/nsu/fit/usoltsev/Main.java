@@ -88,6 +88,16 @@ public class Main extends Application {
                 }
             }
         });
+//        SnakesProto.GameAnnouncement gameAnnouncement = SnakesProto.GameAnnouncement.newBuilder().set
+//        SnakesProto.GameMessage.AnnouncementMsg announcementMsg = SnakesProto.GameMessage.AnnouncementMsg.newBuilder()
+//                .setGames()
+//
+//        SnakesProto.GameMessage message = SnakesProto.GameMessage.newBuilder();
+//
+//
+//        SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom();
+//        gameMessage.getTypeCase().getNumber();
+//        gameMessage.getAnnouncement().getGames()
 
         stage.setScene(scene);
         stage.setResizable(false);

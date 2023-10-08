@@ -3,6 +3,7 @@ package ru.nsu.fit.usoltsev.model;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.scene.image.Image;
+import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
@@ -13,11 +14,12 @@ import java.util.List;
 
 public class FoodModel {
 
-    //TODO: maybe use Point2D -- bad idea, hash map is O(1) but Point compare (?)
     private final HashMap<Integer, Integer> foodsMap = new HashMap<>();
 
     //TODO: matrix for all game
     //TODO: Redraw field based on matrix ??
+
+    @Getter
     private final int[][] foodsCoords = new int[ROWS][COLUMNS];
     private final List<Integer> freeSquares = new ArrayList<>(ROWS * COLUMNS);
 
@@ -29,10 +31,6 @@ public class FoodModel {
         for (int i = 0; i < ROWS * COLUMNS; i++) {
             freeSquares.add(i);
         }
-    }
-
-    public int[][] getFoodsCoords() {
-        return foodsCoords;
     }
 
     public void generateFood(List<Light.Point> snakeBody) {
