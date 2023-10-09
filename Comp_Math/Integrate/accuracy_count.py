@@ -60,3 +60,6 @@ if __name__ == '__main__':
     s3 = threelynome(h / 4, 4 * N)
     k = math.log2(abs((s1 - s2) / (s2 - s3)))
     print("Threelynome koef:", k)
+
+
+#TODO оценка через оценку для лагранжа

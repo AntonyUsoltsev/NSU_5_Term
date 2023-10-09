@@ -34,15 +34,18 @@ def threelynome(h, N):
 if __name__ == '__main__':
     N = int(input("Введите количество отрезков N, кратное 6: "))
     if N % 6 != 0 or N <= 0:
-        print("Bad N")
+        print("Incorrect N")
 
     h = (b - a) / N
 
     result = integrate.quad(func, a, b)
-    print("Exact result:     ", result[0])
+    print("Exact result:      ", result[0])
 
-    print("Trapezia result:  ", trapezia(h, N))
+    g = trapezia(h, N)
+    print("Trapezia result:   ", g, abs(g - result[0]))
 
-    print("Simpson result:   ", simpson(h, N))
+    k = simpson(h, N)
+    print("Simpson result:    ", k, abs(k - result[0]))
 
-    print("Threelynome result:", threelynome(h, N))
+    c = threelynome(h, N)
+    print("Threelynome result:", c, abs(c - result[0]))
