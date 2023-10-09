@@ -8,8 +8,10 @@ convert(intArr : [int]) -> [string] {
     // convertArr:[string] = map(intArr, \i->cast(i : int -> string)); 
 
     convertArr : [string] = map(intArr, \i -> i2s(i));
-    {convertArr};
 
+    ans : string = strGlue(convertArr, ", ");
+    println(ans);
+    {convertArr};
 }
 
 
@@ -118,6 +120,7 @@ inds_tree(arr : [int], m : int) -> [Pair<int, int>]{
 
 
 main(){
+    println("[");
     arr:[int] = [0, 1, 2, 3, 4, 5, 6];
 
     println(convert(arr));
