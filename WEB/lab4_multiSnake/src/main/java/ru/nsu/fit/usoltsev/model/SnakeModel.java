@@ -6,6 +6,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
+import static ru.nsu.fit.usoltsev.GameConstants.*;
+
 
 import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.SnakeView;

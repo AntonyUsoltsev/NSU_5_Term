@@ -1,5 +1,7 @@
 package ru.nsu.fit.usoltsev.listeners;
 
+import ru.nsu.fit.usoltsev.snakes.SnakesProto;
+
 public interface NewGameListener {
-    public void addNewGame(String gameName);
+    void addNewGame( SnakesProto.GameAnnouncement gameInfo);
 }

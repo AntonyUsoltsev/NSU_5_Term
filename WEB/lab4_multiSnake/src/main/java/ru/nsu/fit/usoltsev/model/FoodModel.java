@@ -21,9 +21,8 @@ public class FoodModel {
     //TODO: Redraw field based on matrix ??
 
     @Getter
-    private final int[][] foodsCoords = new int[ROWS][COLUMNS];
+    private final int[][] foodsCoords = new int[COLUMNS][ROWS];
     private final List<Integer> freeSquares = new ArrayList<>(ROWS * COLUMNS);
-
     private final Image foodsImages = new Image("ru/nsu/fit/usoltsev/pictures/apple.png");
     private final FoodView foodView;
 

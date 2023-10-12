@@ -7,10 +7,12 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import ru.nsu.fit.usoltsev.controller.MenuController;
-import ru.nsu.fit.usoltsev.network.NetworkController;
+import ru.nsu.fit.usoltsev.network.MulticastInputController;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Main extends Application {
     @Override
@@ -23,13 +25,15 @@ public class Main extends Application {
         AnchorPane root = FXMLLoader.load(Objects.requireNonNull(Main.class.getResource("snakeMenu.fxml")));
         Scene scene = new Scene(root);
 
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+
         MenuController menuController = new MenuController(root);
-        NetworkController networkController = new NetworkController();
+        MulticastInputController networkController = new MulticastInputController();
         networkController.setNewGameListener(menuController);
 
-        networkController.run();
+        executor.submit(networkController);
 
-        menuController.newMenu(root, stage, scene);
+        menuController.newMenu(stage, scene, executor);
 
 
 //        SnakesProto.GameAnnouncement gameAnnouncement = SnakesProto.GameAnnouncement.newBuilder().set
@@ -45,6 +49,7 @@ public class Main extends Application {
 
         stage.setScene(scene);
         stage.setResizable(false);
+        stage.setOnCloseRequest(event -> executor.shutdownNow());
         stage.show();
     }
 

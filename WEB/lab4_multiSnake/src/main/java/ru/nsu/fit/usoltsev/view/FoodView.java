@@ -2,7 +2,7 @@ package ru.nsu.fit.usoltsev.view;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import static ru.nsu.fit.usoltsev.GameConfig.*;
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 
 public class FoodView {
 

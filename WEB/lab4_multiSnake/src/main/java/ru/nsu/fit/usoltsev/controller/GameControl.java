@@ -9,8 +9,11 @@ import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.model.FoodModel;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
+import ru.nsu.fit.usoltsev.network.UdpController;
 import ru.nsu.fit.usoltsev.view.BackgroundView;
 import ru.nsu.fit.usoltsev.view.InfoView;
+
+import java.net.SocketException;
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
 import static ru.nsu.fit.usoltsev.GameConfig.*;

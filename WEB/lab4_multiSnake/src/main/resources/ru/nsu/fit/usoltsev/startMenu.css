@@ -1,7 +1,10 @@
 #startButton {
-    -fx-background-image: url(pictures/start.png);
+    -fx-background-image: url(pictures/newGame.png);
 }
 
+#joinButton {
+    -fx-background-image: url(pictures/join.png);
+}
 #back {
     -fx-background-image: url(pictures/menuBackground.png);
     -fx-background-size: cover;
