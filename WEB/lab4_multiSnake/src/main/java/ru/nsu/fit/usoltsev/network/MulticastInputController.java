@@ -39,11 +39,12 @@ public class MulticastInputController implements Runnable {
                 SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom
                         (Arrays.copyOfRange(inputPacket.getData(),0, inputPacket.getLength()));
 
-                log.info("Receive Message " + gameMessage.getTypeCase().name());
+               // log.info("Receive multicast message " + gameMessage.getTypeCase().name());
 
                 if (gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT) {
-                    log.info("New game came");
-                    newGameListener.addNewGame(gameMessage.getAnnouncement().getGames(0));
+                   // log.info("New game came");
+
+                    newGameListener.addNewGame(inputPacket.getAddress(), inputPacket.getPort(),gameMessage);
                 }
                 else{
                     log.warn("Incorrect message type in multicast");

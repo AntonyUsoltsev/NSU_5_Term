@@ -1,7 +1,6 @@
 package ru.nsu.fit.usoltsev.network.Udp;
 
 import ru.nsu.fit.usoltsev.network.MessageInfo;
-import ru.nsu.fit.usoltsev.network.UdpController;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

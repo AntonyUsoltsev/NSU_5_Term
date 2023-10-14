@@ -4,132 +4,187 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.NewGameListener;
-import ru.nsu.fit.usoltsev.network.UdpController;
-import ru.nsu.fit.usoltsev.network.gameMessageCreators.AnnouncementMsg;
+import ru.nsu.fit.usoltsev.network.MessageInfo;
+import ru.nsu.fit.usoltsev.network.Udp.UdpController;
+import ru.nsu.fit.usoltsev.network.gameMessageCreators.JoinMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static ru.nsu.fit.usoltsev.GameConstants.*;
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 
 @Slf4j
 public class MenuController implements NewGameListener {
     private GraphicsContext gc;
-    private final TextField width, height, foodCount, timeDelay, gameName;
-    private int widthValue, heightValue, foodCountValue, timeValue;
-    private String gameNameValue;
+
+    @Getter
+    private final UdpController udpController;
+    private final TextField width, height, foodCount, timeDelay, gameName, playerName, joinPlayerName;
+    private int widthValue, heightValue, foodCountValue, timeValue, joinPlayerRole;
+    private String gameNameValue, playerNameValue, joinPlayerNameValue, joinType = "";
+    private String selectedGame;
     private final Button startButton, joinButton;
     private final ListView<String> existGamesView;
-    private String selectedGame;
-    private final HashMap<String, SnakesProto.GameAnnouncement> gamesInfo;
+    private final HashMap<String, MessageInfo> gamesInfo;
 
-    public MenuController(AnchorPane root) {
+    public MenuController(AnchorPane root, ThreadPoolExecutor executor) throws SocketException {
         width = (TextField) root.lookup("#width");
         height = (TextField) root.lookup("#height");
         foodCount = (TextField) root.lookup("#foodCount");
         timeDelay = (TextField) root.lookup("#timeDelay");
         gameName = (TextField) root.lookup("#gameName");
+        playerName = (TextField) root.lookup("#playerName");
+        joinPlayerName = (TextField) root.lookup("#joinPlayerName");
+
         startButton = (Button) root.lookup("#startButton");
         joinButton = (Button) root.lookup("#joinButton");
+
+        RadioButton joinViewerButton = (RadioButton) root.lookup("#joinViewerButton");
+        RadioButton joinPlayerButton = (RadioButton) root.lookup("#joinPlayerButton");
+
+        ToggleGroup toggleGroup = new ToggleGroup();
+        joinViewerButton.setToggleGroup(toggleGroup);
+        joinPlayerButton.setToggleGroup(toggleGroup);
+
+        toggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null) {
+                joinType = "";
+            } else {
+                joinType = ((RadioButton) newValue).getText();
+            }
+        });
+
+        udpController = new UdpController(executor);
         existGamesView = (ListView<String>) root.lookup("#existGames");
 
         gamesInfo = new HashMap<>();
 
     }
 
-    private boolean checkInputConfig() {
-        if (width.getText().isEmpty()) {
-            width.setPromptText("Insert width");
-            return false;
-        } else if (height.getText().isEmpty()) {
-            height.setPromptText("Insert height");
-            return false;
-        } else if (foodCount.getText().isEmpty()) {
-            foodCount.setPromptText("Insert food count!");
-            return false;
-        } else if (timeDelay.getText().isEmpty()) {
-            timeDelay.setPromptText("Insert time delay!");
-            return false;
-        } else if (gameName.getText().isEmpty()) {
-            gameName.setPromptText("Insert game name!");
+    private boolean isFieldEmpty(TextField textField, String item) {
+        if (textField.getText().isEmpty()) {
+            textField.setPromptText("Insert " + item);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isValueInvalidate(TextField textField, int value) {
+        if (value <= 0) {
+            textField.clear();
+            textField.setPromptText("Must be > 0");
+            return true;
+        }
+        return false;
+    }
+
+    private int tryParse(TextField textField) {
+        try {
+            return Integer.parseInt(textField.getText());
+        } catch (NumberFormatException ne) {
+            textField.clear();
+            textField.setPromptText("Must be integer");
+            return -1;
+        }
+
+    }
+
+    private boolean checkNewGameConfig() {
+        if (isFieldEmpty(width, "width") ||
+                isFieldEmpty(height, "height") ||
+                isFieldEmpty(foodCount, "food count") ||
+                isFieldEmpty(timeDelay, "time delay") ||
+                isFieldEmpty(gameName, "game name") ||
+                isFieldEmpty(playerName, "player name")) {
             return false;
         } else {
-            try {
-                widthValue = Integer.parseInt(width.getText());
-                heightValue = Integer.parseInt(height.getText());
-                timeValue = Integer.parseInt(timeDelay.getText());
-                foodCountValue = Integer.parseInt(foodCount.getText());
-                gameNameValue = gameName.getText();
+            widthValue = tryParse(width);
+            heightValue = tryParse(height);
+            timeValue = tryParse(timeDelay);
+            foodCountValue = tryParse(foodCount);
 
-                if (widthValue <= 0) {
-                    width.clear();
-                    width.setPromptText("Must be > 0");
-                    return false;
-                } else if (heightValue <= 0) {
-                    height.clear();
-                    height.setPromptText("Must be > 0");
-                    return false;
-                } else if (foodCountValue <= 0) {
-                    foodCount.clear();
-                    foodCount.setPromptText("Must be > 0");
-                    return false;
-                } else if (timeValue <= 0) {
-                    timeDelay.clear();
-                    return false;
-                }
-            } catch (NumberFormatException ne) {
-                ne.printStackTrace(System.err);
-                System.exit(1);
+            gameNameValue = gameName.getText();
+            playerNameValue = playerName.getText();
+
+            if (isValueInvalidate(width, widthValue) ||
+                    isValueInvalidate(height, heightValue) ||
+                    isValueInvalidate(foodCount, foodCountValue) ||
+                    isValueInvalidate(timeDelay, timeValue)) {
                 return false;
             }
         }
         return true;
     }
 
+    private boolean checkJoinConfig() {
+        if (selectedGame != null &&
+                !isFieldEmpty(joinPlayerName, "player name") &&
+                !joinType.isEmpty()) {
+            joinPlayerNameValue = joinPlayerName.getText();
+            switch (joinType) {
+                case "Player" -> joinPlayerRole = NORMAL;
+                case "Viewer" -> joinPlayerRole = VIEWER;
+            }
+            return true;
+        }
+        return false;
+
+
+    }
+
     private void setWindowProperties(Scene scene, Stage stage) {
         Group group = new Group();
-        Canvas canvas = new Canvas(widthValue * SQUARE_SIZE, heightValue * SQUARE_SIZE);
+        Canvas canvas = new Canvas(WIDTH, HEIGHT);
         group.getChildren().add(canvas);
         scene.setRoot(group);
-        stage.setX(Screen.getPrimary().getVisualBounds().getWidth() / 2 - (double) (widthValue * SQUARE_SIZE) / 2);
-        stage.setY(Screen.getPrimary().getVisualBounds().getHeight() / 2 - (double) (heightValue * SQUARE_SIZE) / 2);
+        stage.setX(Screen.getPrimary().getVisualBounds().getWidth() / 2 - (double) (WIDTH) / 2);
+        stage.setY(Screen.getPrimary().getVisualBounds().getHeight() / 2 - (double) (HEIGHT) / 2);
         stage.sizeToScene();
         gc = canvas.getGraphicsContext2D();
     }
 
+    @Override
+    public void addNewGame(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
+        String gameName = gameMessage.getAnnouncement().getGames(0).getGameName();
+        if (!gamesInfo.containsKey(gameName)) {
+            log.info("map new game");
+            MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
+            gamesInfo.put(gameName, messageInfo);
+            existGamesView.getItems().add(gameName);
+        }
+    }
+
+
     public void newMenu(Stage stage, Scene scene) {
 
         startButton.setOnAction(event -> {
-            if (checkInputConfig()) {
-                try {
-                    UdpController udpController = new UdpController();
+            if (checkNewGameConfig()) {
 
-                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
-                    setWindowProperties(scene, stage);
+                udpController.startSendRecv();
 
-                    SnakesProto.GameMessage gameMessage = AnnouncementMsg.createAnnouncement(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
+                GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER);
+                setWindowProperties(scene, stage);
 
-                    udpController.setOutputMessage(MULTICAST_IP, MULTICAST_PORT, gameMessage);
+                // SnakesProto.GameMessage gameMessage = AnnouncementMsg.createAnnouncement(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
+                udpController.startAnnouncement();
+                // udpController.setOutputMessage(MULTICAST_IP, MULTICAST_PORT, gameMessage);
 
-                    GameControl gameControl = new GameControl(gc, scene);
-                    gameControl.startGame();
+                GameControl gameControl = new GameControl(gc, scene);
+                gameControl.startGame();
 
 
-                } catch (NumberFormatException | SocketException | InterruptedException ex) {
-                    System.err.println(ex.getCause() + ex.getMessage());
-                    System.exit(1);
-                }
             }
         });
 
@@ -140,19 +195,27 @@ public class MenuController implements NewGameListener {
         });
 
         joinButton.setOnAction(event -> {
-            if (selectedGame != null) {
-
+            if (checkJoinConfig()) {
                 // TODO: send JoinMsg firstly
                 try {
+                    udpController.startSendRecv();
 
-                    UdpController udpController = new UdpController();
-                    udpController.sendJoinMsg();
+                    MessageInfo messageInfo = gamesInfo.get(selectedGame);
+                    SnakesProto.GameAnnouncement gameInfo = messageInfo.gameMessage().getAnnouncement().getGames(0);
 
-                    SnakesProto.GameAnnouncement gameInfo = gamesInfo.get(selectedGame);
+                    SnakesProto.GameMessage joinMsg = JoinMsg.createJoin(joinPlayerNameValue, gameInfo.getGameName(), joinPlayerRole);
+                    udpController.setOutputMessage(messageInfo.ipAddr(), messageInfo.port(), joinMsg);
+
+                   // System.out.println(messageInfo.ipAddr().toString() + " " +  messageInfo.port());
+
                     heightValue = gameInfo.getConfig().getHeight();
                     widthValue = gameInfo.getConfig().getWidth();
                     foodCountValue = gameInfo.getConfig().getFoodStatic();
                     timeValue = gameInfo.getConfig().getStateDelayMs();
+
+                    // log.info("height "+ heightValue + ",width " + widthValue + ",food count " + foodCountValue + ",time delay " + timeValue);
+
+                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, NORMAL);
 
                     setWindowProperties(scene, stage);
 
@@ -160,7 +223,8 @@ public class MenuController implements NewGameListener {
                     GameControl gameControl = new GameControl(gc, scene);
 
                     gameControl.startGame();
-                } catch (SocketException ex) {
+
+                } catch (InterruptedException ex) {
                     ex.printStackTrace(System.err);
                     System.exit(1);
                 }
@@ -171,15 +235,6 @@ public class MenuController implements NewGameListener {
         });
     }
 
-
-    @Override
-    public void addNewGame(SnakesProto.GameAnnouncement gameInfo) {
-        if (!gamesInfo.containsKey(gameInfo.getGameName())) {
-            log.info("map new game");
-            gamesInfo.put(gameInfo.getGameName(), gameInfo);
-            existGamesView.getItems().add(gameInfo.getGameName());
-        }
-    }
 
 }
 

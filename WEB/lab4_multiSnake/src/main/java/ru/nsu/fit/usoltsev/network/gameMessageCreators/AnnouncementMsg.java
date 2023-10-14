@@ -3,9 +3,11 @@ package ru.nsu.fit.usoltsev.network.gameMessageCreators;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
+import static ru.nsu.fit.usoltsev.GameConfig.*;
+
 @Slf4j
 public class AnnouncementMsg {
-    public static SnakesProto.GameMessage createAnnouncement(int width, int height, int foodCount, int TimeDelay, String gameName, int role) {
+    public static SnakesProto.GameMessage createAnnouncement(int width, int height, int foodCount, int TimeDelay, String gameName, String playerName, int role) {
 
         SnakesProto.GameConfig gameConfig = SnakesProto.GameConfig.newBuilder()
                 .setWidth(width)
@@ -15,7 +17,7 @@ public class AnnouncementMsg {
                 .build();
 
         SnakesProto.GamePlayer gamePlayer = SnakesProto.GamePlayer.newBuilder()
-                .setName("test1")
+                .setName(playerName)
                 .setId(1)
                 .setRole(SnakesProto.NodeRole.forNumber(role))
                 .setScore(0)
@@ -39,9 +41,9 @@ public class AnnouncementMsg {
 
         SnakesProto.GameMessage message = SnakesProto.GameMessage.newBuilder()
                 .setAnnouncement(am)
-                .setMsgSeq(1)
+                .setMsgSeq(MSG_SEQ.getAndIncrement())
                 .build();
-        log.info("AnnouncementMsg created");
+     //   log.info("AnnouncementMsg created");
 
         return message;
 
