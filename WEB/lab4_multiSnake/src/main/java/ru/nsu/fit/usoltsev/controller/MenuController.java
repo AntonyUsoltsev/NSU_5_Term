@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.NewGameListener;
 import ru.nsu.fit.usoltsev.network.UdpController;
+import ru.nsu.fit.usoltsev.network.gameMessageCreators.AnnouncementMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
 import java.net.SocketException;
@@ -117,13 +118,15 @@ public class MenuController implements NewGameListener {
                     GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
                     setWindowProperties(scene, stage);
 
-                    udpController.setNewGame(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
+                    SnakesProto.GameMessage gameMessage = AnnouncementMsg.createAnnouncement(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
+
+                    udpController.setOutputMessage(MULTICAST_IP, MULTICAST_PORT, gameMessage);
 
                     GameControl gameControl = new GameControl(gc, scene);
                     gameControl.startGame();
 
 
-                } catch (NumberFormatException | SocketException ex) {
+                } catch (NumberFormatException | SocketException | InterruptedException ex) {
                     System.err.println(ex.getCause() + ex.getMessage());
                     System.exit(1);
                 }

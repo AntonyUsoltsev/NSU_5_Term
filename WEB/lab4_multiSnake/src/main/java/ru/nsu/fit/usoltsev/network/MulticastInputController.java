@@ -7,9 +7,10 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Arrays;
+
+import static  ru.nsu.fit.usoltsev.GameConstants.*;
 
 @Slf4j
 public class MulticastInputController implements Runnable {
@@ -21,16 +22,15 @@ public class MulticastInputController implements Runnable {
 
 
     public MulticastInputController() throws IOException {
-        multicastSocket = new MulticastSocket(9192);
-        multicastSocket.joinGroup(InetAddress.getByName("239.192.0.4"));
+        multicastSocket = new MulticastSocket(MULTICAST_PORT);
+        multicastSocket.joinGroup(MULTICAST_IP);
         //multicastSocket.setSoTimeout(1000);
     }
 
 
     @Override
     public void run() {
-
-        while (true) {
+        while (!Thread.interrupted()) {
             byte[] inputBuff = new byte[65536];
             DatagramPacket inputPacket = new DatagramPacket(inputBuff, inputBuff.length);
             try {
@@ -40,11 +40,13 @@ public class MulticastInputController implements Runnable {
                         (Arrays.copyOfRange(inputPacket.getData(),0, inputPacket.getLength()));
 
                 log.info("Receive Message " + gameMessage.getTypeCase().name());
-                switch (gameMessage.getTypeCase()) {
-                    case ANNOUNCEMENT -> {
-                        log.info("New game came");
-                        newGameListener.addNewGame(gameMessage.getAnnouncement().getGames(0));
-                    }
+
+                if (gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT) {
+                    log.info("New game came");
+                    newGameListener.addNewGame(gameMessage.getAnnouncement().getGames(0));
+                }
+                else{
+                    log.warn("Incorrect message type in multicast");
                 }
 
             } catch (IOException e) {

@@ -1,5 +1,8 @@
 package ru.nsu.fit.usoltsev;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class GameConstants {
     /**
      * Directions
@@ -21,5 +24,16 @@ public class GameConstants {
     public static final int FOOD = 1;
     public static final int FOOD_SCORE = 1;
     public static final int SQUARE_SIZE = 30;
+
+    public static final int MULTICAST_PORT = 9192;
+    public static final InetAddress MULTICAST_IP;
+
+    static {
+        try {
+            MULTICAST_IP = InetAddress.getByName("239.192.0.4");
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }
