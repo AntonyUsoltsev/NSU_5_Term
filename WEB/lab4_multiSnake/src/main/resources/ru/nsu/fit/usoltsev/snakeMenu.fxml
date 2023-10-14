@@ -9,18 +9,25 @@
 <?import javafx.scene.text.Text?>
 
 <AnchorPane fx:id="back" prefHeight="543.0" prefWidth="709.0" stylesheets="@startMenu.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
-    <ImageView  id="backGround" fitHeight="190.0" fitWidth="601.0" layoutX="70.0" layoutY="-18.0" pickOnBounds="true" preserveRatio="true">
+    <ImageView id="backGround" fitHeight="190.0" fitWidth="601.0" layoutX="70.0" layoutY="-18.0" pickOnBounds="true" preserveRatio="true">
         <Image url="@pictures/snakeFont.png" />
     </ImageView>
-    <TextField id="height" fx:id="height" layoutX="472.0" layoutY="196.0" text="20" />
-    <TextField id="width" fx:id="width" layoutX="471.0" layoutY="264.0" promptText="20" text="20" />
-    <TextField id="foodCount" fx:id="foodCount" layoutX="472.0" layoutY="330.0" promptText="5" text="5" />
-    <Text layoutX="472.0" layoutY="185.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter height in squares" />
-    <Text layoutX="471.0" layoutY="249.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter width in squares" wrappingWidth="216.14459228515625" />
-    <Text layoutX="471.0" layoutY="317.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Food count" />
+
+    <TextField id="height" fx:id="height" layoutX="470.0" layoutY="229.0" text="20" />
+    <TextField id="width" fx:id="width" layoutX="470.0" layoutY="291.0" promptText="20" text="20" />
+    <TextField id="foodCount" fx:id="foodCount" layoutX="470.0" layoutY="343.0" promptText="5" text="5" />
+    <TextField fx:id="gameName" layoutX="470.0" layoutY="172.0" />
+    <TextField id="timeDelay" fx:id="timeDelay" layoutX="470.0" layoutY="404.0" promptText="130" text="130" />
+
+    <Text layoutX="470.0" layoutY="392.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Time delay" wrappingWidth="106.3140869140625" />
+    <Text layoutX="470.0" layoutY="158.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter game name" />
+    <Text layoutX="470.0" layoutY="218.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter height in squares" />
+    <Text layoutX="470.0" layoutY="276.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter width in squares" wrappingWidth="216.14459228515625" />
+    <Text layoutX="470.0" layoutY="330.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Food count" />
+
     <Button fx:id="startButton" layoutX="457.0" layoutY="446.0" mnemonicParsing="false" prefHeight="68.0" prefWidth="180.0" />
-    <TextField id="timeDelay" fx:id="timeDelay" layoutX="472.0" layoutY="404.0" promptText="130" text="130" />
-    <Text layoutX="471.0" layoutY="392.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Enter Time delay" wrappingWidth="106.3140869140625" />
+    <Button fx:id="joinButton" layoutX="85.0" layoutY="446.0" mnemonicParsing="false" prefHeight="77.0" prefWidth="216.0" />
+
     <ListView id="existGames" fx:id="existGames" layoutX="58.0" layoutY="179.0" prefHeight="251.0" prefWidth="261.0" />
-   <Button fx:id="joinButton" layoutX="85.0" layoutY="446.0" mnemonicParsing="false" prefHeight="77.0" prefWidth="216.0" />
+
 </AnchorPane>

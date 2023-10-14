@@ -31,7 +31,7 @@ public class SnakeModel {
     }
 
     public void setSnakeBody() {
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             snakeBody.add(new Light.Point(5, ROWS / 2, 0, Color.BLUE));
         }
         snakeHead = snakeBody.get(0);

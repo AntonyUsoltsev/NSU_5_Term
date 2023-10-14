@@ -19,13 +19,12 @@ public class MulticastInputController implements Runnable {
     @Setter
     private NewGameListener newGameListener;
 
+
     public MulticastInputController() throws IOException {
         multicastSocket = new MulticastSocket(9192);
         multicastSocket.joinGroup(InetAddress.getByName("239.192.0.4"));
         //multicastSocket.setSoTimeout(1000);
     }
-
-
 
 
     @Override
@@ -37,12 +36,13 @@ public class MulticastInputController implements Runnable {
             try {
                 multicastSocket.receive(inputPacket);
 
-                SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom(Arrays.copyOfRange(inputPacket.getData(),0, inputPacket.getLength()));
+                SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom
+                        (Arrays.copyOfRange(inputPacket.getData(),0, inputPacket.getLength()));
 
                 log.info("Receive Message " + gameMessage.getTypeCase().name());
                 switch (gameMessage.getTypeCase()) {
                     case ANNOUNCEMENT -> {
-                        log.info("new game came");
+                        log.info("New game came");
                         newGameListener.addNewGame(gameMessage.getAnnouncement().getGames(0));
                     }
                 }

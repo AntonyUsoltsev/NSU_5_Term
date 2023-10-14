@@ -33,19 +33,7 @@ public class Main extends Application {
 
         executor.submit(networkController);
 
-        menuController.newMenu(stage, scene, executor);
-
-
-//        SnakesProto.GameAnnouncement gameAnnouncement = SnakesProto.GameAnnouncement.newBuilder().set
-//        SnakesProto.GameMessage.AnnouncementMsg announcementMsg = SnakesProto.GameMessage.AnnouncementMsg.newBuilder()
-//                .setGames()
-//
-//        SnakesProto.GameMessage message = SnakesProto.GameMessage.newBuilder();
-//
-//
-//        SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom();
-//        gameMessage.getTypeCase().getNumber();
-//        gameMessage.getAnnouncement().getGames()
+        menuController.newMenu(stage, scene);
 
         stage.setScene(scene);
         stage.setResizable(false);
