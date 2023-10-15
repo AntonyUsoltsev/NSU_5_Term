@@ -15,8 +15,8 @@ public final class GameConfig {
     public static int FOOD_COUNT;
     public static int TIME_DELAY;
     public static String GAME_NAME;
-
     public static String PLAYER_NAME;
+    public static int ID;
     public static int ROLE;
     public static AtomicLong MSG_SEQ = new AtomicLong(1);
 
@@ -31,6 +31,7 @@ public final class GameConfig {
         GameConfig.GAME_NAME = GAME_NAME;
         GameConfig.PLAYER_NAME = PLAYER_NAME;
         GameConfig.ROLE = ROLE;
+        GameConfig.ID = PLAYER_NAME.hashCode();
     }
 
     private GameConfig() {

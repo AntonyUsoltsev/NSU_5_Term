@@ -1,5 +1,6 @@
 package ru.nsu.fit.usoltsev.controller;
 
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -159,10 +160,11 @@ public class MenuController implements NewGameListener {
     public void addNewGame(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
         String gameName = gameMessage.getAnnouncement().getGames(0).getGameName();
         if (!gamesInfo.containsKey(gameName)) {
-            log.info("map new game");
+            log.info("Map new game " + gameName);
             MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
             gamesInfo.put(gameName, messageInfo);
-            existGamesView.getItems().add(gameName);
+            Platform.runLater(() ->
+                    existGamesView.getItems().add(gameName));
         }
     }
 
@@ -177,9 +179,7 @@ public class MenuController implements NewGameListener {
                 GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER);
                 setWindowProperties(scene, stage);
 
-                // SnakesProto.GameMessage gameMessage = AnnouncementMsg.createAnnouncement(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, MASTER);
                 udpController.startAnnouncement();
-                // udpController.setOutputMessage(MULTICAST_IP, MULTICAST_PORT, gameMessage);
 
                 GameControl gameControl = new GameControl(gc, scene);
                 gameControl.startGame();
@@ -196,7 +196,7 @@ public class MenuController implements NewGameListener {
 
         joinButton.setOnAction(event -> {
             if (checkJoinConfig()) {
-                // TODO: send JoinMsg firstly
+                // DONE: send JoinMsg firstly
                 try {
                     udpController.startSendRecv();
 
@@ -206,7 +206,7 @@ public class MenuController implements NewGameListener {
                     SnakesProto.GameMessage joinMsg = JoinMsg.createJoin(joinPlayerNameValue, gameInfo.getGameName(), joinPlayerRole);
                     udpController.setOutputMessage(messageInfo.ipAddr(), messageInfo.port(), joinMsg);
 
-                   // System.out.println(messageInfo.ipAddr().toString() + " " +  messageInfo.port());
+                    // System.out.println(messageInfo.ipAddr().toString() + " " +  messageInfo.port());
 
                     heightValue = gameInfo.getConfig().getHeight();
                     widthValue = gameInfo.getConfig().getWidth();
@@ -215,10 +215,9 @@ public class MenuController implements NewGameListener {
 
                     // log.info("height "+ heightValue + ",width " + widthValue + ",food count " + foodCountValue + ",time delay " + timeValue);
 
-                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, NORMAL);
+                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole);
 
                     setWindowProperties(scene, stage);
-
 
                     GameControl gameControl = new GameControl(gc, scene);
 
