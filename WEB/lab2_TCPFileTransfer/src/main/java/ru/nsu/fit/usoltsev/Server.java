@@ -28,7 +28,7 @@ public class Server {
             throw new IllegalArgumentException("Incorrect port number");
         }
 
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+        //ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
         try (ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]))) {
 
@@ -37,17 +37,18 @@ public class Server {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 log.info("New client connected");
-                Future<Boolean> future = executor.submit(new ClientHandler(clientSocket));
-                log.info("Data receive " + ((future.get() == SUCCESS) ? "success" : "fail"));
-                clientSocket.close();
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                clientHandler.start();
+                //log.info("Data receive " + ((future.get() == SUCCESS) ? "success" : "fail"));
+                //clientSocket.close();
             }
 
-        } catch (IOException | RuntimeException | InterruptedException | ExecutionException exc) {
+        } catch (IOException | RuntimeException  exc) {
             System.err.println(exc.getMessage());
             exc.printStackTrace(System.err);
         }
 
-        executor.shutdown();
+       // executor.shutdown();
     }
 
     /**

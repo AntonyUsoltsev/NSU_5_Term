@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 import static ru.nsu.fit.usoltsev.Constants.*;
 
 @Slf4j
-public class ClientHandler implements Callable<Boolean> {
+public class ClientHandler extends Thread{
 
     /**
      * Socket with which this handler works
@@ -35,7 +35,7 @@ public class ClientHandler implements Callable<Boolean> {
      * @return SUCCESS == 1 if file receive done correctly, else return FAIL == 0
      */
     @Override
-    public Boolean call() {
+    public void run() {
         try (InputStream inputStream = clientSocket.getInputStream();
              OutputStream outputStream = clientSocket.getOutputStream();
              ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
@@ -51,12 +51,18 @@ public class ClientHandler implements Callable<Boolean> {
             String successMsg = "success";
             outputStream.write(successMsg.getBytes());
 
-            return SUCCESS;
+            clientSocket.close();
+            //return SUCCESS;
 
         } catch (IOException | ClassNotFoundException e) {
             System.err.println(e.getMessage());
             e.printStackTrace(System.err);
-            return FAIL;
+            try {
+                clientSocket.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            // return FAIL;
         }
     }
 
@@ -86,10 +92,10 @@ public class ClientHandler implements Callable<Boolean> {
 
                 curTime = System.currentTimeMillis();
 
-                speedCount(fileInfo.fileSize());
+                speedCount(fileInfo.fileSize(), fileInfo.fileName());
             }
             curTime = System.currentTimeMillis();
-            System.out.println("Total speed = " + (allBytesRead * 1000) / (1024 * 1024 * (curTime - startTime)) + " MB/s");
+            log.info(fileInfo.fileName() + " Total speed = " + (allBytesRead * 1000) / (1024 * 1024 * (curTime - startTime)) + " MB/s");
         }
     }
 
@@ -98,10 +104,10 @@ public class ClientHandler implements Callable<Boolean> {
      * Count current speed of receiving
      * @param fileSize - size of received file
      */
-    private void speedCount(Long fileSize) {
+    private void speedCount(Long fileSize, String fileName) {
         if (curTime - prevTime > 3000) {
             long speed = ((allBytesRead - prevBytesRead) * 1000) / (curTime - prevTime);
-            System.out.println("Current speed = " + speed / (1024 * 1024) + " MB/s; Appr wait time = "
+            log.info(fileName + " Current speed = " + speed / (1024 * 1024) + " MB/s; Appr wait time = "
                     + (fileSize - allBytesRead) / speed + "s");
             prevBytesRead = allBytesRead;
             prevTime = curTime;

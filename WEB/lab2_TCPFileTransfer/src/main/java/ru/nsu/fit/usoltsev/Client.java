@@ -71,7 +71,14 @@ public class Client {
             int bytesRead;
             byte[] buffer = new byte[BUFFER_SIZE];
             while ((bytesRead = fileDataStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
+                try {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                catch (IOException ioException){
+                    System.err.println("Send failed");
+                    ioException.printStackTrace(System.err);
+                    break;
+                }
             }
             client.shutdownOutput();
 
