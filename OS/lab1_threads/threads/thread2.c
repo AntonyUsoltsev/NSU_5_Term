@@ -1,7 +1,4 @@
-
-
 #define _GNU_SOURCE
-
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
@@ -12,25 +9,25 @@
 void *mythread(void *arg) {
     printf("mythread [%d %d %d]: Hello from mythread!\n", getpid(), getppid(), gettid());
     //// int result = 42
-    ////  return (void *) result; так не будет рабоать потому что по заврешении потока его стек разрушится
-//    int *ret_val = malloc(sizeof(int));
-//    if (ret_val == NULL) {
-//        fprintf(stderr, "Bad malloc\n");
-//        return NULL;
-//    }
-//    *ret_val = 42;
-    char* ret_str = malloc(sizeof (char) * 12);
-    if (ret_str == NULL) {
+    ////  return (void *) result; так не будет работать, потому что по завершении потока его стек разрушится
+    int *ret_val = malloc(sizeof(int));
+    if (ret_val == NULL) {
         fprintf(stderr, "Bad malloc\n");
         return NULL;
     }
-    strcpy(ret_str, "hello world");
-    return (void *) ret_str;
+    *ret_val = 42;
+//    char* ret_str = malloc(sizeof (char) * 12);
+//    if (ret_str == NULL) {
+//        fprintf(stderr, "Bad malloc\n");
+//        return NULL;
+//    }
+//    strcpy(ret_str, "hello world");
+    return (void *) ret_val;
 }
 
 //a: pthread_join(tid, &thread_result);
 
-/////b: необходимо выделить динамически память для return value ????
+/////b: необходимо выделить память на куче для return value ????
 
 
 int main() {
@@ -51,7 +48,7 @@ int main() {
     pthread_join(tid, &thread_result);
 
 //  printf("Thread returned: %d\n", *(int *) thread_result);
-    printf("Thread returned: %s\n", (char*) thread_result);
+    printf("Thread returned: %d\n", *(int*) thread_result);
 
     free(thread_result);
     return 0;

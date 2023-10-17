@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 int global_var = 10;
@@ -43,7 +41,7 @@ void *mythread(void *arg) {
 
 // d
 // Локальная перемнная в каждом потоке своя поэтому изменений не видно
-// Глобальная явлется разделяемой перменной
+// Глобальная явлется разделяемой переменной
 
 int main() {
     pthread_t tid;
@@ -56,7 +54,7 @@ int main() {
         //err = pthread_create(&tid, NULL, mythread, NULL);
 
         err = pthread_create(&tid_arr[i], NULL, mythread, &tid_arr[i]);
-        printf("in main create new thread with tid %ld\n", tid_arr[i]);
+        printf("\nin main create new thread with tid %ld\n", tid_arr[i]);
         if (err) {
             printf("main: pthread_create() failed: %s\n", strerror(err));
             return -1;
@@ -67,4 +65,3 @@ int main() {
 
     return 0;
 }
-

@@ -22,7 +22,7 @@ void *mythread(void *arg) {
 
 
     printf("mythread tid = %ld\n", pthread_self());
-   // pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    // pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     // pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     int i = 0;
 
@@ -35,10 +35,11 @@ void *mythread(void *arg) {
     pthread_cleanup_push(cleanup_function, str);
 
     while (1) {
-        //i++;
-        puts("Hello world!\n");
+        i++;
+       // puts("Hello world!\n");
+
       //  puts(str);
-       // pthread_testcancel();
+        pthread_testcancel();
     }
 
     pthread_cleanup_pop(1);

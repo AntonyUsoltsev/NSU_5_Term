@@ -1,5 +1,3 @@
-
-
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -12,7 +10,6 @@ void *mythread(void *arg) {
     //pthread_detach(pthread_self());
     return NULL;
 }
-
 
 int main() {
     pthread_t tid;
@@ -34,7 +31,7 @@ int main() {
 
     printf("main [%d %d %d]: Hello from main!\n", getpid(), getppid(), gettid());;
     while (1) {
-        err = pthread_create(&tid, &attr, mythread, NULL);
+        err = pthread_create(&tid, NULL, mythread, NULL);
       //  printf("in main create new thread with tid %ld\n", tid);
         if (err) {
             printf("main: pthread_create() failed: %s\n", strerror(err));
@@ -50,7 +47,7 @@ int main() {
 // конечном итоге к сбою вашей программы или системы.
 
 
-//Исчерпание ресурсов: Одной из наиболее распространенных причин является исчерпание системных ресурсов для создания
+// Исчерпание ресурсов: Одной из наиболее распространенных причин является исчерпание системных ресурсов для создания
 // новых потоков. Это может включать в себя ограничение на количество потоков, которое может быть создано в вашей
 // системе, или ограничение на доступную память для новых потоков. Если система достигла своих лимитов по ресурсам,
 // создание новых потоков временно становится невозможным.
