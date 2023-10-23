@@ -3,6 +3,7 @@ package ru.nsu.fit.usoltsev;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
@@ -11,7 +12,6 @@ import java.nio.channels.SelectionKey;
 public class Attachment {
     public static final int AUTH = 1;
     public static final int REQUEST = 2;
-    public static final int ERR = 3;
 
     private final int BUFFER_SIZE = 4096;
 
@@ -33,6 +33,12 @@ public class Attachment {
 
     @Setter
     private int status;
+
+    @Setter
+    private InetAddress ipAddr;
+
+    @Setter
+    private int port;
 
     public Attachment() {
         this.inputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
