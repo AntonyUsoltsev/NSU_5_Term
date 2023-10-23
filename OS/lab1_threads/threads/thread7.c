@@ -7,7 +7,6 @@
 #include <fcntl.h>
 #include <ucontext.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #define PAGE 4096
 #define STACK_SIZE (PAGE * 8)

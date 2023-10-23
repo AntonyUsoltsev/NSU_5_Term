@@ -26,12 +26,13 @@ typedef struct {
 typedef mythread_struct_t *mythread_t;
 
 void *mythread(void *arg) {
+    printf("thread pid: %d\n", getppid());
     char *str = (char *) arg;
     for (int i = 0; i < 5; ++i) {
         printf("hello: %s\n", str);
         sleep(1);
     }
-    return "buy";
+    return "bye";
 }
 
 int mythread_startup(void *arg) {
