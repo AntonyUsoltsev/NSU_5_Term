@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
 @Getter
-
+@Setter
 public class Attachment {
     public static final int AUTH = 1;
     public static final int REQUEST = 2;
@@ -18,12 +18,7 @@ public class Attachment {
     /**
      * Buffer from client to site
      */
-    private final ByteBuffer inputBuffer;
-
-    /**
-     * Buffer from site to client
-     */
-    private final ByteBuffer outputBuffer;
+    private ByteBuffer buffer;
 
     /**
      * Destination key
@@ -34,15 +29,8 @@ public class Attachment {
     @Setter
     private int status;
 
-    @Setter
-    private InetAddress ipAddr;
-
-    @Setter
-    private int port;
-
     public Attachment() {
-        this.inputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
-        this.outputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+        this.buffer = ByteBuffer.allocate(BUFFER_SIZE);
         status = AUTH;
     }
 }
