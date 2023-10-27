@@ -1,4 +1,4 @@
-package ru.nsu.fit.usoltsev;
+package ru.nsu.fit.usoltsev.proxyServer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -12,84 +12,80 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static ru.nsu.fit.usoltsev.proxyServer.SOCKS_Constants.*;
+
 @Slf4j
-public class ProxyServer {
-    private static final byte SOCKS_5 = 0x05;
-    private static final byte NO_AUTH_REQUIRED = 0x00;
-    private static final byte IPV4 = 0x01;
-    private static final byte DNS = 0x03;
-    private static final byte RSV = 0x00;
-    private static final byte CONNECT = 0x01;
-    private static final byte SUCCESS = 0x00;
-    private static final byte SERVER_FAIL = 0x01;
-    private static final byte CONNECTION_NOT_ALLOWED = 0x02;
-    private static final byte HOST_UNREACHABLE = 0x04;
-    private static final byte COMMAND_NOT_SUP = 0x07;
-    private static final byte ADDR_TYPE_NOT_SUP = 0x08;
+public class ProxyServer implements AutoCloseable {
 
-    private static byte IP_TYPE;
+    private final Selector selector;
+    private final ServerSocketChannel serverChannel;
+    private final int port;
 
-    public void run(int port) {
+    public ProxyServer(int port) throws IOException {
+        this.selector = SelectorProvider.provider().openSelector();
+        this.serverChannel = ServerSocketChannel.open();
+        serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), port));
+        serverChannel.configureBlocking(false);                      // Устанавливаем неблокирующий режим
+        serverChannel.register(selector, SelectionKey.OP_ACCEPT);    // Регистрация в селекторе и получение ключа
+        this.port = port;
+    }
+
+    public void run() {
         try {
-            ServerSocketChannel serverChannel = ServerSocketChannel.open();
-            serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), port));
-            serverChannel.configureBlocking(false);                      // Устанавливаем неблокирующий режим
-
-            Selector selector = Selector.open();
-            serverChannel.register(selector, SelectionKey.OP_ACCEPT);    //Здесь же устанавливается ключ в селектор
-
-            log.info("Proxy server start working");
+            log.info("Proxy server start working at port: " + port);
 
             while (!Thread.currentThread().isInterrupted()) {
 
-                int readyChannels = selector.select();                   // Блокируется, пока не появится событие
+                int readyChannels = selector.select();            // Блокируется, пока не появится событие
 
-                if (readyChannels > 0) {
+                if (readyChannels >= 0) {
                     for (SelectionKey key : selector.selectedKeys()) {
-                        if (key.isValid()) {
-                            try {
+                        try {
+                            if (key.isValid()) {
                                 if (key.isAcceptable()) {
-                                    acceptClient(serverChannel, selector);    // Принимаем входящее соединение
+                                    acceptClient();               // Принимаем входящее соединение
                                 } else if (key.isConnectable()) {
-                                    connect(key);
+                                    connect(key);                 // Завершаем соединение с сайтом
                                 } else if (key.isReadable()) {
-                                    readData(key);
+                                    readData(key);                // Читаем данные от канала
                                 } else if (key.isWritable()) {
-                                    writeData(key);
+                                    writeData(key);               // Пишем данные в канал
                                 }
-                            } catch (IOException | IllegalArgumentException exc) {
-                                //log.warn(new String(exc.getMessage().getBytes(StandardCharsets.UTF_8)), exc);
-                                //  closeConnection(key);
+
                             }
+
+                        } catch (IOException ignore) {
+                        } catch (IllegalArgumentException exc) {
+                            log.warn(new String(exc.getMessage().getBytes(StandardCharsets.UTF_8)), exc);
                         }
                     }
+
                     selector.selectedKeys().clear();
                 }
 
             }
-        } catch (IOException | IllegalArgumentException ioExc) {
-            //log.warn(ioExc.getMessage());
+        } catch (IllegalArgumentException | IOException ioExc) {
+            log.warn(ioExc.getMessage());
             ioExc.printStackTrace(System.err);
         }
     }
 
-    private void acceptClient(@NotNull ServerSocketChannel serverChannel, Selector selector) throws IOException {
+    private void acceptClient() throws IOException {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
         clientChannel.register(selector, SelectionKey.OP_READ);
-        //log.info("Client connected");
     }
 
-    private void connect(SelectionKey key) throws IOException {
+    private void connect(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = ((SocketChannel) key.channel());
         Attachment attachment = ((Attachment) key.attachment());
         channel.finishConnect();
 
-        sendSuccessAnswer((SocketChannel) ((Attachment) key.attachment()).getDstKey().channel(), IPV4);//??????????????
-        //  sendSuccessAnswer((SocketChannel) key.channel(), IPV4);
-        //log.info("Finish connect");
+        sendSuccessAnswer((SocketChannel) attachment.getDstKey().channel());
 
         attachment.getDstKey().interestOps(SelectionKey.OP_READ);
         key.interestOps(0);
@@ -104,22 +100,17 @@ public class ProxyServer {
         }
 
         Attachment dstAtch = (Attachment) attachment.getDstKey().attachment();
-        channel.write(dstAtch.getBuffer());
+        int bytesWrite = channel.write(dstAtch.getBuffer());
 
-        log.info("Write from: " + channel.getLocalAddress() + " to: " + channel.getRemoteAddress() + " data: " + Arrays.toString(dstAtch.getBuffer().array()));
+        //log.info("Write from: " + channel.getLocalAddress() + " to: " + channel.getRemoteAddress() + " data: " + Arrays.toString(dstAtch.getBuffer().array()));
 
-        int bytesWrite = channel.write(((Attachment) attachment.getDstKey().attachment()).getBuffer());
         if (bytesWrite == -1) {
             throw new IllegalArgumentException("Bytes write = -1");
         } else {
             dstAtch.getBuffer().flip();
             dstAtch.getBuffer().clear();
-            attachment.getDstKey().interestOps(SelectionKey.OP_READ);
+            attachment.getDstKey().interestOps(attachment.getDstKey().interestOps() | SelectionKey.OP_READ);
             key.interestOps(key.interestOps() ^ SelectionKey.OP_WRITE);
-            //key.interestOps(SelectionKey.OP_READ);
-            //  attachment.getDstKey().interestOps(SelectionKey.OP_READ);
-            key.interestOps(SelectionKey.OP_READ);
-
         }
     }
 
@@ -127,42 +118,34 @@ public class ProxyServer {
     private void readData(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         Attachment attachment = (Attachment) key.attachment();
+
         if (attachment == null) {
-            Attachment newAttch = new Attachment();
-            key.attach(newAttch);
+            attachment = new Attachment();
+            key.attach(attachment);
         }
-        attachment = (Attachment) key.attachment();
         int bytesRead = channel.read(attachment.getBuffer());
 
-        if (bytesRead == 0) {
-            //log.warn("Bytes read == 0");
-            // throw new IllegalArgumentException("Bytes read < 1");
+        if (bytesRead == 0 || bytesRead == -1) {
             return;
-        } else if (bytesRead == -1) {
-            //  //log.warn("Bytes read == -1");
-            // throw new IllegalArgumentException("Bytes read < 1");
-            return;
-        } else if (attachment.getDstKey() == null) { // если нет второго конца значит читаем заголовок
-            readHeader(key, bytesRead);
+        } else if (attachment.getDstKey() == null) {           // Если нет второго конца значит читаем заголовок
+            readHeader(channel, attachment, key, bytesRead);
+            // log.info("Read header from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));
         } else {
-            log.info("Read from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));            //log.info("Read data:");
+            // log.info("Read from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));
             key.interestOps(key.interestOps() ^ SelectionKey.OP_READ);
             attachment.getDstKey().interestOps(attachment.getDstKey().interestOps() | SelectionKey.OP_WRITE);
             attachment.getBuffer().flip();
         }
     }
 
-    public void readHeader(@NotNull SelectionKey key, int length) throws IOException {
-        SocketChannel clientChannel = (SocketChannel) key.channel();
-        Attachment attachment = (Attachment) key.attachment();
+    public void readHeader(SocketChannel clientChannel, @NotNull Attachment attachment, SelectionKey key, int length) throws IOException {
         byte[] header = attachment.getBuffer().array();
         if (header.length < 3) {
-            //log.warn("Incorrect header");
             sendFailAnswer(clientChannel, SERVER_FAIL);
             throw new IllegalArgumentException("Incorrect header");
         }
         if (header[0] != SOCKS_5) {
-            //log.warn("Incorrect SOCKS version");
+            log.warn("Incorrect SOCKS version");
             sendFailAnswer(clientChannel, SERVER_FAIL);
             throw new IllegalArgumentException("Incorrect SOCKS version");
         }
@@ -174,14 +157,14 @@ public class ProxyServer {
                 attachment.getBuffer().clear();
             }
             case Attachment.REQUEST -> {
-                requestHandler(header, key, clientChannel, length);
+                requestHandler(header, key, length);
                 attachment.getBuffer().flip();
                 attachment.getBuffer().clear();
             }
         }
     }
 
-    private void authenticationHandler(byte[] header, SocketChannel clientChannel, Attachment attachment) throws IOException {
+    private void authenticationHandler(byte @NotNull [] header, SocketChannel clientChannel, Attachment attachment) throws IOException {
         //log.info("Auth, first header");
         int NMethods = header[1];
         boolean noAuthFlag = false;
@@ -192,71 +175,61 @@ public class ProxyServer {
             }
         }
         if (noAuthFlag) {
-            ByteBuffer answer = ByteBuffer.allocate(2);
-            answer.put(SOCKS_5);
-            answer.put(NO_AUTH_REQUIRED);
-            answer.flip();
-            clientChannel.write(answer);
+            clientChannel.write((ByteBuffer.wrap(new byte[]{SOCKS_5, NO_AUTH_REQUIRED})));
             attachment.setStatus(Attachment.REQUEST);
 
         } else {
-            //log.warn("Client has not NoAuth method");
+            log.warn("Client has not NoAuth method");
             sendFailAnswer(clientChannel, CONNECTION_NOT_ALLOWED);
             throw new IllegalArgumentException("Client has not NoAuth method");
         }
     }
 
-    private void requestHandler(byte[] header, SelectionKey key, SocketChannel clientChannel, int length) throws IOException {
+    private void requestHandler(byte @NotNull [] header, SelectionKey key, int length) throws IOException {
         //log.info("Request, second header");
         if (header[1] == CONNECT) {
             byte[] addr;
             int port;
             switch (header[3]) {
                 case IPV4 -> {
-                    IP_TYPE = IPV4;
                     addr = new byte[]{header[4], header[5], header[6], header[7]};
                     port = (header[8] & 0xFF) << 8 | (header[9] & 0xFF);
-                    connectToSite(addr, port, key);
-                    //   sendSuccessAnswer(clientChannel, (byte) 0x01, addr, new byte[]{header[8], header[9]});
+                    connectToSite(addr, port, IPV4, key);
                 }
                 case DNS -> {
-                    IP_TYPE = DNS;
                     int domainLength = header[4] & 0xFF;
-                    addr = new byte[domainLength];
-                    System.arraycopy(header, 5, addr, 0, domainLength);
+                    addr = Arrays.copyOfRange(header, 5, 5 + domainLength);
                     port = (header[length - 2] & 0xFF) << 8 | (header[length - 1] & 0xFF);
                     //   String domainName = new String(addr, StandardCharsets.UTF_8);
-                    connectToSite(addr, port, key);
-                    //   sendSuccessAnswer(clientChannel, (byte) 0x03, addr, new byte[]{header[length - 2], header[length - 1]});
+                    connectToSite(addr, port, DNS, key);
+
                     //TODO: RESOLVE DNS
                 }
                 default -> {
-                    //log.warn("Bad Ip address type");
-                    sendFailAnswer(clientChannel, ADDR_TYPE_NOT_SUP);
+                    log.warn("Bad Ip address type");
+                    sendFailAnswer((SocketChannel) key.channel(), ADDR_TYPE_NOT_SUP);
                     throw new IllegalArgumentException("Bad Ip address type");
                 }
             }
 
         } else {
-            //log.warn("Bad CMD in second header");
-            sendFailAnswer(clientChannel, COMMAND_NOT_SUP);
+            log.warn("Bad CMD in second header");
+            sendFailAnswer((SocketChannel) key.channel(), COMMAND_NOT_SUP);
             throw new IllegalArgumentException("Bad CMD in second header");
         }
     }
 
-    private void connectToSite(byte[] addr, int port, @NotNull SelectionKey key) throws IOException {
+    private void connectToSite(byte[] addr, int port, byte type, SelectionKey key) throws IOException {
         try {
             SocketChannel siteChanel = SocketChannel.open();
             siteChanel.configureBlocking(false);
 
-            //  String address = new String(addr, StandardCharsets.UTF_8);
-            //log.info("ip: " + InetAddress.getByAddress(addr) + ", port: " + port);
-            switch (IP_TYPE) {
+            switch (type) {
                 case IPV4 -> siteChanel.connect(new InetSocketAddress(InetAddress.getByAddress(addr), port));
                 case DNS -> siteChanel.connect(new InetSocketAddress(InetAddress.getByName(new String(addr)), port));
             }
 
-            SelectionKey dstKey = siteChanel.register(key.selector(), SelectionKey.OP_CONNECT);
+            SelectionKey dstKey = siteChanel.register(selector, SelectionKey.OP_CONNECT);
             key.interestOps(0);
 
             Attachment attachment = (Attachment) key.attachment();
@@ -267,13 +240,13 @@ public class ProxyServer {
             dstKey.attach(dstAttachment);
 
         } catch (UnknownHostException exc) {
-            //log.warn("Unknown Host Exception");
+            log.warn("Unknown Host Exception");
             sendFailAnswer((SocketChannel) key.channel(), HOST_UNREACHABLE);
             throw new IllegalArgumentException("Unknown Host Exception");
         }
     }
 
-    private void closeConnection(SelectionKey key) throws IOException {
+    private void closeConnection(@NotNull SelectionKey key) throws IOException {
         SelectionKey dstKey = ((Attachment) key.attachment()).getDstKey();
         if (dstKey != null) {
             dstKey.channel().close();
@@ -294,22 +267,31 @@ public class ProxyServer {
 
     }
 
-    private void sendFailAnswer(SocketChannel channel, byte flag) throws IOException {
+    private void sendFailAnswer(@NotNull SocketChannel channel, byte flag) throws IOException {
         byte[] ans = new byte[]{SOCKS_5, flag, RSV};
-        log.info("send file");
+        log.info("send fail");
         channel.write(ByteBuffer.wrap(ans));
     }
 
-    private static void sendSuccessAnswer(SocketChannel channel, byte type) throws IOException {
+    private void sendSuccessAnswer(@NotNull SocketChannel channel) throws IOException {
         ByteBuffer responseBuffer = ByteBuffer.allocate(256);
         responseBuffer.put(SOCKS_5);
         responseBuffer.put(SUCCESS);
         responseBuffer.put(RSV);
-        responseBuffer.put(type);
+        responseBuffer.put(IPV4);
         responseBuffer.put(InetAddress.getLoopbackAddress().getAddress());
-        responseBuffer.putInt(1080);
+
+        responseBuffer.putShort((short) port); ////////!!!!!!!!!!!!!!!!!
+
         responseBuffer.flip();
         channel.write(responseBuffer);
+    }
+
+
+    @Override
+    public void close() throws Exception {
+        selector.close();
+        serverChannel.close();
     }
 
 

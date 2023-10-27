@@ -1,0 +1,16 @@
+package ru.nsu.fit.usoltsev.proxyServer;
+
+public class SOCKS_Constants {
+    static final byte SOCKS_5 = 0x05;
+    static final byte NO_AUTH_REQUIRED = 0x00;
+    static final byte IPV4 = 0x01;
+    static final byte DNS = 0x03;
+    static final byte RSV = 0x00;
+    static final byte CONNECT = 0x01;
+    static final byte SUCCESS = 0x00;
+    static final byte SERVER_FAIL = 0x01;
+    static final byte CONNECTION_NOT_ALLOWED = 0x02;
+    static final byte HOST_UNREACHABLE = 0x04;
+    static final byte COMMAND_NOT_SUP = 0x07;
+    static final byte ADDR_TYPE_NOT_SUP = 0x08;
+}

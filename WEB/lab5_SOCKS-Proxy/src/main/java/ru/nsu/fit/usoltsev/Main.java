@@ -1,16 +1,25 @@
 package ru.nsu.fit.usoltsev;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import ru.nsu.fit.usoltsev.proxyServer.ProxyServer;
 
+import java.io.IOException;
+
+@Slf4j
 public class Main {
     public static void main(String[] args) {
         try {
             int port = parseArgs(args);
-            ProxyServer proxyServer = new ProxyServer();
-            proxyServer.run(port);
 
-        } catch (IllegalArgumentException e) {
+            try (ProxyServer proxyServer = new ProxyServer(port)) {
+                proxyServer.run();
 
+            } catch (IllegalArgumentException | IOException e) {
+                log.warn(e.getMessage(), e);
+            }
+        }catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
     }

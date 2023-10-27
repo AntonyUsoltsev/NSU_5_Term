@@ -1,4 +1,4 @@
-package ru.nsu.fit.usoltsev;
+package ru.nsu.fit.usoltsev.proxyServer;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ public class Attachment {
     public static final int AUTH = 1;
     public static final int REQUEST = 2;
 
-    private final int BUFFER_SIZE = 4096;
+    private final int BUFFER_SIZE = 8192;
 
     /**
      * Buffer from client to site
@@ -23,10 +23,11 @@ public class Attachment {
     /**
      * Destination key
      */
-    @Setter
     private SelectionKey dstKey;
 
-    @Setter
+    /**
+     * Current status of connection
+     */
     private int status;
 
     public Attachment() {
