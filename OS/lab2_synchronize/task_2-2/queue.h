@@ -1,20 +1,21 @@
-#ifndef __FITOS_QUEUE_H__
-#define __FITOS_QUEUE_H__
+#ifndef __LAB2_SYNCHRONIZE__
+#define __LAB2_SYNCHRONIZE__
 
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdatomic.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-typedef struct _QueueNode {
+typedef struct QueueNode {
 	int val;
-	struct _QueueNode *next;
+	struct QueueNode *next;
 } qnode_t;
 
-typedef struct _Queue {
+typedef struct Queue {
 	qnode_t *first;
 	qnode_t *last;
 
@@ -36,4 +37,4 @@ int queue_add(queue_t *q, int val);
 int queue_get(queue_t *q, int *val);
 void queue_print_stats(queue_t *q);
 
-#endif		// __FITOS_QUEUE_H__
+#endif		// __LAB2_SYNCHRONIZE__

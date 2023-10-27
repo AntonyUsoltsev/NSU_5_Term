@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sched.h>
 
 #include "queue.h"
+#include "queue.c"
 
 int main() {
 	queue_t *q;
