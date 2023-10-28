@@ -17,7 +17,12 @@ public class Attachment {
     /**
      * Buffer from host to proxy server
      */
-    private ByteBuffer buffer;
+    private ByteBuffer inputBuffer;
+
+    /**
+     * Buffer from proxy server to host
+     */
+    private ByteBuffer outputBuffer;
 
     /**
      * Destination key
@@ -30,7 +35,8 @@ public class Attachment {
     private int status;
 
     public Attachment() {
-        this.buffer = ByteBuffer.allocate(BUFFER_SIZE);
+        this.inputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+        this.outputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         status = AUTH;
     }
 }

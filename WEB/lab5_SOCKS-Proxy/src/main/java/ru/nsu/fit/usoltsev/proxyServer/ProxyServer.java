@@ -56,7 +56,7 @@ public class ProxyServer implements AutoCloseable {
                                 }
                             }
                         } catch (IOException ignore) {
-                          //  log.warn(new String(ignore.getMessage().getBytes(StandardCharsets.UTF_8)), ignore);
+                            //  log.warn(new String(ignore.getMessage().getBytes(StandardCharsets.UTF_8)), ignore);
                         } catch (IllegalArgumentException exc) {
                             log.warn(new String(exc.getMessage().getBytes(StandardCharsets.UTF_8)), exc);
                         }
@@ -88,31 +88,27 @@ public class ProxyServer implements AutoCloseable {
         key.interestOps(0);
     }
 
-
     private void writeData(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         Attachment attachment = (Attachment) key.attachment();
-        if (!attachment.getBuffer().hasRemaining()) {
+        if (!attachment.getOutputBuffer().hasRemaining()) {
             return;
         }
 
-        Attachment dstAtch = (Attachment) attachment.getDstKey().attachment();
-
-        int bytesWrite = channel.write(((Attachment) attachment.getDstKey().attachment()).getBuffer());
+        int bytesWrite = channel.write(attachment.getOutputBuffer());
 
         //log.info("Write from: " + channel.getLocalAddress() + " to: " + channel.getRemoteAddress() + " data: " + Arrays.toString(dstAtch.getBuffer().array()));
 
         if (bytesWrite == -1) {
             throw new IllegalArgumentException("Bytes write = -1");
         } else {
-            dstAtch.getBuffer().flip();
-            dstAtch.getBuffer().clear();
+            attachment.getOutputBuffer().flip();
+            attachment.getOutputBuffer().clear();
             attachment.getDstKey().interestOps(attachment.getDstKey().interestOps() | SelectionKey.OP_READ);
             //key.interestOps(key.interestOps() ^ SelectionKey.OP_WRITE);
             key.interestOps(SelectionKey.OP_READ);
         }
     }
-
 
     private void readData(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
@@ -123,26 +119,25 @@ public class ProxyServer implements AutoCloseable {
             key.attach(attachment);
         }
 
-        int bytesRead = channel.read(attachment.getBuffer());
+        int bytesRead = channel.read(attachment.getInputBuffer());
 
         if (bytesRead == 0 || bytesRead == -1) {
             return;
         } else if (attachment.getDstKey() == null) { // если нет второго конца значит читаем заголовок
             readHeader(key, bytesRead);
-           // log.info("Read header from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));
+            // log.info("Read header from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));
         } else {
-           // log.info("Read from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));
+            // log.info("Read from: " + channel.getRemoteAddress() + " to: " + channel.getLocalAddress() + " data: " + Arrays.toString(attachment.getBuffer().array()));
             key.interestOps(key.interestOps() ^ SelectionKey.OP_READ);
             attachment.getDstKey().interestOps(attachment.getDstKey().interestOps() | SelectionKey.OP_WRITE);
-            attachment.getBuffer().flip();
+            attachment.getInputBuffer().flip();
         }
     }
-
 
     public void readHeader(@NotNull SelectionKey key, int length) throws IOException {
         SocketChannel clientChannel = (SocketChannel) key.channel();
         Attachment attachment = (Attachment) key.attachment();
-        byte[] header = attachment.getBuffer().array();
+        byte[] header = attachment.getInputBuffer().array();
         if (header.length < 3) {
             //log.warn("Incorrect header");
             sendFailAnswer(clientChannel, SERVER_FAIL);
@@ -157,17 +152,18 @@ public class ProxyServer implements AutoCloseable {
         switch (attachment.getStatus()) {
             case Attachment.AUTH -> {
                 authenticationHandler(header, clientChannel, attachment);
-                attachment.getBuffer().flip();
-                attachment.getBuffer().clear();
+                attachment.getInputBuffer().flip();
+                attachment.getInputBuffer().clear();
             }
             case Attachment.REQUEST -> {
                 requestHandler(header, key, clientChannel, length);
-                attachment.getBuffer().flip();
-                attachment.getBuffer().clear();
+                attachment.getInputBuffer().flip();
+                attachment.getInputBuffer().clear();
             }
         }
     }
-    private boolean checkAuthMethod(byte @NotNull [] header){
+
+    private boolean checkAuthMethod(byte @NotNull [] header) {
         int NMethods = header[1];
         for (int i = 0; i < NMethods; i++) {
             if (header[i + 2] == NO_AUTH_REQUIRED) {
@@ -240,6 +236,10 @@ public class ProxyServer implements AutoCloseable {
             Attachment dstAttachment = new Attachment();
             dstAttachment.setDstKey(key);
             dstKey.attach(dstAttachment);
+
+            attachment.setOutputBuffer(dstAttachment.getInputBuffer());
+            dstAttachment.setOutputBuffer(attachment.getInputBuffer());
+
 
         } catch (UnknownHostException exc) {
             log.warn("Unknown Host Exception");

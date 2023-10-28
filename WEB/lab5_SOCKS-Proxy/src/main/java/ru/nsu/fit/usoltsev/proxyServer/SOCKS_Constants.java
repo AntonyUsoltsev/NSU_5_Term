@@ -1,5 +1,7 @@
 package ru.nsu.fit.usoltsev.proxyServer;
 
+import java.nio.ByteBuffer;
+
 public class SOCKS_Constants {
     static final byte SOCKS_5 = 0x05;
     static final byte NO_AUTH_REQUIRED = 0x00;
