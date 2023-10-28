@@ -5,6 +5,7 @@ public class SOCKS_Constants {
     static final byte NO_AUTH_REQUIRED = 0x00;
     static final byte IPV4 = 0x01;
     static final byte DNS = 0x03;
+    static final byte IPV6 = 0x04;
     static final byte RSV = 0x00;
     static final byte CONNECT = 0x01;
     static final byte SUCCESS = 0x00;

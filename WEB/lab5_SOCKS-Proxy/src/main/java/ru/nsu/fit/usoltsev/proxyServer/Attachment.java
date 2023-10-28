@@ -3,7 +3,6 @@ package ru.nsu.fit.usoltsev.proxyServer;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
@@ -16,7 +15,7 @@ public class Attachment {
     private final int BUFFER_SIZE = 8192;
 
     /**
-     * Buffer from client to site
+     * Buffer from host to proxy server
      */
     private ByteBuffer buffer;
 
