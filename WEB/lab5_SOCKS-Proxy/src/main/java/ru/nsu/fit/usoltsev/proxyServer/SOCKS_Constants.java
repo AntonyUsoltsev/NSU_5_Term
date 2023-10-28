@@ -14,4 +14,6 @@ public class SOCKS_Constants {
     static final byte HOST_UNREACHABLE = 0x04;
     static final byte COMMAND_NOT_SUP = 0x07;
     static final byte ADDR_TYPE_NOT_SUP = 0x08;
+    static final int IPV4_LENGTH = 4;
+    static final int IPV6_LENGTH = 16;
 }
