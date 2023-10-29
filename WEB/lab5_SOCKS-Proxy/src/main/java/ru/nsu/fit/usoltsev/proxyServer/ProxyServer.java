@@ -55,10 +55,12 @@ public class ProxyServer implements AutoCloseable {
                                     writeData(key);               // Пишем данные в канал
                                 }
                             }
-                        } catch (IOException ignore) {
+                        } catch (IOException ioExc) {
                             //  log.warn(new String(ignore.getMessage().getBytes(StandardCharsets.UTF_8)), ignore);
-                        } catch (IllegalArgumentException exc) {
-                            log.warn(new String(exc.getMessage().getBytes(StandardCharsets.UTF_8)), exc);
+                            closeConnection(key);
+                        } catch (IllegalArgumentException iaExc) {
+                            log.warn(new String(iaExc.getMessage().getBytes(StandardCharsets.UTF_8)), iaExc);
+                            closeConnection(key);
                         }
                     }
                     selector.selectedKeys().clear();
@@ -97,7 +99,7 @@ public class ProxyServer implements AutoCloseable {
 
         int bytesWrite = channel.write(attachment.getOutputBuffer());
 
-        //log.info("Write from: " + channel.getLocalAddress() + " to: " + channel.getRemoteAddress() + " data: " + Arrays.toString(dstAtch.getBuffer().array()));
+        //log.info("Write from: " + channel.getLocalAddress() + " to: " + channel.getRemoteAddress() + " data: " + Arrays.toString(attachment.getOutputBuffer().array()));
 
         if (bytesWrite == -1) {
             throw new IllegalArgumentException("Bytes write = -1");
@@ -255,7 +257,7 @@ public class ProxyServer implements AutoCloseable {
     }
 
     private void sendSuccessAnswer(@NotNull SocketChannel channel) throws IOException {
-        ByteBuffer responseBuffer = ByteBuffer.allocate(256);
+        ByteBuffer responseBuffer = ByteBuffer.allocate(6 + InetAddress.getLoopbackAddress().getAddress().length);
         responseBuffer.put(SOCKS_5);
         responseBuffer.put(SUCCESS);
         responseBuffer.put(RSV);
@@ -274,7 +276,7 @@ public class ProxyServer implements AutoCloseable {
             dstKey.channel().close();
             dstKey.cancel();
         }
-        //log.info("Close connection");
+        log.info("Close connection");
         key.cancel();
         key.channel().close();
 

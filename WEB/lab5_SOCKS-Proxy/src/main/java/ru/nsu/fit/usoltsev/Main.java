@@ -18,7 +18,7 @@ public class Main {
             } catch (IllegalArgumentException | IOException e) {
                 log.warn(e.getMessage(), e);
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
