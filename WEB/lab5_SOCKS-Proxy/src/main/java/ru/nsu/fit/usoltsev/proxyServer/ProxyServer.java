@@ -13,7 +13,6 @@ import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import org.xbill.DNS.*;
@@ -34,7 +33,7 @@ public class ProxyServer implements AutoCloseable {
         this.serverChannel = ServerSocketChannel.open();
         this.serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), port));
         this.serverChannel.configureBlocking(false);                           // Устанавливаем неблокирующий режим
-        this.serverChannel.register(this.selector, SelectionKey.OP_ACCEPT);    //Здесь же устанавливается ключ в селектор
+        this.serverChannel.register(this.selector, SelectionKey.OP_ACCEPT);    // Здесь же устанавливается ключ в селектор
         this.port = port;
 
         DatagramChannel dnsChannel = DatagramChannel.open();
@@ -65,7 +64,6 @@ public class ProxyServer implements AutoCloseable {
                                     connect(key);                 // Завершаем соединение с сайтом
                                 } else if (key.isReadable()) {
                                     if (key.channel() instanceof DatagramChannel) {
-                                        //log.info("DADAD");
                                         readDnsAnswer(key);
                                     } else {
                                         readData(key);            // Читаем данные от канала
@@ -75,7 +73,7 @@ public class ProxyServer implements AutoCloseable {
                                 }
                             }
                         } catch (IOException ioExc) {
-                            //  log.warn(new String(ignore.getMessage().getBytes(StandardCharsets.UTF_8)), ignore);
+                            //  log.warn(new String(ignore.getMessage().getBytes(StandardCharsets.UTF_8)), ioExc);
                             closeConnection(key);
                         } catch (IllegalArgumentException iaExc) {
                             log.warn(new String(iaExc.getMessage().getBytes(StandardCharsets.UTF_8)), iaExc);
@@ -160,18 +158,15 @@ public class ProxyServer implements AutoCloseable {
         Attachment attachment = (Attachment) key.attachment();
         byte[] header = attachment.getInputBuffer().array();
         if (header.length < 3) {
-            //log.warn("Incorrect header");
             sendFailAnswer(clientChannel, SERVER_FAIL);
             throw new IllegalArgumentException("Incorrect header");
         }
-        if (header[0] != SOCKS_5) {  //TODO: REVIEW
-            //log.warn("Incorrect SOCKS version");
-            sendFailAnswer(clientChannel, SERVER_FAIL);
-            throw new IllegalArgumentException("Incorrect SOCKS version");
-        }
-
         switch (attachment.getStatus()) {
             case Attachment.AUTH -> {
+                if (header[0] != SOCKS_5) {
+                    sendFailAnswer(clientChannel, NO_ACCEPT_METHOD);
+                    throw new IllegalArgumentException("Incorrect SOCKS version");
+                }
                 authenticationHandler(header, clientChannel, attachment);
                 attachment.getInputBuffer().flip();
                 attachment.getInputBuffer().clear();
@@ -230,7 +225,6 @@ public class ProxyServer implements AutoCloseable {
                     throw new IllegalArgumentException("Bad Ip address type = " + header[3]);
                 }
             }
-
         } else {
             log.warn("Bad CMD in second header");
             sendFailAnswer(clientChannel, COMMAND_NOT_SUP);
@@ -245,22 +239,25 @@ public class ProxyServer implements AutoCloseable {
         ans.flip();
 
         if (bytesRead > 0) {
+
             Message message = new Message(ans);
             int senderId = message.getHeader().getID();
             List<Record> answerRecords = message.getSection(Section.ANSWER);
-            for (Record record : answerRecords) {
-                if (record.getType() == Type.A) {
-                    ARecord aRecord = (ARecord) record;
-                    InetAddress ipAddress = aRecord.getAddress();
+            InetAddress ipAddress = answerRecords.stream().
+                    filter(it -> it instanceof ARecord).
+                    limit(1).
+                    map(it -> (ARecord) it).
+                    findAny().
+                    orElseThrow(() -> new IllegalArgumentException("No such element in dns answer")).
+                    getAddress();
 
-                    connectToSite(ipAddress.getAddress(), dnsResolver.getClientMatch().get(senderId).getKey(), dnsResolver.getClientMatch().get(senderId).getValue());
-                    break;
-                }
-            }
+            connectToSite(ipAddress.getAddress(),
+                    dnsResolver.getClientMatch().get(senderId).getKey(),
+                    dnsResolver.getClientMatch().get(senderId).getValue());
         }
     }
 
-    private void connectToSite(byte[] addr, int port, SelectionKey key) throws IOException {
+    private void connectToSite(byte[] addr, int port, @NotNull SelectionKey key) throws IOException {
         try {
             SocketChannel siteChanel = SocketChannel.open();
             siteChanel.configureBlocking(false);
@@ -308,12 +305,12 @@ public class ProxyServer implements AutoCloseable {
     }
 
     private void closeConnection(@NotNull SelectionKey key) throws IOException {
+        //log.info("Close connection");
         SelectionKey dstKey = ((Attachment) key.attachment()).getDstKey();
         if (dstKey != null) {
             dstKey.channel().close();
             dstKey.cancel();
         }
-        //log.info("Close connection");
         key.cancel();
         key.channel().close();
 
