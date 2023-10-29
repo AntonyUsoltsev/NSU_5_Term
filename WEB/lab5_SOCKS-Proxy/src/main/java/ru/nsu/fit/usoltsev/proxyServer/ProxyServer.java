@@ -6,15 +6,19 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import org.xbill.DNS.*;
+import org.xbill.DNS.Record;
+import ru.nsu.fit.usoltsev.DNS.dnsResolver;
 
 import static ru.nsu.fit.usoltsev.proxyServer.SOCKS_Constants.*;
 
@@ -22,15 +26,25 @@ import static ru.nsu.fit.usoltsev.proxyServer.SOCKS_Constants.*;
 public class ProxyServer implements AutoCloseable {
     private final Selector selector;
     private final ServerSocketChannel serverChannel;
+    private final dnsResolver dnsResolver;
     private final int port;
 
     public ProxyServer(int port) throws IOException {
         this.selector = SelectorProvider.provider().openSelector();
         this.serverChannel = ServerSocketChannel.open();
-        serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), port));
-        serverChannel.configureBlocking(false);                      // Устанавливаем неблокирующий режим
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT);    //Здесь же устанавливается ключ в селектор
+        this.serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), port));
+        this.serverChannel.configureBlocking(false);                           // Устанавливаем неблокирующий режим
+        this.serverChannel.register(this.selector, SelectionKey.OP_ACCEPT);    //Здесь же устанавливается ключ в селектор
         this.port = port;
+
+        DatagramChannel dnsChannel = DatagramChannel.open();
+        dnsChannel.configureBlocking(false);
+        dnsChannel.register(this.selector, SelectionKey.OP_READ);
+        SocketAddress dnsServerAddress = new InetSocketAddress(ResolverConfig.getCurrentConfig().servers().get(0).getAddress(), 53);
+        dnsChannel.connect(dnsServerAddress);
+
+        dnsResolver = new dnsResolver(dnsChannel);
+
     }
 
     public void run() {
@@ -50,7 +64,12 @@ public class ProxyServer implements AutoCloseable {
                                 } else if (key.isConnectable()) {
                                     connect(key);                 // Завершаем соединение с сайтом
                                 } else if (key.isReadable()) {
-                                    readData(key);                // Читаем данные от канала
+                                    if (key.channel() instanceof DatagramChannel) {
+                                        //log.info("DADAD");
+                                        readDnsAnswer(key);
+                                    } else {
+                                        readData(key);            // Читаем данные от канала
+                                    }
                                 } else if (key.isWritable()) {
                                     writeData(key);               // Пишем данные в канал
                                 }
@@ -145,7 +164,7 @@ public class ProxyServer implements AutoCloseable {
             sendFailAnswer(clientChannel, SERVER_FAIL);
             throw new IllegalArgumentException("Incorrect header");
         }
-        if (header[0] != SOCKS_5) {
+        if (header[0] != SOCKS_5) {  //TODO: REVIEW
             //log.warn("Incorrect SOCKS version");
             sendFailAnswer(clientChannel, SERVER_FAIL);
             throw new IllegalArgumentException("Incorrect SOCKS version");
@@ -195,17 +214,16 @@ public class ProxyServer implements AutoCloseable {
             switch (header[3]) {
                 case IPV4 -> {
                     addr = Arrays.copyOfRange(header, 4, 4 + IPV4_LENGTH);
-                    connectToSite(addr, port, IPV4, key);
+                    connectToSite(addr, port, key);
                 }
                 case DNS -> {
                     int domainLength = header[4] & 0xFF;
                     addr = Arrays.copyOfRange(header, 5, 5 + domainLength);
-                    connectToSite(addr, port, DNS, key);
-                    //TODO: RESOLVE DNS
+                    dnsResolver.resolve(addr, port, key);
                 }
                 case IPV6 -> {
                     addr = Arrays.copyOfRange(header, 4, 4 + IPV6_LENGTH);
-                    connectToSite(addr, port, IPV6, key);
+                    connectToSite(addr, port, key);
                 }
                 default -> {
                     sendFailAnswer(clientChannel, ADDR_TYPE_NOT_SUP);
@@ -220,14 +238,33 @@ public class ProxyServer implements AutoCloseable {
         }
     }
 
-    private void connectToSite(byte[] addr, int port, byte type, SelectionKey key) throws IOException {
+    private void readDnsAnswer(@NotNull SelectionKey key) throws IOException {
+        ByteBuffer ans = ByteBuffer.allocate(Attachment.BUFFER_SIZE);
+        DatagramChannel datagramChannel = (DatagramChannel) key.channel();
+        int bytesRead = datagramChannel.read(ans);
+        ans.flip();
+
+        if (bytesRead > 0) {
+            Message message = new Message(ans);
+            int senderId = message.getHeader().getID();
+            List<Record> answerRecords = message.getSection(Section.ANSWER);
+            for (Record record : answerRecords) {
+                if (record.getType() == Type.A) {
+                    ARecord aRecord = (ARecord) record;
+                    InetAddress ipAddress = aRecord.getAddress();
+
+                    connectToSite(ipAddress.getAddress(), dnsResolver.getClientMatch().get(senderId).getKey(), dnsResolver.getClientMatch().get(senderId).getValue());
+                    break;
+                }
+            }
+        }
+    }
+
+    private void connectToSite(byte[] addr, int port, SelectionKey key) throws IOException {
         try {
             SocketChannel siteChanel = SocketChannel.open();
             siteChanel.configureBlocking(false);
-            switch (type) {
-                case IPV4, IPV6 -> siteChanel.connect(new InetSocketAddress(InetAddress.getByAddress(addr), port));
-                case DNS -> siteChanel.connect(new InetSocketAddress(InetAddress.getByName(new String(addr)), port));
-            }
+            siteChanel.connect(new InetSocketAddress(InetAddress.getByAddress(addr), port));
 
             SelectionKey dstKey = siteChanel.register(key.selector(), SelectionKey.OP_CONNECT);
             key.interestOps(0);
@@ -264,7 +301,7 @@ public class ProxyServer implements AutoCloseable {
         responseBuffer.put(IPV4);
         responseBuffer.put(InetAddress.getLoopbackAddress().getAddress());
 
-        responseBuffer.putShort((short) port); ////////!!!!!!!!!!!!!!!!!
+        responseBuffer.putShort((short) port); //!!!!!!!
 
         responseBuffer.flip();
         channel.write(responseBuffer);
@@ -276,17 +313,9 @@ public class ProxyServer implements AutoCloseable {
             dstKey.channel().close();
             dstKey.cancel();
         }
-        log.info("Close connection");
+        //log.info("Close connection");
         key.cancel();
         key.channel().close();
-
-//        if (dstKey != null) {
-//            ((Attachment) dstKey.attachment()).setDstKey(null);
-//            if ((dstKey.interestOps() & SelectionKey.OP_WRITE) == 0) {
-//                ((Attachment) dstKey.attachment()).getOutputBuffer().flip();
-//            }
-//            dstKey.interestOps(SelectionKey.OP_WRITE);
-//        }
 
     }
 

@@ -21,8 +21,11 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.0'
     implementation 'org.slf4j:slf4j-simple:2.0.0'
 
+    implementation 'dnsjava:dnsjava:3.5.2'
+    //implementation group: 'dnsjava', name: 'dnsjava', version: '3.5.2'
 
- //   implementation 'ch.qos.logback:logback-classic:2.0.0'  // Укажите актуальную версию
+
+ //   implementation 'ch.qos.logback:logback-classic:2.0.0'
 
 }
 

@@ -12,7 +12,7 @@ public class Attachment {
     public static final int AUTH = 1;
     public static final int REQUEST = 2;
 
-    private final int BUFFER_SIZE = 8192;
+    public static final int BUFFER_SIZE = 8192;
 
     /**
      * Buffer from host to proxy server
