@@ -10,14 +10,13 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
-import ru.nsu.fit.usoltsev.DNS.dnsResolver;
+import ru.nsu.fit.usoltsev.DNS.DnsResolver;
 
 import static ru.nsu.fit.usoltsev.proxyServer.SOCKS_Constants.*;
 
@@ -25,11 +24,11 @@ import static ru.nsu.fit.usoltsev.proxyServer.SOCKS_Constants.*;
 public class ProxyServer implements AutoCloseable {
     private final Selector selector;
     private final ServerSocketChannel serverChannel;
-    private final dnsResolver dnsResolver;
+    private final DnsResolver dnsResolver;
     private final int port;
 
     public ProxyServer(int port) throws IOException {
-        this.selector = SelectorProvider.provider().openSelector();
+        this.selector = Selector.open();
         this.serverChannel = ServerSocketChannel.open();
         this.serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), port));
         this.serverChannel.configureBlocking(false);                           // Устанавливаем неблокирующий режим
@@ -39,11 +38,10 @@ public class ProxyServer implements AutoCloseable {
         DatagramChannel dnsChannel = DatagramChannel.open();
         dnsChannel.configureBlocking(false);
         dnsChannel.register(this.selector, SelectionKey.OP_READ);
-        SocketAddress dnsServerAddress = new InetSocketAddress(ResolverConfig.getCurrentConfig().servers().get(0).getAddress(), 53);
+        SocketAddress dnsServerAddress = new InetSocketAddress(ResolverConfig.getCurrentConfig().servers().get(0).getAddress(), DnsResolver.DNS_PORT);
         dnsChannel.connect(dnsServerAddress);
 
-        dnsResolver = new dnsResolver(dnsChannel);
-
+        dnsResolver = new DnsResolver(dnsChannel);
     }
 
     public void run() {
@@ -64,7 +62,7 @@ public class ProxyServer implements AutoCloseable {
                                     connect(key);                 // Завершаем соединение с сайтом
                                 } else if (key.isReadable()) {
                                     if (key.channel() instanceof DatagramChannel) {
-                                        readDnsAnswer(key);
+                                        readDnsAnswer(key);       // Читаем данные от dns resolver
                                     } else {
                                         readData(key);            // Читаем данные от канала
                                     }
@@ -78,6 +76,8 @@ public class ProxyServer implements AutoCloseable {
                         } catch (IllegalArgumentException iaExc) {
                             log.warn(new String(iaExc.getMessage().getBytes(StandardCharsets.UTF_8)), iaExc);
                             closeConnection(key);
+                        }catch (RuntimeException re){
+                            log.warn(new String(re.getMessage().getBytes(StandardCharsets.UTF_8)), re);
                         }
                     }
                     selector.selectedKeys().clear();
@@ -89,6 +89,10 @@ public class ProxyServer implements AutoCloseable {
         }
     }
 
+    /**
+     * Accept new client and creates channel for it
+     * @throws IOException if accept failed
+     */
     private void acceptClient() throws IOException {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
@@ -96,6 +100,11 @@ public class ProxyServer implements AutoCloseable {
         // log.info("Client connected");
     }
 
+    /**
+     * Finish connect with server
+     * @param key key of server channel
+     * @throws IOException if connection failed
+     */
     private void connect(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = ((SocketChannel) key.channel());
         Attachment attachment = ((Attachment) key.attachment());
@@ -107,6 +116,11 @@ public class ProxyServer implements AutoCloseable {
         key.interestOps(0);
     }
 
+    /**
+     * Write data to channel
+     * @param key key of channel where need to write
+     * @throws IOException if write failed
+     */
     private void writeData(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         Attachment attachment = (Attachment) key.attachment();
@@ -124,11 +138,15 @@ public class ProxyServer implements AutoCloseable {
             attachment.getOutputBuffer().flip();
             attachment.getOutputBuffer().clear();
             attachment.getDstKey().interestOps(attachment.getDstKey().interestOps() | SelectionKey.OP_READ);
-            //key.interestOps(key.interestOps() ^ SelectionKey.OP_WRITE);
             key.interestOps(SelectionKey.OP_READ);
         }
     }
 
+    /**
+     * Read data from channel
+     * @param key key of channel from which need to read
+     * @throws IOException if read failed
+     */
     private void readData(@NotNull SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         Attachment attachment = (Attachment) key.attachment();
@@ -152,6 +170,13 @@ public class ProxyServer implements AutoCloseable {
             attachment.getInputBuffer().flip();
         }
     }
+
+    /**
+     * Read first and second SOCKS-5 headers
+     * @param key key of channel from which header came
+     * @param length length og header in bytes
+     * @throws IOException if sending answer message is failed
+     */
 
     public void readHeader(@NotNull SelectionKey key, int length) throws IOException {
         SocketChannel clientChannel = (SocketChannel) key.channel();
@@ -179,6 +204,11 @@ public class ProxyServer implements AutoCloseable {
         }
     }
 
+    /**
+     * Checks that header contains no authorization method
+     * @param header first header
+     * @return true if contains, else false
+     */
     private boolean checkAuthMethod(byte @NotNull [] header) {
         int NMethods = header[1];
         for (int i = 0; i < NMethods; i++) {
@@ -189,6 +219,13 @@ public class ProxyServer implements AutoCloseable {
         return false;
     }
 
+    /**
+     * Read first header and check for noAuth method
+     * @param header first header
+     * @param clientChannel channel from which header came
+     * @param attachment attachment of clientChannel
+     * @throws IOException if sending answer message is failed
+     */
     private void authenticationHandler(byte @NotNull [] header, SocketChannel clientChannel, Attachment attachment) throws IOException {
         //log.info("Auth, first header");
         if (checkAuthMethod(header)) {
@@ -201,6 +238,14 @@ public class ProxyServer implements AutoCloseable {
         }
     }
 
+    /**
+     * Read second header
+     * @param header second header
+     * @param key key of channel from which header came
+     * @param clientChannel channel from which header came
+     * @param length length of the header in bytes
+     * @throws IOException if sending answer message or connection to site is failed
+     */
     private void requestHandler(byte @NotNull [] header, SelectionKey key, SocketChannel clientChannel, int length) throws IOException {
         //log.info("Request, second header");
         if (header[1] == CONNECT) {
@@ -232,6 +277,11 @@ public class ProxyServer implements AutoCloseable {
         }
     }
 
+    /**
+     * Read IP after DNS resolving
+     * @param key key of dns-resolver channel
+     * @throws IOException if read and parse failed
+     */
     private void readDnsAnswer(@NotNull SelectionKey key) throws IOException {
         ByteBuffer ans = ByteBuffer.allocate(Attachment.BUFFER_SIZE);
         DatagramChannel datagramChannel = (DatagramChannel) key.channel();
@@ -248,7 +298,7 @@ public class ProxyServer implements AutoCloseable {
                     limit(1).
                     map(it -> (ARecord) it).
                     findAny().
-                    orElseThrow(() -> new IllegalArgumentException("No such element in dns answer")).
+                    orElseThrow(() -> new RuntimeException("No dns resolve")).
                     getAddress();
 
             connectToSite(ipAddress.getAddress(),
@@ -257,6 +307,13 @@ public class ProxyServer implements AutoCloseable {
         }
     }
 
+    /**
+     * Connect to site using the sent ip and port
+     * @param addr ip address represent on byte array
+     * @param port port
+     * @param key key of client which want to establish connection with site
+     * @throws IOException if connection failed
+     */
     private void connectToSite(byte[] addr, int port, @NotNull SelectionKey key) throws IOException {
         try {
             SocketChannel siteChanel = SocketChannel.open();

@@ -14,7 +14,6 @@ public class Main {
 
             try (ProxyServer proxyServer = new ProxyServer(port)) {
                 proxyServer.run();
-
             } catch (IllegalArgumentException | IOException e) {
                 log.warn(e.getMessage(), e);
             }
@@ -24,6 +23,11 @@ public class Main {
 
     }
 
+    /**
+     * Parse port number from command arguments
+     * @param args array of command arguments
+     * @return port number if it corrects, else throws IllegalArgumentException
+     */
     public static int parseArgs(String @NotNull [] args) {
         try {
             if (args.length != 1) {

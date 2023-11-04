@@ -15,14 +15,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-public class dnsResolver {
-    private final DatagramChannel dnsChannel;
-    private int senderID;
+public class DnsResolver {
+    public static final int DNS_PORT = 53;
 
+    private final DatagramChannel dnsChannel;
+
+    private int senderID;
     @Getter
     private final HashMap<Integer, Map.Entry<Integer, SelectionKey>> clientMatch;
 
-    public dnsResolver(DatagramChannel dnsChannel) {
+    public DnsResolver(DatagramChannel dnsChannel) {
         this.dnsChannel = dnsChannel;
         this.senderID = 0;
         this.clientMatch = new HashMap<>();
