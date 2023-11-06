@@ -3,24 +3,29 @@ package ru.nsu.fit.usoltsev;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class Weather {
+import java.util.SplittableRandom;
 
-    String weatherState;
-    double temp;
-    double tempFeelLike;
-    long pressure;
-    long humidity;
-    double windSpeed;
-    long cloud;
+public class Weather {
+    private final String weatherState;
+    private final double temp;
+    private final double tempFeelLike;
+    private final double pressure;
+    private final double humidity;
+    private final double windSpeed;
+    private final double cloud;
 
     public Weather(JSONObject obj) {
         weatherState = (String) ((JSONObject) ((JSONArray) obj.get("weather")).get(0)).get("main");
-        temp = (double) ((JSONObject) obj.get("main")).get("temp");
-        tempFeelLike = (double) ((JSONObject) obj.get("main")).get("feels_like");
-        windSpeed = (double) ((JSONObject) obj.get("wind")).get("speed");
-        pressure = (long) ((JSONObject) obj.get("main")).get("pressure");
-        humidity = (long) ((JSONObject) obj.get("main")).get("humidity");
-        cloud = (long) ((JSONObject) obj.get("clouds")).get("all");
+        temp = getValue(obj, "main", "temp");
+        tempFeelLike = getValue(obj, "main", "feels_like");
+        windSpeed = getValue(obj, "wind", "speed");
+        pressure = getValue(obj, "main", "pressure");
+        humidity = getValue(obj, "main", "humidity");
+        cloud = getValue(obj, "clouds", "all");
+    }
+
+    private double getValue(JSONObject obj, String first, String second) {
+        return Double.parseDouble(String.valueOf(((JSONObject) obj.get(first)).get(second)));
     }
 
     @Override
@@ -28,10 +33,10 @@ public class Weather {
         return String.format("""
                         Current weather: %s,
                             Temperature: %.2f C, feels like: %.2f C
-                            Pressure: %d hPa
-                            Humidity: %d %%
+                            Pressure: %.0f hPa
+                            Humidity: %.0f %%
                             Wind speed: %.2f m/s
-                            Cloud percent: %d %%
+                            Cloud percent: %.0f %%
                         """,
                 weatherState, temp, tempFeelLike, pressure, humidity, windSpeed, cloud);
     }

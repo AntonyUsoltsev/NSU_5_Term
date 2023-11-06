@@ -16,43 +16,52 @@ import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+@SuppressWarnings("FieldCanBeLocal")
 @Slf4j
 public class LocationFinder {
-
     private final String placeName;
-
     private final int limit = 10;
-
-    private final String locationApiKey = "5c35b29b-7677-4f44-8f3a-7856e989fe22";
-    private final String weatherApiKey = "889f9ae3b7234d977bf3f9fa86fbce18";
-
-
+    private final int radius = 3000;
     public LocationFinder(String placeName) {
         this.placeName = placeName;
     }
 
     public void start() {
         try {
-            CompletableFuture<String> locationFuture = getLocationVariants(placeName);
+            CompletableFuture<String> locationFuture = getHttpFuture(getLocationVariantsURL(placeName));
             String locations = locationFuture.get();
+
             Place[] places = parseLocations(locations);
-            System.out.println("Insert number of selected place: ");
-            System.out.flush();
-            Scanner scanner = new Scanner(System.in);
-            int index = scanner.nextInt();
-            while (index < 1 || index > places.length) {
-                System.out.println("Insert correct number of selected place: ");
-                index = scanner.nextInt();
-            }
-            System.out.println(places[index - 1]);
-            CompletableFuture<String> weatherFuture = getWeather(places[index - 1]);
+
+            int index = selectedPlace(1, places.length);
+
+            Place selectedPlace = places[index - 1];
+            System.out.println("\n" + selectedPlace + "\n");
+
+            CompletableFuture<String> weatherFuture = getHttpFuture(getWeatherURL(selectedPlace));
             String stringWeather = weatherFuture.get();
+
             Weather weather = parseWeather(stringWeather);
             System.out.println(weather);
 
+            CompletableFuture<String> interestingPlaceFeature = getHttpFuture(getInterestLocationURL(selectedPlace));
+            String stringInterest = interestingPlaceFeature.get();
+            InterestingPlace[] interestingPlaces = parseInterestingPlace(stringInterest);
 
-            return;
-        } catch (IOException | ParseException | InterruptedException | ExecutionException ioExc) {
+            for (var interestingPlace : interestingPlaces) {
+                try {
+                    if (interestingPlace.getXid() != null) {
+                        CompletableFuture<String> interestingPlaceInfoFeature = getHttpFuture(getInterestLocationInfoURL(interestingPlace));
+                        String stringInterestInfo = interestingPlaceInfoFeature.get();
+                        parseInterestingPlaceInfo(stringInterestInfo, interestingPlace);
+                        System.out.println(interestingPlace);
+                    }
+                } catch (Exception e) {
+                    log.warn(new String(e.getMessage().getBytes(StandardCharsets.UTF_8)), e);
+                }
+            }
+
+        } catch (ParseException | InterruptedException | ExecutionException ioExc) {
 
             log.warn(new String(ioExc.getMessage().getBytes(StandardCharsets.UTF_8)));
             throw new RuntimeException(ioExc);
@@ -60,14 +69,10 @@ public class LocationFinder {
     }
 
 
-    public CompletableFuture<String> getLocationVariants(String placeName) throws IOException, ParseException {
+    public CompletableFuture<String> getHttpFuture(@NotNull String url) {
+//        System.out.println(new String(url.getBytes(StandardCharsets.UTF_8)));
 
         OkHttpClient client = new OkHttpClient();
-        String url = "https://graphhopper.com/api/1/geocode?q=" + placeName +
-                "&key=" + locationApiKey +
-                "&limit=" + limit;
-
-        System.out.println(new String(url.getBytes(StandardCharsets.UTF_8)));
         Request request = new Request.Builder()
                 .url(url)
                 .get()
@@ -97,11 +102,16 @@ public class LocationFinder {
             }
         });
         return resultFuture;
-
     }
 
-    public Place[] parseLocations(String json) throws ParseException {
-        System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
+    public String getLocationVariantsURL(String placeName) {
+        return "https://graphhopper.com/api/1/geocode?q=" + placeName +
+                "&key=" + APiKeys.locationApiKey +
+                "&limit=" + limit;
+    }
+
+    public Place[] parseLocations(@NotNull String json) throws ParseException {
+        //System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
         JSONParser parser = new JSONParser();
 
         JSONObject jsonObj = (JSONObject) parser.parse(json);
@@ -116,52 +126,68 @@ public class LocationFinder {
         }
         return places;
     }
-    public Weather parseWeather(String json) throws ParseException {
-        System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
+
+    public int selectedPlace(int minLength, int maxLength) {
+        System.out.println("\nInsert number of selected place: ");
+        System.out.flush();
+        Scanner scanner = new Scanner(System.in);
+        int index = scanner.nextInt();
+        while (index < minLength || index > maxLength) {
+            System.out.println("Insert correct number of selected place: ");
+            index = scanner.nextInt();
+        }
+        return index;
+    }
+
+    public String getWeatherURL(@NotNull Place selectPlace) {
+        return "https://api.openweathermap.org/data/2.5/weather?" +
+                "lat=" + selectPlace.getLatitude() +
+                "&lon=" + selectPlace.getLongitude() +
+                "&units=metric" +
+                "&appid=" + APiKeys.weatherApiKey;
+    }
+
+    public Weather parseWeather(@NotNull String json) throws ParseException {
+        //System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
         JSONParser parser = new JSONParser();
         JSONObject jsonObj = (JSONObject) parser.parse(json);
         return new Weather(jsonObj);
     }
 
-    public CompletableFuture<String> getWeather(Place selectPlace) {
-        OkHttpClient client = new OkHttpClient();
-        String url = "https://api.openweathermap.org/data/2.5/weather?" +
-                "lat=" + selectPlace.getLattitude() +
+    public String getInterestLocationURL(@NotNull Place selectPlace) {
+        return "https://api.opentripmap.com/0.1/en/places/radius?" +
+                "radius=" + radius +
                 "&lon=" + selectPlace.getLongitude() +
-                "&units=metric" +
-                "&appid=" + weatherApiKey;
+                "&lat=" + selectPlace.getLatitude() +
+                "&apikey=" + APiKeys.interestLocationApiKey;
 
-        System.out.println(new String(url.getBytes(StandardCharsets.UTF_8)));
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
+    }
 
-        CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    public InterestingPlace[] parseInterestingPlace(@NotNull String json) throws ParseException {
+        // System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObj = (JSONObject) parser.parse(json);
+        JSONArray features = (JSONArray) jsonObj.get("features");
+        int minLen = Math.min(limit, features.size());
+        InterestingPlace[] interestingPlaces = new InterestingPlace[minLen];
+        for (int i = 0; i < minLen; i++) {
+            interestingPlaces[i] = new InterestingPlace((JSONObject) features.get(i));
+        }
+        return interestingPlaces;
+    }
 
-        client.newCall(request).enqueue(new okhttp3.Callback() {
-            @Override
-            public void onFailure(@NotNull okhttp3.Call call, @NotNull IOException e) {
-                resultFuture.completeExceptionally(e);
-            }
 
-            @Override
-            public void onResponse(@NotNull okhttp3.Call call, @NotNull Response response) {
-                try {
-                    if (response.isSuccessful()) {
-                        assert response.body() != null;
-                        String responseBody = response.body().string();
-                        resultFuture.complete(responseBody);
-                    } else {
-                        resultFuture.completeExceptionally(new Exception("HTTP request fail"));
-                    }
-                } catch (IOException e) {
-                    resultFuture.completeExceptionally(e);
-                }
-            }
-        });
-        return resultFuture;
+    public String getInterestLocationInfoURL(@NotNull InterestingPlace interestingPlace) {
+        return " https://api.opentripmap.com/0.1/ru/places/" +
+                "xid/" + interestingPlace.getXid() +
+                "?apikey=" + APiKeys.interestLocationApiKey;
+    }
 
+    private void parseInterestingPlaceInfo(String json, InterestingPlace interestingPlace) throws ParseException {
+        // System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObj = (JSONObject) parser.parse(json);
+        interestingPlace.setInfo(jsonObj);
     }
 
 }
