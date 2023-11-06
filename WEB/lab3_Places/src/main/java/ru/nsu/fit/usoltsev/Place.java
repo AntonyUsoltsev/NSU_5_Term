@@ -1,17 +1,31 @@
 package ru.nsu.fit.usoltsev;
 
+import lombok.Getter;
 import org.json.simple.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 
-public record Place(String country, String osm_key, String osm_value, String city, String street, String name) {
+public class Place{
+    String country;
+    String osm_key;
+    String osm_value;
+    String city;
+    String street;
+    String name;
+    @Getter
+    double lattitude;
+    @Getter
+    double longitude;
+
     public Place(JSONObject obj) {
-        this(get("country", obj),
-                get("osm_key", obj),
-                get("osm_value", obj),
-                get("city", obj),
-                get("street", obj),
-                get("name", obj));
+        country = get("country", obj);
+        osm_key = get("osm_key", obj);
+        osm_value = get("osm_value", obj);
+        city = get("city", obj);
+        street = get("street", obj);
+        name = get("name", obj);
+        lattitude = (double) ((JSONObject) obj.get("point")).get("lat");
+        longitude = (double) ((JSONObject) obj.get("point")).get("lng");
     }
 
     private static String get(String key, JSONObject obj) {
