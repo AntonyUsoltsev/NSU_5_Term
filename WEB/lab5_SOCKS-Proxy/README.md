@@ -15,6 +15,6 @@ The server works on localhost 127.0.0.1, on port given in command arguments
 
 Command arguments:
 
-    1) <Integer> port of the server
+    1) <UShort> port of the server
 
 Example:  1080

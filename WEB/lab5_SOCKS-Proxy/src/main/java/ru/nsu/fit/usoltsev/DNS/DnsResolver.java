@@ -33,7 +33,8 @@ public class DnsResolver {
     public void resolve(byte[] addr, int port, SelectionKey key) {
         try {
             Message message = new Message();
-            Record record = Record.newRecord(Name.fromString(new String(addr, StandardCharsets.UTF_8) + '.'), Type.A, DClass.IN);
+            Record record = Record.newRecord(Name.fromString(
+                    new String(addr, StandardCharsets.UTF_8) + '.'), Type.A, DClass.IN);
             message.addRecord(record, Section.QUESTION);
 
             Header header = message.getHeader();
