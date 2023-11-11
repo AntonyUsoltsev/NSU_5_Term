@@ -24,7 +24,6 @@ public class InterestingPlace {
             longitude = (double) ((JSONArray) ((JSONObject) feature.get("geometry")).get("coordinates")).get(0);
             latitude = (double) ((JSONArray) ((JSONObject) feature.get("geometry")).get("coordinates")).get(1);
         }
-
     }
 
     public void setInfo(@NotNull JSONObject obj) {

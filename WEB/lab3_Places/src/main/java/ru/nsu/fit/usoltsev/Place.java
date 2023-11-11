@@ -1,6 +1,7 @@
 package ru.nsu.fit.usoltsev;
 
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -28,7 +29,7 @@ public class Place {
         longitude = (double) ((JSONObject) obj.get("point")).get("lng");
     }
 
-    private static String get(String key, JSONObject obj) {
+    private static String get(String key, @NotNull JSONObject obj) {
         return obj.get(key) != null ? (String) obj.get(key) : "Unknown";
 
     }
