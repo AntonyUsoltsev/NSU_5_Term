@@ -2,9 +2,6 @@ package ru.nsu.fit.usoltsev;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.util.SplittableRandom;
-
 public class Weather {
     private final String weatherState;
     private final double temp;

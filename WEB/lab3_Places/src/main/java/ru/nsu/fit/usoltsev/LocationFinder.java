@@ -1,20 +1,24 @@
 package ru.nsu.fit.usoltsev;
 
+import kotlin.Pair;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("FieldCanBeLocal")
 @Slf4j
@@ -22,8 +26,80 @@ public class LocationFinder {
     private final String placeName;
     private final int limit = 10;
     private final int radius = 3000;
+
     public LocationFinder(String placeName) {
         this.placeName = placeName;
+    }
+
+    public void test() {
+
+        CompletableFuture<String> locationFuture = getHttpFuture(getLocationVariantsURL(placeName));
+
+        CompletableFuture<Void> resultFuture = locationFuture.thenApplyAsync(locations -> {
+            try {
+                Place[] places = parseLocations(locations);
+                int index = selectedPlace(1, places.length);
+                return places[index - 1];
+            } catch (ParseException pe) {
+                throw new RuntimeException("Error parsing places", pe);
+            }
+        }).thenComposeAsync(selectedPlace -> {
+            System.out.println("\n" + selectedPlace + "\n");
+
+            CompletableFuture<Weather> weatherFuture = getHttpFuture(getWeatherURL(selectedPlace))
+                    .thenApplyAsync(response -> {
+                        try {
+                            return parseWeather(response);
+                        } catch (ParseException pe) {
+                            throw new RuntimeException("Error parsing weather", pe);
+                        }
+                    });
+
+            CompletableFuture<InterestingPlace[]> interestingPlacesFuture = getHttpFuture(getInterestLocationURL(selectedPlace))
+                    .thenApplyAsync(response -> {
+                        try {
+                            return parseInterestingPlace(response);
+                        } catch (ParseException pe) {
+                            throw new RuntimeException("Error parsing interesting places", pe);
+                        }
+                    })
+                    .thenComposeAsync(interestingPlaces -> {
+                        List<CompletableFuture<Void>> infoFutures = Arrays.stream(interestingPlaces)
+                                .filter(intPlace -> intPlace.getXid() != null)
+                                .map(intPlace -> getHttpFuture(getInterestLocationInfoURL(intPlace))
+                                        .thenAcceptAsync(stringInterestInfo -> {
+                                            try {
+                                                parseInterestingPlaceInfo(stringInterestInfo, intPlace);
+                                            } catch (ParseException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }))
+                                .toList();
+
+                        return CompletableFuture.allOf(infoFutures.toArray(new CompletableFuture[0]))
+                                .thenApplyAsync(v -> interestingPlaces);
+                    });
+
+            return CompletableFuture.allOf(weatherFuture, interestingPlacesFuture)
+                    .thenApplyAsync(v -> new Pair<>(weatherFuture.join(), interestingPlacesFuture.join()));
+        }).thenAcceptAsync(pair -> {
+            System.out.println(pair.getFirst());
+            for (InterestingPlace intPlace : pair.getSecond()) {
+                if(intPlace.getXid() != null)
+                    System.out.println(intPlace);
+            }
+
+        });
+
+
+        resultFuture.exceptionally(throwable -> {
+            throw new RuntimeException(throwable);
+        });
+
+
+        resultFuture.join();
+
+
     }
 
     public void start() {
@@ -53,6 +129,7 @@ public class LocationFinder {
                     if (interestingPlace.getXid() != null) {
                         CompletableFuture<String> interestingPlaceInfoFeature = getHttpFuture(getInterestLocationInfoURL(interestingPlace));
                         String stringInterestInfo = interestingPlaceInfoFeature.get();
+                        interestingPlaceInfoFeature.join();
                         parseInterestingPlaceInfo(stringInterestInfo, interestingPlace);
                         System.out.println(interestingPlace);
                     }
@@ -60,6 +137,10 @@ public class LocationFinder {
                     log.warn(new String(e.getMessage().getBytes(StandardCharsets.UTF_8)), e);
                 }
             }
+            locationFuture.join();
+            weatherFuture.join();
+            interestingPlaceFeature.join();
+
 
         } catch (ParseException | InterruptedException | ExecutionException ioExc) {
 
@@ -160,7 +241,6 @@ public class LocationFinder {
                 "&lon=" + selectPlace.getLongitude() +
                 "&lat=" + selectPlace.getLatitude() +
                 "&apikey=" + APiKeys.interestLocationApiKey;
-
     }
 
     public InterestingPlace[] parseInterestingPlace(@NotNull String json) throws ParseException {

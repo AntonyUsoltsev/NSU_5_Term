@@ -10,7 +10,8 @@ public class Main {
         String placeName = scanner.nextLine();
 
         LocationFinder locationFinder = new LocationFinder(placeName);
-        locationFinder.start();
+       // locationFinder.start();
+        locationFinder.test();
 
         scanner.close();
     }

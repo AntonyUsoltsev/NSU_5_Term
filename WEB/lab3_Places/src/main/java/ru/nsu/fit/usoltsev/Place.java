@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.json.simple.JSONObject;
 
 import java.nio.charset.StandardCharsets;
-
+@SuppressWarnings({"FieldCanBeLocal","unused"})
 public class Place {
     private final String country;
     private final String osm_key;
