@@ -8,29 +8,24 @@ import org.json.simple.JSONObject;
 import java.nio.charset.StandardCharsets;
 
 public class InterestingPlace {
-    private String name;
+    private final String name;
     @Getter
-    private String xid;
-    private double latitude;
-    private double longitude;
+    private final String xid;
+    private final double latitude;
+    private final double longitude;
     private String info;
 
     public InterestingPlace(@NotNull JSONObject feature) {
-
-        String checkName = (String) ((JSONObject) feature.get("properties")).get("name");
-        if (!checkName.isBlank()) {
-            name = checkName;
-            xid = (String) ((JSONObject) feature.get("properties")).get("xid");
-            longitude = (double) ((JSONArray) ((JSONObject) feature.get("geometry")).get("coordinates")).get(0);
-            latitude = (double) ((JSONArray) ((JSONObject) feature.get("geometry")).get("coordinates")).get(1);
-        }
+        name = (String) ((JSONObject) feature.get("properties")).get("name");
+        xid = (String) ((JSONObject) feature.get("properties")).get("xid");
+        longitude = (double) ((JSONArray) ((JSONObject) feature.get("geometry")).get("coordinates")).get(0);
+        latitude = (double) ((JSONArray) ((JSONObject) feature.get("geometry")).get("coordinates")).get(1);
     }
 
     public void setInfo(@NotNull JSONObject obj) {
         if (obj.get("wikipedia_extracts") != null) {
             info = (String) ((JSONObject) obj.get("wikipedia_extracts")).get("text");
-        }
-        else{
+        } else {
             info = "Information absent";
         }
 

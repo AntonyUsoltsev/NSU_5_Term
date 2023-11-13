@@ -6,28 +6,28 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("FieldCanBeLocal")
 @Slf4j
 public class LocationFinder {
     private final String placeName;
-    private final int limit = 10;
-    private final int radius = 3000;
+    private final int limit;
+    private final int radius;
 
-    private final JSONParser jsonParser;
-
-    public LocationFinder(String placeName) {
-        this.jsonParser = new JSONParser();
+    public LocationFinder(String placeName, int limit, int radius) {
         this.placeName = placeName;
+        this.limit = limit;
+        this.radius = radius;
     }
 
     public void start() {
@@ -36,13 +36,13 @@ public class LocationFinder {
         CompletableFuture<Void> resultFuture = locationFuture
                 .thenApplyAsync(this::getSelectedPlace)
                 .thenComposeAsync(selectedPlace -> {
-                    System.out.println("\nSelect:" + selectedPlace + "\n");
+                    System.out.println("\nSelect: " + selectedPlace + "\n");
 
                     CompletableFuture<Weather> weatherFuture =
                             getHttpFuture(URLUtils.getWeatherURL(selectedPlace))
                                     .thenApplyAsync(this::getWeather);
 
-                    CompletableFuture<InterestingPlace[]> interestingPlacesFuture =
+                    CompletableFuture<ArrayList<InterestingPlace>> interestingPlacesFuture =
                             getHttpFuture(URLUtils.getInterestLocationURL(selectedPlace, radius))
                                     .thenApplyAsync(this::getInterestingPlaces)
                                     .thenComposeAsync(this::getInterestPlacesInfo);
@@ -50,7 +50,8 @@ public class LocationFinder {
                     return CompletableFuture.allOf(weatherFuture, interestingPlacesFuture)
                             .thenApplyAsync(v -> new Pair<>(weatherFuture.join(), interestingPlacesFuture.join()));
 
-                }).thenAcceptAsync(this::printFindInfo);
+                })
+                .thenAcceptAsync(this::printFindInfo);
 
         resultFuture.exceptionally(throwable -> {
             log.warn(throwable.getMessage(), throwable);
@@ -79,13 +80,9 @@ public class LocationFinder {
             @Override
             public void onResponse(@NotNull okhttp3.Call call, @NotNull Response response) {
                 try {
-                    if (response.isSuccessful()) {
-                        assert response.body() != null;
-                        String responseBody = response.body().string();
-                        resultFuture.complete(responseBody);
-                    } else {
-                        resultFuture.completeExceptionally(new Exception("HTTP request fail"));
-                    }
+                    assert response.body() != null;
+                    String responseBody = response.body().string();
+                    resultFuture.complete(responseBody);
                 } catch (IOException e) {
                     resultFuture.completeExceptionally(e);
                 }
@@ -105,15 +102,13 @@ public class LocationFinder {
     }
 
     public Place[] parseLocations(@NotNull String json) throws ParseException {
-        //System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
         JSONParser parser = new JSONParser();
-
         JSONObject jsonObj = (JSONObject) parser.parse(json);
-        JSONArray ja = (JSONArray) jsonObj.get("hits");
-        Place[] places = new Place[ja.size()];
+        JSONArray jsonArr = (JSONArray) jsonObj.get("hits");
+        Place[] places = new Place[jsonArr.size()];
 
-        for (int i = 0; i < ja.size(); i++) {
-            JSONObject obj = (JSONObject) ja.get(i);
+        for (int i = 0; i < jsonArr.size(); i++) {
+            JSONObject obj = (JSONObject) jsonArr.get(i);
             places[i] = new Place(obj);
             System.out.println((i + 1) + ": " + places[i]);
         }
@@ -142,33 +137,36 @@ public class LocationFinder {
         }
     }
 
-    private InterestingPlace[] getInterestingPlaces(String response) {
+    public ArrayList<InterestingPlace> getInterestingPlaces(@NotNull String json) {
         try {
             JSONParser parser = new JSONParser();
-            JSONObject jsonObj = (JSONObject) parser.parse(response);
+            JSONObject jsonObj = (JSONObject) parser.parse(json);
             JSONArray features = (JSONArray) jsonObj.get("features");
-            int minLen = Math.min(limit, features.size());
-            InterestingPlace[] interestingPlaces = new InterestingPlace[minLen];
-            for (int i = 0; i < minLen; i++) {
-                interestingPlaces[i] = new InterestingPlace((JSONObject) features.get(i));
+            ArrayList<InterestingPlace> list = new ArrayList<>();
+            for (Object feature : features) {
+                if (!((String) ((JSONObject) ((JSONObject) feature).get("properties")).get("name")).isBlank()) {
+                    list.add(new InterestingPlace(((JSONObject) feature)));
+                    if (list.size() >= limit) {
+                        break;
+                    }
+                }
             }
-            return interestingPlaces;
+            return list;
         } catch (ParseException pe) {
             throw new RuntimeException("Error parsing interesting places", pe);
         }
     }
 
-    private CompletableFuture<InterestingPlace[]> getInterestPlacesInfo(InterestingPlace[] interestingPlaces) {
-        List<CompletableFuture<Void>> infoFutures = Arrays.stream(interestingPlaces)
-                .filter(intPlace -> intPlace.getXid() != null)
+    private CompletableFuture<ArrayList<InterestingPlace>> getInterestPlacesInfo(@NotNull ArrayList<InterestingPlace> interestingPlaces) {
+        List<CompletableFuture<Void>> infoFutures = interestingPlaces.stream()
                 .map(intPlace -> getHttpFuture(URLUtils.getInterestLocationInfoURL(intPlace))
                         .thenAcceptAsync(stringInterestInfo -> {
                             try {
                                 JSONParser parser = new JSONParser();
                                 JSONObject jsonObj = (JSONObject) parser.parse(stringInterestInfo);
                                 intPlace.setInfo(jsonObj);
-                            } catch (ParseException e) {
-                                throw new RuntimeException(e);
+                            } catch (ParseException pe) {
+                                throw new RuntimeException("Error parsing interesting places info", pe);
                             }
                         }))
                 .toList();
@@ -177,37 +175,10 @@ public class LocationFinder {
                 .thenApplyAsync(v -> interestingPlaces);
     }
 
-    private void printFindInfo(@NotNull Pair<Weather, InterestingPlace[]> pair) {
+    private void printFindInfo(@NotNull Pair<Weather, ArrayList<InterestingPlace>> pair) {
         System.out.println(pair.getFirst());
         for (InterestingPlace intPlace : pair.getSecond()) {
-            if (intPlace.getXid() != null)
-                System.out.println(intPlace);
+            System.out.println(intPlace);
         }
     }
-
-    //    public InterestingPlace[] parseInterestingPlace(@NotNull String json) throws ParseException {
-//        // System.out.println(new String(json.getBytes(StandardCharsets.UTF_8)));
-//        JSONParser parser = new JSONParser();
-//        JSONObject jsonObj = (JSONObject) parser.parse(json);
-//        JSONArray features = (JSONArray) jsonObj.get("features");
-//        int futSize = features.size();
-//        System.out.println("feature size " + futSize);
-//        int minLen = Math.min(limit, futSize);
-//        int count = 0;
-//        ArrayList<Place> list = new ArrayList<>();
-//        InterestingPlace[] interestingPlaces = new InterestingPlace[minLen];
-//        for (Object feature : features) {
-//            if (!((String) ((JSONObject) ((JSONObject) feature).get("properties")).get("name")).isBlank()) {
-//                list.add(new Place((JSONObject) feature));
-//                interestingPlaces[count] = new InterestingPlace((JSONObject) feature);
-//                count++;
-//                if (count >= limit) {
-//                    break;
-//                }
-//            }
-//        }
-//        InterestingPlace[] newInterstPLace = new InterestingPlace[count];
-//        System.arraycopy(interestingPlaces, 0, newInterstPLace, 0, count);
-//        return newInterstPLace;
-//    }
 }
