@@ -41,3 +41,4 @@ bin/
 ### Mac OS ###
 .DS_Store
 /src/main/java/ru/nsu/fit/usoltsev/APiKeys.java
+/src/main/java/ru/nsu/fit/usoltsev/apies/APiKeys.java

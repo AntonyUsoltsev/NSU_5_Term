@@ -2,6 +2,9 @@ package ru.nsu.fit.usoltsev;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import ru.nsu.fit.usoltsev.apies.APiKeys;
+import ru.nsu.fit.usoltsev.apies.InterestingPlace;
+import ru.nsu.fit.usoltsev.apies.Place;
 
 public class URLUtils {
     @NotNull
@@ -10,7 +13,8 @@ public class URLUtils {
         return "https://graphhopper.com/api/1/geocode?" +
                 "q=" + placeName +
                 "&key=" + APiKeys.locationApiKey +
-                "&limit=" + limit;
+                "&limit=" + limit +
+                "&locale=en";
     }
 
     @NotNull
@@ -36,7 +40,7 @@ public class URLUtils {
     @NotNull
     @Contract(pure = true)
     public static String getInterestLocationInfoURL(@NotNull InterestingPlace interestingPlace) {
-        return "https://api.opentripmap.com/0.1/ru/places/" +
+        return "https://api.opentripmap.com/0.1/en/places/" +
                 "xid/" + interestingPlace.getXid() +
                 "?apikey=" + APiKeys.interestLocationApiKey;
     }

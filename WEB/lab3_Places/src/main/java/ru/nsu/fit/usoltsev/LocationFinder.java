@@ -10,6 +10,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import ru.nsu.fit.usoltsev.apies.InterestingPlace;
+import ru.nsu.fit.usoltsev.apies.Place;
+import ru.nsu.fit.usoltsev.apies.Weather;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -177,8 +180,12 @@ public class LocationFinder {
 
     private void printFindInfo(@NotNull Pair<Weather, ArrayList<InterestingPlace>> pair) {
         System.out.println(pair.getFirst());
-        for (InterestingPlace intPlace : pair.getSecond()) {
-            System.out.println(intPlace);
+        if (pair.getSecond().isEmpty()) {
+            System.out.println("Interesting places not found");
+        } else {
+            for (InterestingPlace intPlace : pair.getSecond()) {
+                System.out.println(intPlace);
+            }
         }
     }
 }

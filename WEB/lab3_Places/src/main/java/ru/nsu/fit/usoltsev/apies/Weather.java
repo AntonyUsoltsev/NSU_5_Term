@@ -1,4 +1,4 @@
-package ru.nsu.fit.usoltsev;
+package ru.nsu.fit.usoltsev.apies;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -16,7 +16,7 @@ public class Weather {
         temp = getValue(obj, "main", "temp");
         tempFeelLike = getValue(obj, "main", "feels_like");
         windSpeed = getValue(obj, "wind", "speed");
-        pressure = getValue(obj, "main", "pressure");
+        pressure = getValue(obj, "main", "pressure") * 0.75;
         humidity = getValue(obj, "main", "humidity");
         cloud = getValue(obj, "clouds", "all");
     }
@@ -30,7 +30,7 @@ public class Weather {
         return String.format("""
                         Current weather: %s,
                             Temperature: %.2f C, feels like: %.2f C
-                            Pressure: %.0f hPa
+                            Pressure: %.0f mm.Hg
                             Humidity: %.0f %%
                             Wind speed: %.2f m/s
                             Cloud percent: %.0f %%

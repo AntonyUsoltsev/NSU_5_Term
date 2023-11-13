@@ -1,4 +1,4 @@
-package ru.nsu.fit.usoltsev;
+package ru.nsu.fit.usoltsev.apies;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
