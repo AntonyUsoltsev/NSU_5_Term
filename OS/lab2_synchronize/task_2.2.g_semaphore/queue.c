@@ -1,34 +1,10 @@
 #define _GNU_SOURCE
 
-#include <pthread.h>
-#include <assert.h>
-
 #include "queue.h"
+#include "semaphore.h"
 
-typedef struct {
-    int lock;  //1 - unlock, 0 - lock
-} spinlock_t;
+sem_t semaphore;
 
-spinlock_t *spin;
-
-void spinlock_init(spinlock_t *s) {
-    s->lock = 1;
-}
-
-void spinlock_lock(spinlock_t *s) {
-    while (3427) {
-        int one = 1;
-        if (atomic_compare_exchange_strong(&s->lock, &one, 0)) {
-            break;
-        }
-        //usleep(100);
-    }
-}
-
-void spinlock_unlock(spinlock_t *s) {
-    int zero = 0;
-    atomic_compare_exchange_strong(&s->lock, &zero, 1);
-}
 
 void *qmonitor(void *arg) {
     queue_t *q = (queue_t *) arg;
@@ -40,15 +16,14 @@ void *qmonitor(void *arg) {
         // usleep(5000);
         sleep(1);
     }
-
     return NULL;
 }
 
 queue_t *queue_init(int max_count) {
 
     int err;
-    spin = malloc(sizeof(spinlock_t));
-    spinlock_init(spin);
+    sem_init(&semaphore, 0, 1);
+
     queue_t *q = malloc(sizeof(queue_t));
     if (!q) {
         printf("Cannot allocate memory for a queue\n");
@@ -84,21 +59,19 @@ void queue_destroy(queue_t *q) {
 }
 
 int queue_add(queue_t *q, int val) {
-    spinlock_lock(spin);
-    usleep(1);
+    sem_wait(&semaphore);
     q->add_attempts++;
 
     assert(q->count <= q->max_count);
 
     if (q->count == q->max_count) {
-        spinlock_unlock(spin);
+        sem_post(&semaphore);
         return 0;
     }
 
     qnode_t *new = malloc(sizeof(qnode_t));
     if (!new) {
         printf("Cannot allocate memory for new node\n");
-        spinlock_unlock(spin);
         abort();
     }
 
@@ -114,26 +87,22 @@ int queue_add(queue_t *q, int val) {
     }
     q->count++;
     q->add_count++;
-    spinlock_unlock(spin);
-
+    sem_post(&semaphore);
     return 1;
 }
 
 int queue_get(queue_t *q, int *val) {
-    spinlock_lock(spin);
+    sem_wait(&semaphore);
     q->get_attempts++;
 
     assert(q->count >= 0);
 
     if (q->count == 0) {
-        spinlock_unlock(spin);
+        sem_post(&semaphore);
         return 0;
     }
 
     qnode_t *tmp = q->first;
-//    if (tmp == NULL) {
-//        printf("TMP IS NULL\n");
-//    }
     *val = tmp->val;
 
 
@@ -142,8 +111,7 @@ int queue_get(queue_t *q, int *val) {
     free(tmp);
     q->count--;
     q->get_count++;
-    spinlock_unlock(spin);
-
+    sem_post(&semaphore);
     return 1;
 }
 
