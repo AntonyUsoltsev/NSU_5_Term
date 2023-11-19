@@ -16,7 +16,7 @@ void spinlock_init(spinlock_t *s) {
 }
 
 void spinlock_lock(spinlock_t *s) {
-    while (3427) {
+    while (1) {
         int one = 1;
         if (atomic_compare_exchange_strong(&s->lock, &one, 0)) {
             break;
@@ -131,12 +131,7 @@ int queue_get(queue_t *q, int *val) {
     }
 
     qnode_t *tmp = q->first;
-//    if (tmp == NULL) {
-//        printf("TMP IS NULL\n");
-//    }
     *val = tmp->val;
-
-
     q->first = q->first->next;
 
     free(tmp);
