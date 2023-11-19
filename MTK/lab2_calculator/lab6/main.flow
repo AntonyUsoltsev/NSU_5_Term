@@ -1,0 +1,282 @@
+import lingo/pegcode/driver;
+import runtime;
+import lib/sys/system;
+import lib/ds/hashmap; 
+
+ArExpr ::= ArSum, ArMult, ArSub, ArDiv, ArInt, ArVar, ArMinus, ArPow;
+
+ArNum ::= ArInt, ArVar;
+
+ArSum(lhs : ArExpr, rhs : ArExpr);
+ArMult(lhs : ArExpr, rhs : ArExpr);
+ArSub(lhs : ArExpr, rhs : ArExpr);
+ArDiv(lhs : ArExpr, rhs : ArExpr);
+ArPow(lhs: ArExpr, rhs: ArExpr);
+ArVar(var : string);
+ArInt(val : int);
+ArMinus(num : ArNum);
+
+// rational number
+ArRat(num : int, den : int);
+
+variables : HashMap<string, Maybe<ArRat>> = makeHashMap(\i -> s2i(i));
+
+s2ar(str : string) -> ArExpr {
+    e_gr = "#include grammar.lingo";
+    parsic(compilePegGrammar(e_gr),
+			str,
+            SemanticActions(setTree(defaultPegActions.t,"createArInt",\s -> ArInt(s2i(s[0])))))
+}
+
+ar2s(expr : ArExpr) -> string {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs) : "(" + ar2s(lhs) + "+" + ar2s(rhs) + ")";
+        ArMult(lhs, rhs): "(" + ar2s(lhs) + "*" + ar2s(rhs) + ")";
+        ArSub(lhs, rhs) : "(" + ar2s(lhs) + "-" + ar2s(rhs) + ")";
+        ArDiv(lhs, rhs) : "(" + ar2s(lhs) + "/" + ar2s(rhs) + ")";
+		ArPow(lhs, rhs) : "(" + ar2s(lhs) + "^" + ar2s(rhs) + ")";
+		ArVar(var) : var;
+        ArInt(val) : i2s(val);
+		ArMinus(val) : ar2s(val);
+    }
+}
+
+// -a / -b -> a / b
+// a / -b -> -a / b
+get_numerator(a : int, b : int) -> int {
+	if (a < 0 && b < 0) {-a;}
+
+	else if (a > 0 && b < 0) {-a;}
+
+	else {a;}
+}
+
+get_denominator(a : int, b : int) -> int {
+	if (a < 0 && b < 0) {-b;}
+
+	else if (a > 0 && b < 0) {-b;}
+
+	else {b;}
+}
+
+simplify(numerator : int, denominator : int) -> Maybe<ArRat> {
+	if (denominator == 0) {
+		None();
+	}
+	else {
+		// -a / -b -> a / b
+		// a / -b -> -a / b
+		num = get_numerator(numerator, denominator);
+		den = get_denominator(numerator, denominator);
+
+		nod : int = NOD(num, den);
+		Some(ArRat(num / nod, den / nod));
+	}
+}
+
+myPow(num1 : int, num2 : int, num3 : int, num4 : int) -> Maybe<ArRat>{
+	if(num4 != 1){
+		None();
+	}
+	else{
+		Some(ArRat(pow(num1, num3), pow(num2, num3)));
+	}
+}
+
+NOD(numerator : int, denominator : int) -> int {
+	if (numerator == 0) { 1; }
+
+	else {
+		abs_num : int = iabs(numerator);
+
+		if (abs_num == denominator) {
+			abs_num;
+		}
+		
+		else if (abs_num > denominator) {
+			NOD(abs_num - denominator, denominator);
+		}
+
+		else {
+			NOD(abs_num, denominator - abs_num);
+		}
+	}
+}
+
+get_var(numerator : int, denominator : int) -> Maybe<ArRat> {
+	if (denominator <= 0) {
+		None();
+	}
+	else {
+		simplify(numerator, denominator);
+	}
+}
+
+handle_var(var : string) -> Maybe<ArRat> {
+	value : Maybe<Maybe<ArRat>> = lookupHashMap(variables, var);
+
+	switch (value) {
+		None() : {
+			print("Input variable ");
+			println(var);
+
+			print("numerator = ");
+			numerator : int = s2i(readUntil("\n"));
+
+			print("denominator = ");
+			denominator : int = s2i(readUntil("\n"));
+			
+			new_var : Maybe<ArRat> = get_var(numerator, denominator);
+			setHashMap(variables, var, new_var);
+			new_var;
+		}
+		// we already know this variable
+		Some(val) : val;
+	}
+}
+
+apply(lhs : Maybe<ArRat>,
+	  rhs : Maybe<ArRat>, 
+	  func : (l : ArRat, r : ArRat) -> Maybe<ArRat>) -> Maybe<ArRat> {
+
+	switch(lhs) {
+		None() : None();
+		Some(l) : {
+			switch(rhs) {
+				None() : None();
+				Some(r) : {
+					func(l, r);
+				}
+			}
+		}
+	}
+}
+
+calculate(expr : ArExpr) -> Maybe<ArRat> {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> simplify(x.num * y.den + x.den * y.num, x.den * y.den));
+
+        ArMult(lhs, rhs) : apply(calculate(lhs),
+								 calculate(rhs),
+								 \x, y -> simplify(x.num * y.num, x.den * y.den));
+
+        ArSub(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> simplify(x.num * y.den - x.den * y.num, x.den * y.den));
+
+        ArDiv(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> simplify(x.num * y.den, x.den * y.num));
+		ArPow(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> {
+									if(y.den == 1){
+										//myPow(x.num, x.den, y.num, y.den)
+										simplify(pow(x.num, y.num), pow(x.den, y.num));
+									}
+									else{
+										simplify(0, 0);
+									}
+								}); 						
+
+		ArVar(var) : handle_var(var);
+
+		ArMinus(num) : {
+			switch (num) {
+				ArInt(val) : Some(ArRat(-val, 1));
+
+				ArVar(var) : {
+					rat : Maybe<ArRat> = handle_var(var);
+					switch (rat) {
+						None() : None();
+						Some(v) : Some(ArRat(-v.num, v.den));
+					}
+				}
+			}
+		}
+
+        ArInt(var) : {
+			Some(ArRat(var, 1));
+		}
+    }
+}
+
+printArRat(fract : Maybe<ArRat>) -> void {
+	switch (fract) {
+		None() : println(None());
+		Some(val) : {
+			if (val.den == 1) {
+				println("Result: " + i2s(val.num));
+			}
+			else if (val.num == 0) {
+				println("0");
+			}
+			else {
+				println("Result: " + i2s((val.num / val.den)));
+			}
+		}
+	}
+}
+
+
+// rational number
+// ArRat(num : int, den : int);
+
+// s2arRPN(str: string) -> ArExpr {
+//     e_gr = "#include grammar.lingo";
+//    parsic(
+//             compilePegGrammar(e_gr),
+//             str,
+//             SemanticActions(setTree(defaultPegActions.t, "createArInt", \s -> ArInt(s2i(s[0]))))
+//           );
+// }
+
+// ar2sRPN(exp: ArExpr) -> string {
+//     switch (exp) {
+//         ArSum(lhs, rhs) : ar2sRPN(lhs) + " " + ar2sRPN(rhs) + " +";
+//         ArMult(lhs, rhs) : ar2sRPN(lhs) + " " + ar2sRPN(rhs) + " *";
+// 		ArSub(lhs, rhs) : ar2sRPN(lhs) + " " + ar2sRPN(rhs) + " -";
+// 		ArDiv(lhs, rhs) : ar2sRPN(lhs) + " " + ar2sRPN(rhs) + " /";
+// 		ArPow(lhs, rhs) : ar2sRPN(lhs) + " " + ar2sRPN(rhs) + " ^";
+//         ArInt(val): i2s(val);
+//     }
+// }
+
+get_intermidiate_stack(stack : [string], func : (string, string) -> string) -> [string] {
+
+  value = func(stack[length(stack) - 1], stack[length(stack) - 2]);
+
+  interm_stack = replace(stack, length(stack), value);
+
+  removeRange(interm_stack, length(interm_stack) - 3, 2);
+}
+
+rpn2s(expr : string) -> string {
+
+  tokens : [string] = strSplit(expr, " "); 
+
+  fold(tokens, [], \stack, cur -> {
+    if (cur == "+" || cur == "*" || cur == "-" || cur == "/" || cur == "^") {
+      get_intermidiate_stack(stack, \x, y -> "(" + y + " " + cur + " " + x + ")");
+    }
+    else {
+      replace(stack, length(stack), cur);
+    }
+  })[0];
+}
+
+
+
+main() {
+
+	example2 = "10 1 2 + 100 - * 2 5 ^ /";
+	//example2 = "a b c ^ / d e * a c 3 4 ^ ^ * - -";
+	println("Source expression: " +  example2);
+
+	result = rpn2s(example2);
+	//println("Result: " + result);
+
+	printArRat(calculate(s2ar(result)));
+}

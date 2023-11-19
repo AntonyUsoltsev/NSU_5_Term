@@ -1,0 +1,55 @@
+import lingo/pegcode/driver;
+import runtime;
+import lib/sys/system;
+import lib/ds/hashmap; 
+
+ArExpr ::= ArSum, ArMult, ArInt;
+ArSum(lhs : ArExpr, rhs : ArExpr);
+ArMult(lhs : ArExpr, rhs : ArExpr);
+ArInt(val : int);
+
+s2ar(str : string) -> ArExpr {
+    e_gr = "#include grammar.lingo";
+    parsic(
+            compilePegGrammar(e_gr),
+            str,
+            SemanticActions(setTree(defaultPegActions.t, "createArInt", \s -> ArInt(s2i(s[0]))))
+          )
+}
+
+ar2s(expr : ArExpr) -> string {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs) :  "(" + ar2s(lhs) + "+" + ar2s(rhs) + ")";
+        ArMult(lhs, rhs) : "(" + ar2s(lhs) + "*" + ar2s(rhs) + ")";
+        ArInt(var) : i2s(var);
+    }
+}
+
+tr2s(expr : ArExpr) -> string {
+    switch(expr){
+        ArMult(l, r) : "ArMult(" + tr2s(l) + ", " + tr2s(r) + ")";
+        ArSum(l, r) : "ArSum(" + tr2s(l) + ", " + tr2s(r) + ")";
+        ArInt(v) : "ArInt(" + i2s(v) + ")";
+    }
+}
+
+calculate(expr : ArExpr) -> double {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs)  : calculate(lhs) + calculate(rhs);
+        ArMult(lhs, rhs) : calculate(lhs) * calculate(rhs);
+        ArInt(var) : i2d(var);
+    }
+}
+
+main() {
+    str : string = "((3 + 4) * (3 + 6))";
+    str_console_1 : string = readUntil("\n");
+    str_console = substring(str_console_1, 0, strlen(str_console_1) - 1);
+
+    
+    println("Expression: " + str_console);
+    println(tr2s(s2ar(str_console)));
+    println(ar2s(s2ar(str_console)));
+    println("Result: " + d2s(calculate(s2ar(str_console))));
+  
+}

@@ -1,0 +1,194 @@
+import lingo/pegcode/driver;
+import runtime;
+
+ArExpr ::= ArSum, ArMult, ArSub, ArDiv, ArInt, ArVar, ArMinus;
+
+ArNum ::= ArInt, ArVar;
+
+ArSum(lhs : ArExpr, rhs : ArExpr);
+ArMult(lhs : ArExpr, rhs : ArExpr);
+ArSub(lhs : ArExpr, rhs : ArExpr);
+ArDiv(lhs : ArExpr, rhs : ArExpr);
+ArVar(var : string);
+ArInt(val : double);
+ArMinus(num : ArNum);
+
+ArMonom(monoTree : Tree<string, double>);
+ArPolynom(polyTree : Tree<ArMonom, double>);
+
+ArRatFunc(num : ArPolynom, den : ArPolynom);
+
+// rational number
+ArRat(num : double, den : double);
+
+s2ar(str : string) -> ArExpr {
+    e_gr = "#include grammar.lingo";
+    parsic(compilePegGrammar(e_gr),
+        str,
+			SemanticActions(setTree(defaultPegActions.t,
+					"createArInt", \s -> ArInt(s2d(s[0]))))
+            )
+}
+
+to_pow(var : string, degree : double) -> string{
+    if(degree != 1.0) { var + "^" + d2s(degree); }
+    else { var; }
+}
+
+discard_redudant_koeff(coeff : double, value : string) -> string{
+
+    if ((coeff != 1.0) && (value != "1")) { concatStrings([d2s(coeff), "*", value]); }
+
+    else if ((coeff != 1.0) && (value == "1")) { concatStrings([d2s(coeff)]); }
+
+    else if ((coeff == 1.0) && (value != "1")) { concatStrings([value]); }
+
+    else { concatStrings([d2s(coeff)]); }
+}
+
+ar_monom2s(pm: ArMonom) -> string {
+    vars = tree2pairs(pm.monoTree);
+
+    if (length(vars) == 0) {"1";}
+
+    else {
+        foldi(vars, "", \i, acc, v -> {
+            new_vars = acc + to_pow(v.first, v.second);
+
+            if (i == length(vars) - 1) { new_vars; }
+            else { new_vars + "*"; }
+        })
+    }
+}
+
+
+polynom2s(ps : ArPolynom) -> string {
+
+    monoms = tree2pairs(ps.polyTree);
+
+    if (length(monoms) == 0) { "0"; }
+
+    else {
+        foldi(monoms, "", \i, acc, v -> {
+			new_monoms = acc + discard_redudant_koeff(v.second, ar_monom2s(v.first));
+			if(i == length(monoms) - 1) { new_monoms; }
+			else { new_monoms + " + "; }
+        });
+    }
+}
+
+rat_func2s(rf: ArRatFunc) -> string {
+    if(polynom2s(rf.den) == "1") { polynom2s(rf.num); }
+    else { 
+        // if (polynom2s(rf.den) == "2000000000" && polynom2s(rf.num) == "2"){
+        //    "(" + "1" + ") / (" +"1000000000" + ")";
+        // } 
+        if(s2i(polynom2s(rf.den)) % s2i(polynom2s(rf.num)) == 0){
+            "(" + "1" + ") / (" + i2s(s2i(polynom2s(rf.den)) / s2i(polynom2s(rf.num))) + ")";
+        }
+        else{
+           "(" + polynom2s(rf.num) + ") / (" + polynom2s(rf.den) + ")";
+        }
+    }
+}
+
+ar2s(expr : ArExpr) -> string {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs) :  "(" + ar2s(lhs) + " + " + ar2s(rhs) + ")";
+        ArMult(lhs, rhs) : "(" + ar2s(lhs) + " * " + ar2s(rhs) + ")";
+        ArSub(lhs, rhs) : "(" + ar2s(lhs) + " - " + ar2s(rhs) + ")";
+        ArDiv(lhs, rhs) : "(" + ar2s(lhs) + " / " + ar2s(rhs) + ")";
+        ArInt(var) : d2s(var);
+		ArVar(var) : var;
+		ArMinus(num) : "-" + ar2s(num);
+    }
+}
+
+sum_polynoms(p1 : ArPolynom, p2 : ArPolynom) -> ArPolynom {
+    ArPolynom (
+			filterTree(mergeTreeCustom(p1.polyTree, p2.polyTree, \k, v1, v2 -> {v1 + v2;}),
+            \k, v -> {!(v == 0.0)}
+        )
+    )
+}
+
+mult_polynoms(p1 : ArPolynom, p2 : ArPolynom) -> ArPolynom{
+    ArPolynom(
+        filterTree(
+            foldTree(p1.polyTree, TreeEmpty(), \k1, v1, acc1 -> {
+                mergeTreeCustom(acc1,
+                    foldTree(p2.polyTree, TreeEmpty(), \k2, v2, acc2 ->{
+                        multi = ArMonom(mergeTreeCustom(k1.monoTree, k2.monoTree, \kk, vv1, vv2 -> {vv1 + vv2}));
+                        mergeTreeCustom(acc2, makeTree1(multi, v1 * v2), \kk, vv1, vv2 -> {vv1 + vv2});
+                    }),
+                    \kk, vv1, vv2 -> {vv1 + vv2}
+                )
+            })
+            , \k,v -> {!(v == 0.0)}
+        )
+    )
+}
+
+neg_polynom(p: ArPolynom) -> ArPolynom {
+    ArPolynom(
+        foldTree(p.polyTree,
+				TreeEmpty(),
+				\k, v, acc -> { mergeTree(acc, makeTree1(k, (0.0 - v)));}
+			)
+    )
+}
+
+sum_rat_func(f1 : ArRatFunc, f2 : ArRatFunc) -> ArRatFunc {
+    if (f1.den == f2.den){
+        ArRatFunc(sum_polynoms(f1.num,f2.num), f1.den);
+    }
+    else{
+        ArRatFunc(sum_polynoms(mult_polynoms(f1.num, f2.den), mult_polynoms(f2.num, f1.den)), mult_polynoms(f1.den, f2.den));
+    }
+}
+
+neg_rat_func(f1 : ArRatFunc) -> ArRatFunc {
+    ArRatFunc(neg_polynom(f1.num), f1.den);
+}
+
+mult_rat_func(f1 : ArRatFunc, f2 : ArRatFunc) -> ArRatFunc {
+    ArRatFunc(mult_polynoms(f1.num, f2.num), mult_polynoms(f1.den, f2.den));
+}
+
+div_rat_func(f1 : ArRatFunc, f2 : ArRatFunc) -> ArRatFunc {
+    mult_rat_func(f1, ArRatFunc(f2.den, f2.num));
+}
+
+
+ar2rat_func(exp : ArExpr) -> ArRatFunc {
+    switch(exp) {
+        ArSum(l, r) : {
+            sum_rat_func(ar2rat_func(l), ar2rat_func(r));
+        }
+        ArSub(l, r) : {
+            sum_rat_func(ar2rat_func(l), neg_rat_func(ar2rat_func(r)));
+        }
+        ArMult(l, r) : {
+            mult_rat_func(ar2rat_func(l), ar2rat_func(r));
+        }
+        ArDiv(l, r) : {
+            div_rat_func(ar2rat_func(l), ar2rat_func(r));
+        }
+        ArMinus(l) : {
+            neg_rat_func(ar2rat_func(l));
+        }
+        ArVar(v) : {
+            ArRatFunc(ArPolynom(makeTree1(ArMonom(makeTree1(v, 1.0)), 1.0)), ArPolynom(makeTree1(ArMonom(TreeEmpty()),1.0)));
+        }
+		ArInt(val) : {
+            ArRatFunc(ArPolynom(makeTree1(ArMonom(TreeEmpty()), val)), ArPolynom(makeTree1(ArMonom(TreeEmpty()), 1.0)));
+		}
+    }
+}
+
+main() {
+    expr = "((1/2000000000) + (3x/2000000000))";
+	println("Expression: " + expr);
+	println("Result: " + rat_func2s(ar2rat_func(s2ar(expr))));
+    quit(0);
+}

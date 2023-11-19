@@ -1,0 +1,25 @@
+S = sum | mul | sub | div | int | var | minus | pow;
+
+int = digit+ $s { ArInt(s2i($s)) };
+
+minus = 
+	ws "-" ws (digit+) $s ws  { ArMinus(ArInt(s2i($s))) } | 
+	"(" ws "-"(digit+) $s ws ")"  { ArMinus(ArInt(s2i($s))) } |
+	ws "-"(('a' - 'z')+) $s ws  { ArMinus(ArVar($s))} | 
+	"(" ws "-"(('a' - 'z')+) $s ws ")"  { ArMinus(ArVar($s)) };
+
+sum = "(" ws S:l ws "+" ws S:r ws ")" { ArSum(:l, :r) };
+
+mul = "(" ws S:l ws "*" ws S:r ws ")" { ArMult(:l, :r) };
+
+sub = "(" ws S:l ws "-" ws S:r ws ")" { ArSub(:l, :r) };
+
+div = "(" ws S:l ws "/" ws S:r ws ")" { ArDiv(:l, :r) };
+
+pow = "(" ws S:l ws "^" ws S:r ws ")" { ArPow(:l, :r) };
+
+var = ws ('a' - 'z')+ $s ws { ArVar($s) };
+
+digit = '0' - '9';
+
+ws = (' ' | '\t' | '\n' | '\r')*;

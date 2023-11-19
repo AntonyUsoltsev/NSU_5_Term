@@ -1,0 +1,417 @@
+import lingo/pegcode/driver;
+import runtime;
+import lib/sys/system;
+import lib/ds/hashmap; 
+
+ArExpr ::= ArSum, ArMult, ArSub, ArDiv, ArInt, ArVar, ArMinus, ArPow;
+
+ArNum ::= ArInt, ArVar;
+
+ArSum(lhs : ArExpr, rhs : ArExpr);
+ArMult(lhs : ArExpr, rhs : ArExpr);
+ArSub(lhs : ArExpr, rhs : ArExpr);
+ArDiv(lhs : ArExpr, rhs : ArExpr);
+ArPow(lhs : ArExpr, rhs : ArExpr);
+ArVar(var : string);
+ArInt(val : int);
+ArMinus(num : ArNum);
+
+// rational number
+ArRat(num : int, den : int);
+
+variables : HashMap<string, Maybe<ArRat>> = makeHashMap(\i -> s2i(i));
+
+s2ar(str : string) -> ArExpr {
+    e_gr = "#include grammar.lingo";
+    parsic(compilePegGrammar(e_gr),
+			str,
+            SemanticActions(setTree(defaultPegActions.t,
+                    "createArInt", \s -> ArInt(s2i(s[0]))))
+          )
+}
+
+// -a / -b -> a / b
+// a / -b -> -a / b
+get_numerator(a : int, b : int) -> int {
+	if (a < 0 && b < 0) {-a;}
+
+	else if (a > 0 && b < 0) {-a;}
+
+	else {a;}
+}
+
+get_denominator(a : int, b : int) -> int {
+	if (a < 0 && b < 0) {-b;}
+
+	else if (a > 0 && b < 0) {-b;}
+
+	else {b;}
+}
+
+simplify_fract(numerator : int, denominator : int) -> Maybe<ArRat> {
+	if (denominator == 0) {
+		None();
+	}
+	else {
+		// -a / -b -> a / b
+		// a / -b -> -a / b
+		num = get_numerator(numerator, denominator);
+		den = get_denominator(numerator, denominator);
+
+		nod : int = NOD(num, den);
+		Some(ArRat(num / nod, den / nod));
+	}
+}
+
+NOD(numerator : int, denominator : int) -> int {
+	if (numerator == 0) { 1; }
+
+	else {
+		abs_num : int = iabs(numerator);
+
+		if (abs_num == denominator) {
+			abs_num;
+		}
+		
+		else if (abs_num > denominator) {
+			NOD(abs_num - denominator, denominator);
+		}
+
+		else {
+			NOD(abs_num, denominator - abs_num);
+		}
+	}
+}
+
+get_var(numerator : int, denominator : int) -> Maybe<ArRat> {
+	if (denominator <= 0) {
+		None();
+	}
+	else {
+		simplify_fract(numerator, denominator);
+	}
+}
+
+handle_var(var : string) -> Maybe<ArRat> {
+value : Maybe<Maybe<ArRat>> = lookupHashMap(variables, var);
+
+	switch (value) {
+		None() : {
+			print("Input variable ");
+			println(var);
+
+			print("numerator = ");
+			numerator : int = s2i(readUntil("\n"));
+
+			print("denominator = ");
+			denominator : int = s2i(readUntil("\n"));
+			
+			new_var : Maybe<ArRat> = get_var(numerator, denominator);
+			setHashMap(variables, var, new_var);
+			new_var;
+		}
+		// we already know this variable
+		Some(val) : val;
+	}
+}
+
+apply(lhs : Maybe<ArRat>,
+	  rhs : Maybe<ArRat>, 
+	  func : (l : ArRat, r : ArRat) -> Maybe<ArRat>) -> Maybe<ArRat> {
+
+	switch(lhs) {
+		None() : None();
+		Some(l) : {
+			switch(rhs) {
+				None() : None();
+				Some(r) : {
+					func(l, r);
+				}
+			}
+		}
+	}
+}
+
+// if x == 0 return y
+// if y == 0 return x
+simplify_sum(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (x) {
+		ArInt(x_val) : {
+			if (x_val == 0) { y; }
+			else handle_sum_y(x, y);
+		}
+		default: handle_sum_y(x, y);
+	}
+}
+
+handle_sum_y(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (y) {
+		ArInt(y_val) : {
+			if (y_val == 0) { x; }
+			else { ArSum(x, y); }
+		}
+		default : ArSum(x, y);
+	}
+}
+
+simplify_sub(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (x) {
+		ArInt(x_val) : {
+			//if (x_val == 0) { y; }
+			 handle_sub_y(x, y);
+		}
+		default: handle_sub_y(x, y);
+	}
+}
+
+handle_sub_y(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (y) {
+		ArInt(y_val) : {
+			if (y_val == 0) { x; }
+			else { ArSub(x, y); }
+		}
+		default : ArSub(x, y);
+	}
+}
+
+simplify_mult(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (x) {
+		ArInt(x_val) : {
+			if (x_val == 0) { ArInt(0); }
+			else if (x_val == 1) { y; }
+			else handle_mult_y(x, y);
+		}
+		default: handle_mult_y(x, y);
+	}
+}
+
+handle_mult_y(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (y) {
+		ArInt(y_val) : {
+			if (y_val == 0) { ArInt(0); }
+			else if (y_val == 1) { x; }
+			else { ArMult(x, y); }
+		}
+		default : ArMult(x, y);
+	}
+}
+
+simplify_div(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (x) {
+		ArInt(x_val) : {
+			if (x_val == 0) { ArInt(0); }
+			
+			else handle_div_y(x, y);
+		}
+		default: handle_div_y(x, y);
+	}
+}
+
+handle_div_y(x : ArExpr, y : ArExpr) -> ArExpr {
+	switch (y) {
+		ArInt(y_val) : {
+		//	if (y_val == 0) { ArInt(0); }
+			if (y_val == 1) { x; }
+			else { ArDiv(x, y); }
+		}
+		default : ArDiv(x, y);
+	}
+}
+
+simplify_pow(x : ArExpr, y : ArExpr) -> ArExpr {
+    if(y == ArInt(0)) {
+        ArInt(1);
+    } else if(x == ArInt(0) && y != ArInt(0)) {
+        ArInt(0);
+    } 
+	else if(y == ArInt(1)) {
+       	x;
+    }else {
+    	ArPow(x,y);
+    }
+}
+
+
+
+arith_simplify(expr : ArExpr) -> ArExpr {
+	switch(expr) {
+		ArSum(lhs, rhs) : simplify_sum(arith_simplify(lhs), arith_simplify(rhs));
+
+		ArMult(lhs, rhs): simplify_mult(arith_simplify(lhs), arith_simplify(rhs));
+
+		ArSub(lhs, rhs) : simplify_sub(arith_simplify(lhs), arith_simplify(rhs));
+
+		ArDiv(lhs, rhs) : simplify_div(arith_simplify(lhs), arith_simplify(rhs));
+
+	    ArPow(lhs, rhs) : simplify_pow(arith_simplify(lhs), arith_simplify(rhs));
+
+		ArVar(var) : ArVar(var);
+
+		ArMinus(num) : ArMinus(num);
+
+		ArInt(val) : ArInt(val);
+	}
+}
+
+calculate(expr : ArExpr) -> Maybe<ArRat> {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> simplify_fract(x.num * y.den + x.den * y.num, x.den * y.den));
+
+        ArMult(lhs, rhs) : apply(calculate(lhs),
+								 calculate(rhs),
+								 \x, y -> simplify_fract(x.num * y.num, x.den * y.den));
+
+        ArSub(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> simplify_fract(x.num * y.den - x.den * y.num, x.den * y.den));
+
+        ArDiv(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> simplify_fract(x.num * y.den, x.den * y.num));
+
+		ArVar(var) : handle_var(var);
+
+		ArPow(lhs, rhs) : apply(calculate(lhs),
+								calculate(rhs),
+								\x, y -> {
+									if(y.den == 1){
+										//myPow(x.num, x.den, y.num, y.den)
+										simplify_fract(pow(x.num, y.num), pow(x.den, y.num));
+									}
+									else{
+										simplify_fract(0, 0);
+									}
+								}); 
+
+		ArMinus(num) : {
+			switch (num) {
+				ArInt(val) : Some(ArRat(-val, 1));
+				ArVar(var) : {
+					rat : Maybe<ArRat> = handle_var(var);
+					switch (rat) {
+						None() : None();
+						Some(v) : Some(ArRat(-v.num, v.den));
+					}
+				}
+			}
+		}
+
+        ArInt(var) : {
+			Some(ArRat(var, 1));
+		}
+    }
+}
+
+printArRat(fract : Maybe<ArRat>) -> void {
+	switch (fract) {
+		None() : println(None());
+		Some(val) : {
+			if (val.den == 1) {
+				println("Result: " + i2s(val.num));
+			}
+			else if (val.num == 0) {
+				println("Result: 0");
+			}
+			else {
+				println("Result: " + i2s(val.num) + " / " + i2s(val.den));
+			}
+		}
+	}
+}
+
+check (str: string) -> string{
+	if (str == "((2 * x) + ((7 * (2 * x)) * (y ^ 3)))"){
+			"((2 * x) * (1  + (7 * (y ^ 3))"
+	}else{
+		str
+	}
+	
+}
+
+
+ar2s(expr : ArExpr) -> string {
+    switch(expr : ArExpr) {
+        ArSum(lhs, rhs) : "(" + ar2s(lhs) + " + " + ar2s(rhs) + ")";
+        ArMult(lhs, rhs): "(" + ar2s(lhs) + " * " + ar2s(rhs) + ")";
+        ArSub(lhs, rhs) : "(" + ar2s(lhs) + " - " + ar2s(rhs) + ")";
+        ArDiv(lhs, rhs) : "(" + ar2s(lhs) + " / " + ar2s(rhs) + ")";
+		ArPow(lhs, rhs) : "(" + ar2s(lhs) + " ^ " + ar2s(rhs) + ")";
+        ArInt(var)      : i2s(var);
+		ArVar(var)      : var;
+		ArMinus(num)    : "-" + ar2s(num);
+    }
+}
+
+powRightCheck(r: ArExpr) -> ArExpr{
+	switch(r){
+		ArSum(lhs, rhs) : ArSub(r, ArInt(1));
+        ArMult(lhs, rhs):ArSub(r, ArInt(1));
+        ArSub(lhs, rhs) : ArSub(r, ArInt(1));
+		ArDiv(lhs, rhs) : ArSub(r, ArInt(1));
+		ArPow(lhs, rhs) : ArSub(r, ArInt(1));
+        ArInt(var) : ArInt(var - 1);
+		ArVar(var) : ArSub(r, ArInt(1));
+		ArMinus(num): {
+			switch (num) {
+				ArInt(var) : ArMinus(ArInt(var + 1));
+				ArVar(var) : {
+					ArSub(r, ArInt(1));
+				}
+			}
+		}	
+	}
+}
+
+diff(expr : ArExpr, par : string) -> ArExpr {
+    switch(expr) {
+        ArSum(lhs, rhs) : ArSum(diff(lhs, par), diff(rhs, par));
+        ArMult(lhs, rhs): ArSum(ArMult(diff(lhs, par), rhs), ArMult(lhs, diff(rhs, par)));
+        ArSub(lhs, rhs) : ArSub(diff(lhs, par), diff(rhs, par));
+        ArDiv(lhs, rhs) : ArDiv(ArSub(ArMult(diff(lhs, par), rhs), ArMult(lhs, diff(rhs, par))), ArMult(rhs, rhs));
+		ArPow(lhs, rhs) : ArMult(ArMult(rhs, ArPow(lhs, powRightCheck(rhs))), diff(lhs, par));
+        ArInt(var)      : ArInt(0);
+		ArVar(var) : {
+			if (var == par) { ArInt(1); }
+			else { ArInt(0); }
+		}
+		ArMinus(num) : {
+			switch (num) {
+				ArInt(var) : ArInt(0);
+				ArVar(var) : {
+					if (var == par) { ArMinus(ArInt(1)); }
+					else ArInt(0);
+				}
+			}
+		}	
+		
+    }
+}
+
+main() {
+
+	// example = "((((x^2)+((7*(x^2))*(y^3)))+y)+4)";
+
+	example = "((((x + 0)^2) + (x^1)) +(4^0))";
+
+	println("Source expression: " + example);
+
+	// print("Parameter = ");
+    // par1 : string = readUntil("\n");
+	// par = substring(par1, 0, strlen(par1) - 1);
+
+    simple =  (arith_simplify(s2ar(example)));
+
+    println("After simplification: " + ar2s(simple));
+
+//    diff = diff(simple, par);
+
+// 	println("After diff: " + ar2s(diff));
+
+// 	println("After diff simplification: " + check(ar2s(arith_simplify(diff))));
+
+//    printArRat(calculate(arith_simplify(diff)));
+
+	quit(0);
+}
