@@ -1,63 +1,55 @@
 #include <unistd.h>
 #include <pthread.h>
-#include <stdbool.h>
 #include "queue.h"
 
-#define STORAGE_CAPACITY 8
-#define THREAD_COUNT 4
+#define STORAGE_CAPACITY 100
+#define THREAD_COUNT 6
 #define ASC 0
 #define DESC 1
 #define EQ 2
-#define SWAP 3
+#define SWAP1 3
+#define SWAP2 4
+#define SWAP3 5
 
-void lock(Node *elem, int line, const int *counter, char *type) {
-    printf("%d: %s try lock in %d, on value %s \n", *counter, type, line + 1, elem->value);
-    fflush(stdout);
-    pthread_mutex_lock(&elem->sync);
-    printf("%d: %s mutex lock in line %d, on value %s \n", *counter, type, line - 1, elem->value);
-    fflush(stdout);
-}
-
-void unlock(Node *elem, int line, const int *counter, char *type) {
-//    printf("%d: %s try unlock in %d, on value %s \n", *counter, type, line + 1, elem->value);
-//    fflush(stdout);
-    pthread_mutex_unlock(&elem->sync);
-//    printf("%d: %s mutex unlock in line %d, on value %s \n", *counter, type, line - 1, elem->value);
-//    fflush(stdout);
-}
 
 void *ascending_thread(void *data) {
     ThreadData *thread_data = (ThreadData *) data;
     Storage *storage = thread_data->storage;
     int *counter = thread_data->counter;
+
     while (1) {
-        Node *prev = storage->first;
-        Node *curr = NULL;
-        if (prev != NULL) {
-            curr = prev->next;
-        } else {
+        Node *curr = storage->first;
+        if (curr == NULL || curr->next == NULL) {
             printf("Too few elements in queue");
             break;
         }
-
-        while (curr != NULL && prev !=NULL) {
-            if (pthread_mutex_trylock(&prev->sync) == 0) {
-                if (pthread_mutex_trylock(&curr->sync) == 0) {
+        Node *curr2, *tmp;
+        while (1) {
+            if (curr != NULL && pthread_mutex_trylock(&curr->sync) == 0) {
+                if (curr->next != NULL && pthread_mutex_trylock(&curr->next->sync) == 0) {
                     volatile int pair_count = 0;
-                    if (strlen(prev->value) < strlen(curr->value)) {
+                    curr2 = curr->next;
+                    if (strlen(curr->value) < strlen(curr2->value)) {
                         pair_count++;
                     }
-                    unlock(curr, __LINE__, counter, "asc");
+                    tmp = curr;
+                    curr = curr->next;
+                    pthread_mutex_unlock(&tmp->sync);
+                    pthread_mutex_unlock(&curr->sync);
+                } else {
+                    tmp = curr;
+                    curr = curr->next;
+                    pthread_mutex_unlock(&tmp->sync);
                 }
-                unlock(prev, __LINE__, counter, "asc");
+            } else if (curr == NULL) {
+                break;
+            } else {
+                curr = curr->next;
             }
-            prev = prev->next;
-            curr = curr->next;
-            (*counter)++;
-
         }
-    }
 
+        (*counter)++;
+    }
     return NULL;
 }
 
@@ -67,43 +59,37 @@ void *descending_thread(void *data) {
     int *counter = thread_data->counter;
 
     while (1) {
-        (*counter)++;
-        Node *prev = storage->first;
-        Node *curr = NULL;
-        if (prev != NULL) {
-            curr = storage->first->next;
-        } else {
+        Node *curr = storage->first;
+        if (curr == NULL || curr->next == NULL) {
             printf("Too few elements in queue");
             break;
         }
-
-        while (curr != NULL) {
-            pthread_mutex_lock(&(prev->sync));
-            printf("desc mutex lock in line %d, on value %s \n", __LINE__ - 1, prev->value);
-            fflush(stdout);
-            pthread_mutex_lock(&(curr->sync));
-            printf("desc mutex lock in line %d, on value %s \n", __LINE__ - 1, curr->value);
-            fflush(stdout);
-
-            volatile int pair_count = 0;
-            if (strlen(prev->value) > strlen(curr->value)) {
-                pair_count++;
+        Node *curr2, *tmp;
+        while (1) {
+            if (curr != NULL && pthread_mutex_trylock(&curr->sync) == 0) {
+                if (curr->next != NULL && pthread_mutex_trylock(&curr->next->sync) == 0) {
+                    volatile int pair_count = 0;
+                    curr2 = curr->next;
+                    if (strlen(curr->value) == strlen(curr2->value)) {
+                        pair_count++;
+                    }
+                    tmp = curr;
+                    curr = curr->next;
+                    pthread_mutex_unlock(&tmp->sync);
+                    pthread_mutex_unlock(&curr->sync);
+                } else {
+                    tmp = curr;
+                    curr = curr->next;
+                    pthread_mutex_unlock(&tmp->sync);
+                }
+            } else if (curr == NULL) {
+                break;
+            } else {
+                curr = curr->next;
             }
-
-            Node *tmp = prev;
-            prev = curr;
-            curr = curr->next;
-            pthread_mutex_unlock(&(prev->sync));
-            printf("desc mutex unlock in line %d, on value %s \n", __LINE__ - 1, prev->value);
-            fflush(stdout);
-            pthread_mutex_unlock(&(tmp->sync));
-            printf("desc mutex unlock in line %d, on value %s \n", __LINE__ - 1, tmp->value);
-            fflush(stdout);
-
         }
-        //  printf("Desc count: %d\n", *counter);
+        (*counter)++;
     }
-
     return NULL;
 }
 
@@ -111,61 +97,40 @@ void *equal_length_thread(void *data) {
     ThreadData *thread_data = (ThreadData *) data;
     Storage *storage = thread_data->storage;
     int *counter = thread_data->counter;
-    //pthread_mutex_t *counter_mutex = thread_data->counter_mutex;
 
     while (1) {
-        //  pthread_mutex_lock(counter_mutex);
-        (*counter)++;
-        // pthread_mutex_unlock(counter_mutex);
-
-        Node *prev = storage->first;
-        Node *curr = NULL;
-        if (prev != NULL) {
-            curr = storage->first->next;
-        } else {
+        Node *curr = storage->first;
+        if (curr == NULL || curr->next == NULL) {
             printf("Too few elements in queue");
             break;
         }
-
-        while (curr != NULL) {
-            pthread_mutex_lock(&(prev->sync));
-            printf("eq mutex lock in line %d, on value %s \n", __LINE__ - 1, prev->value);
-            fflush(stdout);
-            pthread_mutex_lock(&(curr->sync));
-            printf("eq mutex lock in line %d, on value %s \n", __LINE__ - 1, curr->value);
-            fflush(stdout);
-
-            volatile int pair_count = 0;
-            if (strlen(prev->value) == strlen(curr->value)) {
-                pair_count++;
+        Node *curr2, *tmp;
+        while (1) {
+            if (curr != NULL && pthread_mutex_trylock(&curr->sync) == 0) {
+                if (curr->next != NULL && pthread_mutex_trylock(&curr->next->sync) == 0) {
+                    volatile int pair_count = 0;
+                    curr2 = curr->next;
+                    if (strlen(curr->value) > strlen(curr2->value)) {
+                        pair_count++;
+                    }
+                    tmp = curr;
+                    curr = curr->next;
+                    pthread_mutex_unlock(&tmp->sync);
+                    pthread_mutex_unlock(&curr->sync);
+                } else {
+                    tmp = curr;
+                    curr = curr->next;
+                    pthread_mutex_unlock(&tmp->sync);
+                }
+            } else if (curr == NULL) {
+                break;
+            } else {
+                curr = curr->next;
             }
-
-            Node *tmp = prev;
-            prev = curr;
-            curr = curr->next;
-
-            pthread_mutex_unlock(&(prev->sync));
-            printf("eq mutex unlock in line %d, on value %s \n", __LINE__ - 1, prev->value);
-            fflush(stdout);
-            pthread_mutex_unlock(&(tmp->sync));
-            printf("eq mutex unlock in line %d, on value %s \n", __LINE__ - 1, tmp->value);
-            fflush(stdout);
-
         }
+        (*counter)++;
     }
-
     return NULL;
-}
-
-void swap_nodes(Node *node1, Node *node2, Node *node3) { //swaps node2 and node3
-    if (node1 != NULL) {
-        node2->next = node3->next;
-        node1->next = node3;
-        node3->next = node2;
-    } else {
-        node2->next = node3->next;
-        node3->next = node2;
-    }
 }
 
 
@@ -173,34 +138,44 @@ void *swap_thread(void *data) {
     ThreadData *thread_data = (ThreadData *) data;
     Storage *storage = thread_data->storage;
     int *counter = thread_data->counter;
-    int a = 0;
     while (1) {
         Node *curr1 = storage->first;
-        Node *curr2 = curr1->next;
-        Node *curr3 = curr2->next;
-        while (curr3 != NULL) {
-            if (pthread_mutex_trylock(&curr1->sync) == 0) {
-                if (pthread_mutex_trylock(&curr2->sync) == 0) {
-                    if (pthread_mutex_trylock(&curr3->sync) == 0) {
+        Node *curr2, *curr3, *tmp;
+        while (1) {
+            if (curr1 != NULL && pthread_mutex_trylock(&curr1->sync) == 0) {
+                if (curr1->next != NULL && pthread_mutex_trylock(&curr1->next->sync) == 0) {
+                    if (curr1->next->next != NULL && pthread_mutex_trylock(&curr1->next->next->sync) == 0) {
+                        curr2 = curr1->next;
+                        curr3 = curr1->next->next;
                         if (rand() % 2 == 0) {
                             curr2->next = curr3->next;
                             curr3->next = curr2;
                             curr1->next = curr3;
                             (*counter)++;
                         }
-                        unlock(curr3, __LINE__, counter, "swap");
+                        tmp = curr1;
+                        curr1 = tmp->next;
+                        curr2 = curr1->next;
+                        pthread_mutex_unlock(&tmp->sync);
+                        pthread_mutex_unlock(&curr1->sync);
+                        pthread_mutex_unlock(&curr2->sync);
+                    } else {
+                        tmp = curr1;
+                        curr1 = curr1->next;
+                        pthread_mutex_unlock(&tmp->sync);
+                        pthread_mutex_unlock(&curr1->sync);
                     }
-                    unlock(curr2, __LINE__, counter, "swap");
+                } else {
+                    tmp = curr1;
+                    curr1 = curr1->next;
+                    pthread_mutex_unlock(&tmp->sync);
                 }
-                unlock(curr1, __LINE__, counter, "swap");
+            } else if (curr1 == NULL) {
+                break;
+            } else {
+                curr1 = curr1->next;
             }
-            curr1 = curr1->next;
-            curr2 = curr1->next;
-            curr3 = curr2->next;
-
-
         }
-
     }
 }
 
@@ -208,7 +183,8 @@ void *swap_thread(void *data) {
 void *count_monitor(void *arg) {
     int *counters = (int *) arg;
     while (1) {
-        printf("ASC: %d, DESC: %d, EQ: %d, SWAP: %d\n", counters[ASC], counters[DESC], counters[EQ], counters[SWAP]);
+        printf("ASC: %d, DESC: %d, EQ: %d, SWAP1: %d, SWAP2: %d, SWAP3: %d\n",
+               counters[ASC], counters[DESC], counters[EQ], counters[SWAP1], counters[SWAP2], counters[SWAP3]);
         sleep(1);
     }
     return NULL;
@@ -219,27 +195,32 @@ int main() {
     fill_storage(storage);
     print_storage(storage);
 
-    pthread_t ascending_tid, descending_tid, equal_length_tid, swap_tid, monitor;
+    pthread_t ascending_tid, descending_tid, equal_length_tid, swap_tid1, swap_tid2, swap_tid3, monitor;
 
     int *counters = calloc(THREAD_COUNT, sizeof(int));
 
     ThreadData ascending_data = {storage, &counters[ASC]};
     ThreadData descending_data = {storage, &counters[DESC]};
     ThreadData equal_data = {storage, &counters[EQ]};
-    ThreadData swap_data = {storage, &counters[SWAP]};
+    ThreadData swap_data1 = {storage, &counters[SWAP1]};
+    ThreadData swap_data2 = {storage, &counters[SWAP2]};
+    ThreadData swap_data3 = {storage, &counters[SWAP3]};
 
     pthread_create(&ascending_tid, NULL, ascending_thread, &ascending_data);
-    //   pthread_create(&descending_tid, NULL, descending_thread, &descending_data);
-    //  pthread_create(&equal_length_tid, NULL, equal_length_thread, &equal_data);
-    pthread_create(&swap_tid, NULL, swap_thread, &swap_data);
+    pthread_create(&descending_tid, NULL, descending_thread, &descending_data);
+    pthread_create(&equal_length_tid, NULL, equal_length_thread, &equal_data);
+    pthread_create(&swap_tid1, NULL, swap_thread, &swap_data1);
+    pthread_create(&swap_tid2, NULL, swap_thread, &swap_data2);
+    pthread_create(&swap_tid3, NULL, swap_thread, &swap_data3);
     pthread_create(&monitor, NULL, count_monitor, counters);
 
-
     pthread_join(ascending_tid, NULL);
-//    pthread_join(descending_tid, NULL);
-//    pthread_join(equal_length_tid, NULL);
+    pthread_join(descending_tid, NULL);
+    pthread_join(equal_length_tid, NULL);
     pthread_join(monitor, NULL);
-    pthread_join(swap_tid, NULL);
+    pthread_join(swap_tid1, NULL);
+    pthread_join(swap_tid2, NULL);
+    pthread_join(swap_tid3, NULL);
 
     return 0;
 }
