@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include "queue.h"
 
-#define STORAGE_CAPACITY 100
+#define STORAGE_CAPACITY 1000
 #define THREAD_COUNT 6
 #define ASC 0
 #define DESC 1
@@ -20,7 +20,7 @@ void *ascending_thread(void *data) {
     while (1) {
         Node *curr = storage->first;
         if (curr == NULL || curr->next == NULL) {
-            printf("Too few elements in queue");
+            printf("Too few elements in queue to asc\n");
             break;
         }
         Node *curr2, *tmp;
@@ -57,13 +57,12 @@ void *descending_thread(void *data) {
     ThreadData *thread_data = (ThreadData *) data;
     Storage *storage = thread_data->storage;
     int *counter = thread_data->counter;
-
+    if (storage->first == NULL || storage->first->next == NULL) {
+        printf("Too few elements in queue to desc\n");
+        return NULL;
+    }
     while (1) {
         Node *curr = storage->first;
-        if (curr == NULL || curr->next == NULL) {
-            printf("Too few elements in queue");
-            break;
-        }
         Node *curr2, *tmp;
         while (1) {
             if (curr != NULL && pthread_mutex_trylock(&curr->sync) == 0) {
@@ -97,13 +96,13 @@ void *equal_length_thread(void *data) {
     ThreadData *thread_data = (ThreadData *) data;
     Storage *storage = thread_data->storage;
     int *counter = thread_data->counter;
+    if (storage->first == NULL || storage->first->next == NULL) {
+        printf("Too few elements in queue to asc\n");
+        return NULL;
+    }
 
     while (1) {
         Node *curr = storage->first;
-        if (curr == NULL || curr->next == NULL) {
-            printf("Too few elements in queue");
-            break;
-        }
         Node *curr2, *tmp;
         while (1) {
             if (curr != NULL && pthread_mutex_trylock(&curr->sync) == 0) {
@@ -140,6 +139,10 @@ void *swap_thread(void *data) {
     int *counter = thread_data->counter;
     while (1) {
         Node *curr1 = storage->first;
+        if (curr1 == NULL || curr1->next == NULL || curr1->next->next == NULL) {
+            printf("Too few elements in queue to swap\n");
+            break;
+        }
         Node *curr2, *curr3, *tmp;
         while (1) {
             if (curr1 != NULL && pthread_mutex_trylock(&curr1->sync) == 0) {
