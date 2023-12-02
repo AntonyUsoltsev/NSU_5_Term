@@ -105,15 +105,12 @@ int read_request(int client_socket, char *request) {
 }
 
 int send_from_cache(char *request, int client_socket) {
-
-    print_cache(cache);
-
     char *cache_record = calloc(CACHE_BUFFER_SIZE, sizeof(char));
-    int status = find_in_cache(cache, request, cache_record);
+    ssize_t len = find_in_cache(cache, request, cache_record);
 
-    if (status == EXIT_SUCCESS) {
+    if (len != -1) {
         // If response find in cache send it to client
-        ssize_t send_bytes = write(client_socket, cache_record, );
+        ssize_t send_bytes = write(client_socket, cache_record, len);
         if (send_bytes == FAIL) {
             logg("Error while sending cached data", RED);
             close(client_socket);
@@ -197,7 +194,6 @@ void *client_handler(void *arg) {
     while ((bytes_read = read(dest_socket, buffer, BUFFER_SIZE)) > 0) {
 //        logg_int("    Read response from remote server, len = ", bytes_read, GREEN);
         bytes_sent = write(client_socket, buffer, bytes_read);
-        // sleep(1);
         if (bytes_sent == -1) {
             logg("Error while sending data to client", RED);
             close(client_socket);
@@ -211,14 +207,15 @@ void *client_handler(void *arg) {
         }
         all_bytes_read += bytes_read;
     }
+    add_size(record, all_bytes_read);
+    push_record(cache, record);
+    logg_int("Cached the result, len = ", all_bytes_read, BLUE);
+    printf("\n");
+
     close(client_socket);
     close(dest_socket);
     free(buffer);
     free(request0);
-
-    push_record(cache, record);
-    logg_int("Cached the result, len = ", all_bytes_read, BLUE);
-    printf("\n");
 
     return NULL;
 }

@@ -12,7 +12,7 @@
 typedef struct cache {
     unsigned long request;
     char *response;
-
+    ssize_t response_len;
     struct cache *next;
 } Cache;
 
@@ -40,20 +40,20 @@ int init_cache_record(Cache *record) {
     return EXIT_SUCCESS;
 }
 
-int find_in_cache(Cache *start, char *req, char *copy) {
+ssize_t find_in_cache(Cache *start, char *req, char *copy) {
     Cache *cur = start;
     pthread_mutex_lock(&cache_mutex);
-    unsigned int req_hash = hash(req);
+    unsigned long req_hash = hash(req);
     while (cur != NULL) {
         if (cur->request == req_hash) {
             strncpy(copy, cur->response, strlen(cur->response));
             pthread_mutex_unlock(&cache_mutex);
-            return EXIT_SUCCESS;
+            return cur->response_len;
         }
         cur = cur->next;
     }
     pthread_mutex_unlock(&cache_mutex);
-    return EXIT_FAILURE;
+    return -1;
 }
 
 void add_request(Cache *record, char *req) {
@@ -64,8 +64,11 @@ void add_request(Cache *record, char *req) {
 }
 
 void add_response(Cache *record, char *resp, unsigned long cur_position, unsigned long resp_size) {
-
     memcpy(record->response + cur_position, resp, resp_size);
+}
+
+void add_size(Cache *record, ssize_t size) {
+    record->response_len = size;
 }
 
 void push_record(Cache *start, Cache *record) {
@@ -80,7 +83,7 @@ void push_record(Cache *start, Cache *record) {
 
 void delete_cache_record(Cache *record) {
     free(record->response);
-//    pthread_mutex_destroy(&record->record_mutex);
+
 }
 
 void print_cache(Cache *start) {
