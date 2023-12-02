@@ -8,59 +8,21 @@
 #include <netdb.h>
 #include <signal.h>
 #include <arpa/inet.h>
-
-#define RED   "\033[1;31m"
-#define GREEN "\033[1;32m"
-#define BLUE  "\033[1;34m"
-#define RESET "\033[0m"
-#define BACK_WHITE "\033[1;47m"
-#define BACK_PURP "\033[1;45m"
+#include "cache_list.h"
+#include "logger.h"
 
 #define FAIL (-1)
 #define PORT 80
 #define MAX_USERS_COUNT 10
-#define MAX_CACHE_SIZE 128
 #define BUFFER_SIZE 4096
-
-typedef struct {
-    char *request;
-    char *response;
-} cache_entry;
 
 typedef struct {
     int client_socket;
     char *request;
 } context;
 
-cache_entry cache[MAX_CACHE_SIZE];
-pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
-int cur_cache_pos = 0;
 int server_is_on = 1;
-
-
-void logg(char *msg, char *color) {
-    pthread_t thread_id = pthread_self();
-    if (strcmp(color, RED) == 0) {
-        char buf[BUFFER_SIZE];
-        sprintf(buf, "%s[Thread %ld] %s%s", color, thread_id, msg, RESET);
-        perror(buf);
-    } else {
-        printf("%s[Thread %ld] %s%s\n", color, thread_id, msg, RESET);
-    }
-    fflush(stdout);
-}
-
-void logg_char(char *msg, char *info, char *color) {
-    char buf[BUFFER_SIZE + 100];
-    sprintf(buf, "%s %s", msg, info);
-    logg(buf, color);
-}
-
-void logg_int(char *msg, long info, char *color) {
-    char buf[BUFFER_SIZE + 100];
-    sprintf(buf, "%s %ld", msg, info);
-    logg(buf, color);
-}
+Cache *cache;
 
 void sigint_handler(int signo) {
     if (signo == SIGINT) {
@@ -70,22 +32,26 @@ void sigint_handler(int signo) {
 }
 
 int init_cache() {
-    for (int i = 0; i < MAX_CACHE_SIZE; ++i) {
-        cache[i].request = calloc(BUFFER_SIZE, sizeof(char));
-        cache[i].response = calloc(BUFFER_SIZE * 10, sizeof(char));
-        if (cache[i].request == NULL || cache[i].response == NULL) {
-            logg("Error in сalloc while init cache", RED);
-            return FAIL;
-        }
+    logg("Initializing cache", YELLOW);
+    cache = malloc(sizeof(Cache));
+    if (cache == NULL) {
+        return EXIT_FAILURE;
     }
+    cache->next = NULL;
     return EXIT_SUCCESS;
 }
 
 void destroy_cache() {
-    for (int i = 0; i < MAX_CACHE_SIZE; ++i) {
-        free(cache[i].request);
-        free(cache[i].response);
+    logg("Destroying cache", YELLOW);
+    pthread_mutex_lock(&cache_mutex);
+    Cache *cur = cache;
+    while (cur != NULL) {
+        delete_cache_record(cur);
+        Cache *next = cur->next;
+        free(cur);
+        cur = next;
     }
+    pthread_mutex_unlock(&cache_mutex);
 }
 
 int create_server_socket() {
@@ -109,7 +75,7 @@ int create_server_socket() {
         return FAIL;
     }
 
-    logg_int("Server socket bound to", server_addr.sin_addr.s_addr, GREEN);
+    logg_int("Server socket bound to ", server_addr.sin_addr.s_addr, GREEN);
 
     err = listen(server_socket, MAX_USERS_COUNT);
     if (err == FAIL) {
@@ -138,22 +104,16 @@ int read_request(int client_socket, char *request) {
     return EXIT_SUCCESS;
 }
 
-int find_in_cache(char *request, int client_socket) {
-    int cache_index = -1;
-    char *cache_record = calloc(BUFFER_SIZE * 10, sizeof(char));
-    pthread_mutex_lock(&cache_mutex);
-    for (int i = 0; i < MAX_CACHE_SIZE; ++i) {
-        if (strcmp(cache[i].request, request) == 0) {
-            cache_index = i;
-            strcpy(cache_record, cache[i].response);
-            break;
-        }
-    }
-    pthread_mutex_unlock(&cache_mutex);
+int send_from_cache(char *request, int client_socket) {
 
-    if (cache_index != -1) {
+    print_cache(cache);
+
+    char *cache_record = calloc(CACHE_BUFFER_SIZE, sizeof(char));
+    int status = find_in_cache(cache, request, cache_record);
+
+    if (status == EXIT_SUCCESS) {
         // If response find in cache send it to client
-        ssize_t send_bytes = send(client_socket, cache_record, strlen(cache_record), 0);
+        ssize_t send_bytes = write(client_socket, cache_record, );
         if (send_bytes == FAIL) {
             logg("Error while sending cached data", RED);
             close(client_socket);
@@ -161,7 +121,7 @@ int find_in_cache(char *request, int client_socket) {
             return EXIT_FAILURE;
         }
         free(cache_record);
-        logg_int("Send cached response to the client, len = ", send_bytes, BLUE);
+        logg_int("Send cached response to the client, len = ", send_bytes, PURPLE);
         printf("\n");
         close(client_socket);
         return EXIT_SUCCESS;
@@ -206,9 +166,12 @@ void *client_handler(void *arg) {
     char request[BUFFER_SIZE];
     strcpy(request, request0);
 
+    Cache *record = malloc(sizeof(Cache));
+    init_cache_record(record);
+    add_request(record, request0);
+
     // Creating new connection with remote server
     // Parse the request and extract the host
-
     unsigned char host[50];
     const unsigned char *host_result = memccpy(host, strstr((char *) request, "Host:") + 6, '\r', sizeof(host));
     host[host_result - host - 1] = '\0';
@@ -229,38 +192,33 @@ void *client_handler(void *arg) {
     }
     logg_int("  Send request to remote server, len = ", bytes_sent, GREEN);
 
-    // Cache the request and shift current position in cache array
-    pthread_mutex_lock(&cache_mutex);
-    int cache_pos = cur_cache_pos;
-    cur_cache_pos = (cur_cache_pos + 1) % MAX_CACHE_SIZE;
-    strncpy(cache[cache_pos].request, request, sizeof(request));
-    cache[cache_pos].response[0] = '\0';
-    pthread_mutex_unlock(&cache_mutex);
-
-    char *buffer = calloc(BUFFER_SIZE * 10, sizeof(char));
-    ssize_t bytes_read;
+    char *buffer = calloc(BUFFER_SIZE, sizeof(char));
+    ssize_t bytes_read, all_bytes_read = 0;
     while ((bytes_read = read(dest_socket, buffer, BUFFER_SIZE)) > 0) {
-        logg_int("\tRead response from remote server, len = ", bytes_read, GREEN);
+//        logg_int("    Read response from remote server, len = ", bytes_read, GREEN);
         bytes_sent = write(client_socket, buffer, bytes_read);
+        // sleep(1);
         if (bytes_sent == -1) {
             logg("Error while sending data to client", RED);
             close(client_socket);
             close(dest_socket);
             return NULL;
         } else {
-            logg_int("\t  Write response to client, len = ", bytes_sent, GREEN);
-            buffer[bytes_read] = '\0';
-
             // Cache part of response
-            pthread_mutex_lock(&cache_mutex);
-            strcat(cache[cache_pos].response, buffer);
-            pthread_mutex_unlock(&cache_mutex);
+//            logg_int("\tWrite response to client, len = ", bytes_sent, GREEN);
+            add_response(record, buffer, all_bytes_read, bytes_read);
+//            logg_int("\tCached part of response, len = ", bytes_sent, GREEN);
         }
+        all_bytes_read += bytes_read;
     }
     close(client_socket);
     close(dest_socket);
     free(buffer);
-    logg("Cached the result\n", BLUE);
+    free(request0);
+
+    push_record(cache, record);
+    logg_int("Cached the result, len = ", all_bytes_read, BLUE);
+    printf("\n");
 
     return NULL;
 }
@@ -274,15 +232,16 @@ int main() {
         logg("Error to create server socket", RED);
         exit(EXIT_FAILURE);
     }
-    logg_int("Server listening on port", PORT, BACK_WHITE);
 
     int err = init_cache();
-    if (err == -1) {
+    if (err == EXIT_FAILURE) {
         logg("Error to init cache", RED);
         destroy_cache();
         close(server_socket);
         exit(EXIT_FAILURE);
     }
+
+    logg_int("Server listening on port ", PORT, PURPLE);
 
     while (server_is_on) {
         int client_socket;
@@ -303,16 +262,18 @@ int main() {
         char *request = calloc(BUFFER_SIZE, sizeof(char));
         err = read_request(client_socket, request);
         if (err == EXIT_FAILURE) {
+            logg("Failed to read request", RED);
             free(request);
             close(client_socket);
             continue;
         }
 
-        if (find_in_cache(request, client_socket) == EXIT_SUCCESS) {
+        if (send_from_cache(request, client_socket) == EXIT_SUCCESS) {
             free(request);
             close(client_socket);
             continue;
         } else {
+            logg("Init new connection", PURPLE);
             context ctx = {client_socket, request};
             pthread_t handler_thread;
             err = pthread_create(&handler_thread, NULL, &client_handler, &ctx);
@@ -323,10 +284,6 @@ int main() {
                 destroy_cache();
                 exit(EXIT_FAILURE);
             }
-            pthread_join(handler_thread, NULL);
-            free(request);
-            close(client_socket);
-
         }
     }
     close(server_socket);
