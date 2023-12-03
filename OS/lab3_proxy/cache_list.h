@@ -2,12 +2,10 @@
 #define LAB3_PROXY_CACHE_LIST_H
 
 #include <pthread.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include "logger.h"
 
 #define CACHE_BUFFER_SIZE (1024 * 1024 * 64) // 64 MB
-
 
 typedef struct cache {
     unsigned long request;
@@ -17,7 +15,6 @@ typedef struct cache {
 } Cache;
 
 pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 unsigned long hash(const char *str) {
     unsigned long hash = 0;
@@ -35,7 +32,6 @@ int init_cache_record(Cache *record) {
         logg("Failed to allocate memory to new response array", RED);
         return EXIT_FAILURE;
     }
-    //   pthread_mutex_init(&newRecord->record_mutex, NULL);
     record->next = NULL;
     return EXIT_SUCCESS;
 }
@@ -46,7 +42,7 @@ ssize_t find_in_cache(Cache *start, char *req, char *copy) {
     unsigned long req_hash = hash(req);
     while (cur != NULL) {
         if (cur->request == req_hash) {
-            strncpy(copy, cur->response, strlen(cur->response));
+            strncpy(copy, cur->response, cur->response_len);
             pthread_mutex_unlock(&cache_mutex);
             return cur->response_len;
         }
@@ -71,9 +67,13 @@ void add_size(Cache *record, ssize_t size) {
     record->response_len = size;
 }
 
+// Предупреждение: вставка записи в кэш происходит после того как клиенту был передан весь ответ,
+// поэтому если после получения результата первого запроса сразу сделать такой же запрос еще раз, то данные первого
+// запроса могут еще не быть в кэше
 void push_record(Cache *start, Cache *record) {
     Cache *cur = start;
     pthread_mutex_lock(&cache_mutex);
+    logg("Starting caching", YELLOW);
     while (cur->next != NULL) {
         cur = cur->next;
     }

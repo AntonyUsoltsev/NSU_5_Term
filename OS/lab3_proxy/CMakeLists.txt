@@ -7,5 +7,4 @@ add_executable(lab3_proxy
         main.c
         logger.h
         cache_list.h
-#        main_sip.c
 )

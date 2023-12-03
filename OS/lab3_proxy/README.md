@@ -7,4 +7,5 @@ How to use:
 
 How to test:
 > curl --http1.0 -i -x 127.0.0.1:80 http://www.google.com/ \
-> (from another process)
+> (from another process) \
+> or another link from "requests"

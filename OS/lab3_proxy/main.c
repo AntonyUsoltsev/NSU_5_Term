@@ -180,7 +180,7 @@ void *client_handler(void *arg) {
     }
     logg("Create new connection with remote server", GREEN);
 
-    ssize_t bytes_sent = write(dest_socket, request, sizeof(request));
+    ssize_t bytes_sent = write(dest_socket, request, strlen(request));
     if (bytes_sent == FAIL) {
         logg("Error while sending request to remote server", RED);
         close(client_socket);
@@ -192,7 +192,7 @@ void *client_handler(void *arg) {
     char *buffer = calloc(BUFFER_SIZE, sizeof(char));
     ssize_t bytes_read, all_bytes_read = 0;
     while ((bytes_read = read(dest_socket, buffer, BUFFER_SIZE)) > 0) {
-//        logg_int("    Read response from remote server, len = ", bytes_read, GREEN);
+//      logg_int("    Read response from remote server, len = ", bytes_read, GREEN);
         bytes_sent = write(client_socket, buffer, bytes_read);
         if (bytes_sent == -1) {
             logg("Error while sending data to client", RED);
@@ -201,15 +201,15 @@ void *client_handler(void *arg) {
             return NULL;
         } else {
             // Cache part of response
-//            logg_int("\tWrite response to client, len = ", bytes_sent, GREEN);
+//          logg_int("\tWrite response to client, len = ", bytes_sent, GREEN);
             add_response(record, buffer, all_bytes_read, bytes_read);
-//            logg_int("\tCached part of response, len = ", bytes_sent, GREEN);
+//          logg_int("\tCached part of response, len = ", bytes_sent, GREEN);
         }
         all_bytes_read += bytes_read;
     }
     add_size(record, all_bytes_read);
     push_record(cache, record);
-    logg_int("Cached the result, len = ", all_bytes_read, BLUE);
+    logg_int("Cached the result, len = ", all_bytes_read, YELLOW);
     printf("\n");
 
     close(client_socket);
