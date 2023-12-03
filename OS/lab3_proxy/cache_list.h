@@ -67,7 +67,11 @@ void add_size(Cache *record, ssize_t size) {
     record->response_len = size;
 }
 
-// Предупреждение: вставка записи в кэш происходит после того как клиенту был передан весь ответ,
+void delete_cache_record(Cache *record) {
+    free(record->response);
+}
+
+// Предупреждение: вставка записи в кэш происходит после того, как клиенту был передан весь ответ,
 // поэтому если после получения результата первого запроса сразу сделать такой же запрос еще раз, то данные первого
 // запроса могут еще не быть в кэше
 void push_record(Cache *start, Cache *record) {
@@ -76,15 +80,21 @@ void push_record(Cache *start, Cache *record) {
     logg("Starting caching", YELLOW);
     while (cur->next != NULL) {
         cur = cur->next;
+        if(cur->request == record->request){ // Такое возможно, если несколько потоков одновременно делают одинаковый запрос
+            logg("Find duplicate while pushing cache record", YELLOW);
+            delete_cache_record(record);
+            free(record);
+            pthread_mutex_unlock(&cache_mutex);
+            return;
+        }
     }
     cur->next = record;
+    logg_int("Cached the result, len = ", record->response_len, YELLOW);
+    printf("\n");
     pthread_mutex_unlock(&cache_mutex);
 }
 
-void delete_cache_record(Cache *record) {
-    free(record->response);
 
-}
 
 void print_cache(Cache *start) {
     pthread_mutex_lock(&cache_mutex);

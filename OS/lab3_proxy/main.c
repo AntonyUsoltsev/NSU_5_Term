@@ -209,8 +209,6 @@ void *client_handler(void *arg) {
     }
     add_size(record, all_bytes_read);
     push_record(cache, record);
-    logg_int("Cached the result, len = ", all_bytes_read, YELLOW);
-    printf("\n");
 
     close(client_socket);
     close(dest_socket);
