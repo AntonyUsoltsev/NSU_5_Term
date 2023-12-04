@@ -11,8 +11,8 @@ public class AckMsg {
         SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.newBuilder()
                 .setMsgSeq(msgSeq)
                 .setAck(ackMsg)
-                .setSenderId(senderId)
-                .setReceiverId(ID)
+                .setSenderId(ID)
+                .setReceiverId(senderId)
                 .build();
         return gameMessage;
     }

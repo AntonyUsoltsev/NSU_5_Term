@@ -7,7 +7,7 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 import java.net.InetAddress;
 import java.util.HashMap;
 
-import static ru.nsu.fit.usoltsev.GameConfig.*;
+import static ru.nsu.fit.usoltsev.GameConfig.TIME_DELAY;
 
 public class AckChecker implements Runnable {
     private final UdpController udpController;
@@ -22,7 +22,6 @@ public class AckChecker implements Runnable {
         while (!Thread.interrupted()) {
             HashMap<Long, MessageInfo> timeSendMessage = udpController.getMessageTimeSend();
             if (!timeSendMessage.isEmpty())
-
                 synchronized (timeSendMessage) {
                     timeSendMessage.entrySet()
                             .removeIf(entry -> {
@@ -33,6 +32,7 @@ public class AckChecker implements Runnable {
 
                                 if (udpController.getAckStore().contains(info)) {
                                     udpController.getAckStore().remove(info);
+//                                    udpController.setSuccessMsg(info);
                                     return true;
                                 }
 

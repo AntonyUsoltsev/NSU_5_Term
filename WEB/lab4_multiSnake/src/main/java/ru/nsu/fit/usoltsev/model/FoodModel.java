@@ -6,56 +6,61 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
-import static ru.nsu.fit.usoltsev.GameConfig.*;
-import static ru.nsu.fit.usoltsev.GameConstants.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import static ru.nsu.fit.usoltsev.GameConfig.*;
+import static ru.nsu.fit.usoltsev.GameConstants.FOOD;
 
 public class FoodModel {
 
     private final HashMap<Integer, Integer> foodsMap = new HashMap<>();
 
     //TODO: matrix for all game
-    //TODO: Redraw field based on matrix ??
 
     @Getter
     private final int[][] foodsCoords = new int[COLUMNS][ROWS];
-    private final List<Integer> freeSquares = new ArrayList<>(ROWS * COLUMNS);
+
     private final Image foodsImages = new Image("ru/nsu/fit/usoltsev/pictures/apple.png");
     private final FoodView foodView;
 
-    public FoodModel() {
+    public FoodModel(List<Integer> freeSquares) {
         foodView = new FoodView();
         for (int i = 0; i < ROWS * COLUMNS; i++) {
             freeSquares.add(i);
         }
     }
 
-    public void generateFood(List<Light.Point> snakeBody) {
+    public void generateFood(ArrayList<SnakeModel> snakeModels, List<Integer> freeSquares) {
         for (int i = 0; i < FOOD_COUNT; i++) {
-            generateOneFood(snakeBody);
+            generateOneFood(snakeModels, freeSquares);
         }
     }
 
-    public void eraseOneFood(int foodX, int foodY) {
+    public void eraseOneFood(int foodX, int foodY, List<Integer> freeSquares) {
         foodsCoords[foodX][foodY] = 0;
         freeSquares.add(foodY * COLUMNS + foodX);
         foodsMap.remove(foodY * COLUMNS + foodX);
     }
 
-    public void generateOneFood(List<Light.Point> snakeBody) {
+    public void generateOneFood(ArrayList<SnakeModel> snakeModels, List<Integer> freeSquares) {
+        int totalLen = 0;
+        for (var snake : snakeModels) {
+            totalLen += snake.getSnakeBody().size();
+        }
         start:
         //TODO: fix loop when it is no free space
         while (true) {
-            if (freeSquares.size() > snakeBody.size()) {
+            if (freeSquares.size() > totalLen) {
                 Integer foodCoords = freeSquares.get((int) (Math.random() * freeSquares.size()));
                 int foodX = foodCoords % COLUMNS;
                 int foodY = foodCoords / COLUMNS;
-                for (Light.Point snake : snakeBody) {
-                    if (snake.getX() == foodX && snake.getY() == foodY) {
-                        continue start;
+                for (var snake : snakeModels) {
+                    for (Light.Point snakeBody : snake.getSnakeBody()) {
+                        if (snakeBody.getX() == foodX && snakeBody.getY() == foodY) {
+                            continue start;
+                        }
                     }
                 }
                 freeSquares.remove(foodCoords);
@@ -68,7 +73,7 @@ public class FoodModel {
 
     public void drawFood(GraphicsContext gc) {
         for (var pair : foodsMap.entrySet()) {
-            foodView.drawFood(foodsImages, pair.getKey() % COLUMNS,  pair.getKey() / COLUMNS, gc);
+            foodView.drawFood(foodsImages, pair.getKey() % COLUMNS, pair.getKey() / COLUMNS, gc);
         }
     }
 }

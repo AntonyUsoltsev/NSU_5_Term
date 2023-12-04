@@ -17,7 +17,7 @@ public class JoinMsg {
         SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.newBuilder()
                 .setJoin(joinMsg)
                 .setMsgSeq(MSG_SEQ.getAndIncrement())
-                .setSenderId(ID)
+//                .setSenderId(ID)
                 .build();
         log.info("Join message created");
         return gameMessage;

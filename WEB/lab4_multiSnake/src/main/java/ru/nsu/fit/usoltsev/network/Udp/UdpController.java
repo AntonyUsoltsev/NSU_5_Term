@@ -20,16 +20,20 @@ public class UdpController {
     private final UdpSender udpSender;
     private final UdpReceiver udpReceiver;
     private final AnnouncementAdder announcementAdder;
-
     private final AckChecker ackChecker;
     private final ThreadPoolExecutor executor;
 
     //HashMap<String, MessageInfo> inputMessageStore;
     // HashMap<String, MessageInfo> outputMessageStore;
-    private final BlockingQueue<MessageInfo> outputMessageStore;
+    private final LinkedBlockingQueue<MessageInfo> outputMessageStore;
     private final BlockingQueue<MessageInfo> inputMessageStore;
+
     @Getter
     private final BlockingQueue<String> ackStore;
+
+    @Getter
+    private final BlockingQueue<String> successMsgStore;
+
     @Getter
     private final HashMap<Long, MessageInfo> messageTimeSend;
 
@@ -42,19 +46,17 @@ public class UdpController {
         udpReceiver = new UdpReceiver(udpSocket, this);
         announcementAdder = new AnnouncementAdder(this);
         ackChecker = new AckChecker(this);
-
-        // inputMessageStore = new HashMap<>();
-        // outputMessageStore = new HashMap<>();
         outputMessageStore = new LinkedBlockingQueue<>();
         inputMessageStore = new LinkedBlockingQueue<>();
         ackStore = new LinkedBlockingQueue<>();
+        successMsgStore = new LinkedBlockingQueue<>();
         messageTimeSend = new HashMap<>();
     }
 
     public void setOutputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) throws InterruptedException {
         MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
         outputMessageStore.put(messageInfo);
-//        i
+
 //            setMessageTimeSend(messageInfo);
         //log.info("Set new output message");
     }
@@ -101,6 +103,10 @@ public class UdpController {
     public MessageInfo getInputMessage() throws InterruptedException {
         //log.info("Take input message");
         return inputMessageStore.take();
+    }
+
+    public void setSuccessMsg(){
+
     }
 
     public void startAnnouncement() {

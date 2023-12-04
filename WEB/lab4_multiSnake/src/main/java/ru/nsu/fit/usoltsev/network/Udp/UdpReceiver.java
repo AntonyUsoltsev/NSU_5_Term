@@ -1,6 +1,7 @@
 package ru.nsu.fit.usoltsev.network.Udp;
 
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.AckMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
@@ -34,12 +35,14 @@ public class UdpReceiver implements Runnable {
 
                 //  udpController.setInputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameMessage);
 
-                if(gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.ACK) {
+                if (gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.ACK) {
                     udpController.setAck(inputPacket.getAddress(), inputPacket.getPort(), gameMessage);
-                }
-
-                else if (gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.JOIN ||
-                        gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.PING ||
+                    if (GameConfig.ID == -1) {
+                        GameConfig.ID = gameMessage.getReceiverId();
+                        log.info("Get new id from Master after join: " + GameConfig.ID);
+                        GameConfig.countDownLatch.countDown();
+                    }
+                } else if (gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.PING ||
                         gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.STEER ||
                         gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.STATE ||
                         gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.ERROR ||
@@ -48,6 +51,9 @@ public class UdpReceiver implements Runnable {
                     SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), gameMessage.getSenderId());
                     udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
 
+                } else if (gameMessage.getTypeCase() == SnakesProto.GameMessage.TypeCase.JOIN) {
+                    SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), GameConfig.ID_JOIN.incrementAndGet());
+                    udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                 }
 
             } catch (IOException | InterruptedException e) {

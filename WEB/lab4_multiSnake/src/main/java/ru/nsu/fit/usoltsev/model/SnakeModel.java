@@ -23,16 +23,15 @@ public class SnakeModel {
     @Getter
     private Light.Point snakeHead;
     private int curDirection = RIGHT;
-
     private final SnakeView snakeView;
 
     public SnakeModel() {
         snakeView = new SnakeView();
     }
 
-    public void setSnakeBody() {
+    public void setSnakeBody(int startX, int startY) {
         for (int i = 0; i < 2; i++) {
-            snakeBody.add(new Light.Point(5, ROWS / 2, 0, Color.BLUE));
+            snakeBody.add(new Light.Point(startX, startY, 0, Color.BLUE));
         }
         snakeHead = snakeBody.get(0);
     }

@@ -23,8 +23,9 @@ import java.net.SocketException;
 import java.util.HashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static ru.nsu.fit.usoltsev.GameConfig.HEIGHT;
+import static ru.nsu.fit.usoltsev.GameConfig.WIDTH;
 import static ru.nsu.fit.usoltsev.GameConstants.*;
-import static ru.nsu.fit.usoltsev.GameConfig.*;
 
 @Slf4j
 public class MenuController implements NewGameListener {
@@ -71,7 +72,6 @@ public class MenuController implements NewGameListener {
         existGamesView = (ListView<String>) root.lookup("#existGames");
 
         gamesInfo = new HashMap<>();
-
     }
 
     private boolean isFieldEmpty(TextField textField, String item) {
@@ -163,8 +163,7 @@ public class MenuController implements NewGameListener {
             log.info("Map new game " + gameName);
             MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
             gamesInfo.put(gameName, messageInfo);
-            Platform.runLater(() ->
-                    existGamesView.getItems().add(gameName));
+            Platform.runLater(() -> existGamesView.getItems().add(gameName));
         }
     }
 
@@ -176,13 +175,13 @@ public class MenuController implements NewGameListener {
 
                 udpController.startSendRecv();
 
-                GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER);
+                GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER, 1);
                 setWindowProperties(scene, stage);
 
                 udpController.startAnnouncement();
 
-                GameControl gameControl = new GameControl(gc, scene);
-                gameControl.startGame();
+                GameController gameController = new GameController(gc, scene);
+                gameController.startGame();
 
 
             }
@@ -207,6 +206,8 @@ public class MenuController implements NewGameListener {
                     udpController.setOutputMessage(messageInfo.ipAddr(), messageInfo.port(), joinMsg);
 
                     // System.out.println(messageInfo.ipAddr().toString() + " " +  messageInfo.port());
+                    // Todo: wait until ACK (?)
+
 
                     heightValue = gameInfo.getConfig().getHeight();
                     widthValue = gameInfo.getConfig().getWidth();
@@ -215,13 +216,14 @@ public class MenuController implements NewGameListener {
 
                     // log.info("height "+ heightValue + ",width " + widthValue + ",food count " + foodCountValue + ",time delay " + timeValue);
 
-                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole);
+                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole, -1);
+                    GameConfig.countDownLatch.await();
 
                     setWindowProperties(scene, stage);
 
-                    GameControl gameControl = new GameControl(gc, scene);
+                    GameController gameController = new GameController(gc, scene);
 
-                    gameControl.startGame();
+                    gameController.startGame();
 
                 } catch (InterruptedException ex) {
                     ex.printStackTrace(System.err);
