@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <arpa/inet.h>
+#include <semaphore.h>
 #include "cache_list.h"
 #include "logger.h"
 
@@ -23,6 +24,7 @@ typedef struct {
 
 int server_is_on = 1;
 Cache *cache;
+sem_t thread_semaphore;
 
 void sigint_handler(int signo) {
     if (signo == SIGINT) {
@@ -215,12 +217,16 @@ void *client_handler(void *arg) {
     free(buffer);
     free(request0);
 
+    sem_post(&thread_semaphore);
+
     return NULL;
 }
 
 int main() {
     logg("SERVER START", BACK_PURP);
     signal(SIGINT, sigint_handler);
+
+    sem_init(&thread_semaphore, 0, MAX_USERS_COUNT);
 
     int server_socket = create_server_socket();
     if (server_socket == FAIL) {
@@ -268,6 +274,7 @@ int main() {
             close(client_socket);
             continue;
         } else {
+            sem_wait(&thread_semaphore);
             logg("Init new connection", PURPLE);
             context ctx = {client_socket, request};
             pthread_t handler_thread;
@@ -283,5 +290,6 @@ int main() {
     }
     close(server_socket);
     destroy_cache();
+    sem_destroy(&thread_semaphore);
     exit(EXIT_SUCCESS);
 }
