@@ -4,16 +4,14 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
-
-import static ru.nsu.fit.usoltsev.GameConfig.*;
-import static ru.nsu.fit.usoltsev.GameConstants.*;
-
-
 import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.SnakeView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static ru.nsu.fit.usoltsev.GameConfig.*;
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 
 public class SnakeModel {
 
@@ -22,6 +20,7 @@ public class SnakeModel {
 
     @Getter
     private Light.Point snakeHead;
+
     private int curDirection = RIGHT;
     private final SnakeView snakeView;
 
@@ -43,7 +42,15 @@ public class SnakeModel {
             case S, DOWN -> curDirection = (curDirection != UP ? DOWN : UP);
             case W, UP -> curDirection = (curDirection != DOWN ? UP : DOWN);
         }
+    }
 
+    public void changeDirection(int direction){
+        switch (direction){
+            case RIGHT-> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
+            case LEFT -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
+            case DOWN -> curDirection = (curDirection != UP ? DOWN : UP);
+            case UP -> curDirection = (curDirection != DOWN ? UP : DOWN);
+        }
     }
 
     public void snakeMovement() {
@@ -86,15 +93,6 @@ public class SnakeModel {
 
     public void drawSnake(GraphicsContext gc) {
         snakeView.drawSnake(gc, snakeHead, snakeBody);
-    }
-
-    public boolean snakeCrush() {
-        for (int i = 1; i < snakeBody.size(); i++) {
-            if (snakeHead.getX() == snakeBody.get(i).getX() && snakeHead.getY() == snakeBody.get(i).getY()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void raiseUp() {

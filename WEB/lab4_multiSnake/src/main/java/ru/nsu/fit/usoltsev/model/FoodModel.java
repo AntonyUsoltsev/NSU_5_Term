@@ -6,7 +6,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class FoodModel {
         }
     }
 
-    public void generateFood(ArrayList<SnakeModel> snakeModels, List<Integer> freeSquares) {
+    public void generateFood(HashMap<Integer, SnakeModel> snakeModels, List<Integer> freeSquares) {
         for (int i = 0; i < FOOD_COUNT; i++) {
             generateOneFood(snakeModels, freeSquares);
         }
@@ -44,9 +43,9 @@ public class FoodModel {
         foodsMap.remove(foodY * COLUMNS + foodX);
     }
 
-    public void generateOneFood(ArrayList<SnakeModel> snakeModels, List<Integer> freeSquares) {
+    public void generateOneFood(HashMap<Integer, SnakeModel> snakeModels, List<Integer> freeSquares) {
         int totalLen = 0;
-        for (var snake : snakeModels) {
+        for (var snake : snakeModels.values()) {
             totalLen += snake.getSnakeBody().size();
         }
         start:
@@ -56,7 +55,7 @@ public class FoodModel {
                 Integer foodCoords = freeSquares.get((int) (Math.random() * freeSquares.size()));
                 int foodX = foodCoords % COLUMNS;
                 int foodY = foodCoords / COLUMNS;
-                for (var snake : snakeModels) {
+                for (var snake : snakeModels.values()) {
                     for (Light.Point snakeBody : snake.getSnakeBody()) {
                         if (snakeBody.getX() == foodX && snakeBody.getY() == foodY) {
                             continue start;

@@ -8,10 +8,10 @@ public class GameConstants {
      * Directions
      */
     public static final int
-            LEFT = 0,
-            RIGHT = 1,
-            UP = 2,
-            DOWN = 3;
+            UP = 1,
+            DOWN = 2,
+            LEFT = 3,
+            RIGHT = 4;
 
     /**
      * Roles

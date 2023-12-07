@@ -1,7 +1,10 @@
 package ru.nsu.fit.usoltsev.network.Udp;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.listeners.SnakeAddListener;
+import ru.nsu.fit.usoltsev.listeners.StateChangeListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
@@ -16,15 +19,17 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 public class UdpController {
+    @Setter @Getter
+    private SnakeAddListener snakeAddListener;
+
+    @Setter @Getter
+    private StateChangeListener stateChangeListener;
     DatagramSocket udpSocket;
     private final UdpSender udpSender;
     private final UdpReceiver udpReceiver;
     private final AnnouncementAdder announcementAdder;
     private final AckChecker ackChecker;
     private final ThreadPoolExecutor executor;
-
-    //HashMap<String, MessageInfo> inputMessageStore;
-    // HashMap<String, MessageInfo> outputMessageStore;
     private final LinkedBlockingQueue<MessageInfo> outputMessageStore;
     private final BlockingQueue<MessageInfo> inputMessageStore;
 
@@ -108,6 +113,15 @@ public class UdpController {
     public void setSuccessMsg(){
 
     }
+
+    public boolean notifyAddListener(int id){
+        boolean result = snakeAddListener.addNewSnake(id);
+        return result;
+    }
+    public void notifyStateListener(int direction, int id){
+        stateChangeListener.addNewState(direction, id);
+    }
+
 
     public void startAnnouncement() {
         executor.submit(announcementAdder);

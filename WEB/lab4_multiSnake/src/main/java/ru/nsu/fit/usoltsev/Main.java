@@ -1,7 +1,6 @@
 package ru.nsu.fit.usoltsev;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -11,7 +10,6 @@ import ru.nsu.fit.usoltsev.controller.MenuController;
 import ru.nsu.fit.usoltsev.network.MulticastInputController;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;

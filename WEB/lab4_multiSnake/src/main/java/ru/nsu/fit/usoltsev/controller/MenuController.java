@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static ru.nsu.fit.usoltsev.GameConfig.HEIGHT;
 import static ru.nsu.fit.usoltsev.GameConfig.WIDTH;
@@ -30,7 +31,6 @@ import static ru.nsu.fit.usoltsev.GameConstants.*;
 @Slf4j
 public class MenuController implements NewGameListener {
     private GraphicsContext gc;
-
     @Getter
     private final UdpController udpController;
     private final TextField width, height, foodCount, timeDelay, gameName, playerName, joinPlayerName;
@@ -180,10 +180,10 @@ public class MenuController implements NewGameListener {
 
                 udpController.startAnnouncement();
 
-                GameController gameController = new GameController(gc, scene);
+                GameController gameController = new GameController(gc, scene, udpController);
+                udpController.setSnakeAddListener(gameController);
+                udpController.setStateChangeListener(gameController);
                 gameController.startGame();
-
-
             }
         });
 
@@ -197,6 +197,7 @@ public class MenuController implements NewGameListener {
             if (checkJoinConfig()) {
                 // DONE: send JoinMsg firstly
                 try {
+
                     udpController.startSendRecv();
 
                     MessageInfo messageInfo = gamesInfo.get(selectedGame);
@@ -208,7 +209,6 @@ public class MenuController implements NewGameListener {
                     // System.out.println(messageInfo.ipAddr().toString() + " " +  messageInfo.port());
                     // Todo: wait until ACK (?)
 
-
                     heightValue = gameInfo.getConfig().getHeight();
                     widthValue = gameInfo.getConfig().getWidth();
                     foodCountValue = gameInfo.getConfig().getFoodStatic();
@@ -217,14 +217,14 @@ public class MenuController implements NewGameListener {
                     // log.info("height "+ heightValue + ",width " + widthValue + ",food count " + foodCountValue + ",time delay " + timeValue);
 
                     GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole, -1);
-                    GameConfig.countDownLatch.await();
-
-                    setWindowProperties(scene, stage);
-
-                    GameController gameController = new GameController(gc, scene);
-
-                    gameController.startGame();
-
+                    boolean latchCountedDown = GameConfig.countDownLatch.await(2, TimeUnit.SECONDS);
+                    if (latchCountedDown) {
+                        setWindowProperties(scene, stage);
+                        GameController gameController = new GameController(gc, scene, udpController);
+                        gameController.startGame();
+                    } else {
+                        System.out.println("Failed to place new snake");
+                    }
                 } catch (InterruptedException ex) {
                     ex.printStackTrace(System.err);
                     System.exit(1);
