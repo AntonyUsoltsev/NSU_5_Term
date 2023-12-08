@@ -21,13 +21,13 @@ public final class GameConfig {
     public static String PLAYER_NAME;
 
     public static int ID;
-    public static AtomicInteger ID_JOIN = new AtomicInteger(2);
+    public static final AtomicInteger ID_JOIN = new AtomicInteger(2);
     public static int ROLE;
-    public static AtomicLong MSG_SEQ = new AtomicLong(1);
-    public static CountDownLatch countDownLatch = new CountDownLatch(1);
+    public static final AtomicLong MSG_SEQ = new AtomicLong(1);
+    public static final CountDownLatch countDownLatch = new CountDownLatch(1);
     public static InetAddress MASTER_IP;
     public static int MASTER_PORT;
-    public static HashMap<InetAddress, Integer> HOSTS_IP_PORT = new HashMap<>();
+    public static final HashMap<InetAddress, Integer> HOSTS_IP_PORT = new HashMap<>();
 
 
     public static void setConstants(int WIDTH, int HEIGHT, int FOOD_COUNT, int TIME_DELAY, String GAME_NAME, String PLAYER_NAME, int ROLE, int ID) {

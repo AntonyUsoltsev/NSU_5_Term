@@ -35,14 +35,6 @@ public class SnakeModel {
         snakeHead = snakeBody.get(0);
     }
 
-    public void changeDirection(KeyEvent keyCode) {
-        switch (keyCode.getCode()) {
-            case D, RIGHT -> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
-            case A, LEFT -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
-            case S, DOWN -> curDirection = (curDirection != UP ? DOWN : UP);
-            case W, UP -> curDirection = (curDirection != DOWN ? UP : DOWN);
-        }
-    }
 
     public void changeDirection(int direction){
         switch (direction){

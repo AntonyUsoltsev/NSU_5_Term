@@ -33,12 +33,11 @@ public class UdpReceiver implements Runnable {
                         (Arrays.copyOfRange(inputPacket.getData(), 0, inputPacket.getLength()));
 
                 log.info("Receive message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
-
                 //  udpController.setInputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameMessage);
                 switch (gameMessage.getTypeCase()) {
                     case ACK -> {
                         udpController.setAck(inputPacket.getAddress(), inputPacket.getPort(), gameMessage);
-                        if (GameConfig.ID == -1) {
+                        if (GameConfig.ID == -1 && gameMessage.getReceiverId() != -1) {
                             GameConfig.ID = gameMessage.getReceiverId();
                             GameConfig.MASTER_IP = inputPacket.getAddress();
                             GameConfig.MASTER_PORT = inputPacket.getPort();
@@ -56,14 +55,20 @@ public class UdpReceiver implements Runnable {
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                     }
                     case JOIN -> {
-                        int newId = GameConfig.ID_JOIN.getAndIncrement();
-                        if (udpController.notifyAddListener(newId)) {
+                        if (GameConfig.HOSTS_IP_PORT.containsKey(inputPacket.getAddress())){
+                            SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), -1);
+                            udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
+                        }
+                        else {
                             GameConfig.HOSTS_IP_PORT.put(inputPacket.getAddress(), inputPacket.getPort());
-                            SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), newId);
-                            udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
-                        } else {
-                            SnakesProto.GameMessage gameAnswer = ErrorMsg.createError(gameMessage.getMsgSeq(), -1, "Fail to place new snake");
-                            udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
+                            int newId = GameConfig.ID_JOIN.getAndIncrement();
+                            if (udpController.notifyAddListener(newId)) {
+                                SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), newId);
+                                udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
+                            } else {
+                                SnakesProto.GameMessage gameAnswer = ErrorMsg.createError(gameMessage.getMsgSeq(), -1, "Fail to place new snake");
+                                udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
+                            }
                         }
                     }
                     case ERROR -> {

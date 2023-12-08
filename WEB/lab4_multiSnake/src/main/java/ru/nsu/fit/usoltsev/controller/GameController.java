@@ -8,6 +8,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.SnakeAddListener;
 import ru.nsu.fit.usoltsev.listeners.StateChangeListener;
 import ru.nsu.fit.usoltsev.model.FoodModel;
@@ -55,18 +56,21 @@ public class GameController implements SnakeAddListener, StateChangeListener {
 
     @Override
     public boolean addNewSnake(int playerID) {
-        synchronized (snakeModelMap) {
-            SnakeModel snakeModel = new SnakeModel();
-            snakeModelMap.put(playerID, snakeModel);
+        synchronized (snakeModelMap){
             Light.Point generatePoint = findFreeSpace();
-            if (generatePoint == null) {
-                return false;
-            } else {
+            if (generatePoint != null) {
+                SnakeModel snakeModel = new SnakeModel();
+                snakeModelMap.put(playerID, snakeModel);
                 snakeModel.setSnakeBody((int) generatePoint.getX(), (int) generatePoint.getY());
                 stateChanges.put(playerID, RIGHT);
+                log.info(String.format("Add new snake, id = %d, ", playerID));
+                log.info("Current snakes map = " + snakeModelMap);
                 return true;
+            } else {
+                return false;
             }
         }
+
     }
 
     @Override
@@ -97,7 +101,7 @@ public class GameController implements SnakeAddListener, StateChangeListener {
         switch (ROLE) {
             case MASTER -> {
                 addNewSnake(ID);
-                new MasterSnakeController(scene, snakeModelMap.get(ID));
+                new MasterSnakeController(scene, this);
                 foodModel.generateFood(snakeModelMap, freeSquares);
                 Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> masterRun()));
                 timeline.setCycleCount(Animation.INDEFINITE);
@@ -112,7 +116,7 @@ public class GameController implements SnakeAddListener, StateChangeListener {
                 Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> normalRun()));
                 timeline.setCycleCount(Animation.INDEFINITE);
                 timeline.play();
-                log.info("Master timeline started");
+                log.info("Normal timeline started");
             }
             case DEPUTY -> {
 
@@ -121,10 +125,10 @@ public class GameController implements SnakeAddListener, StateChangeListener {
     }
 
     public void masterRun() {
-        if (gameOver) {
-            infoView.drawGameOver(gc);
-            return;
-        }
+//        if (gameOver) {
+//            infoView.drawGameOver(gc);
+//            return;
+//        }
 
         backgroundView.drawBackground(gc);
         foodModel.drawFood(gc);
@@ -145,11 +149,18 @@ public class GameController implements SnakeAddListener, StateChangeListener {
             }
         }
 
-        gameOver = snakeCrush();
+     //   gameOver = snakeCrush();
         infoView.drawScore(gc, score);
 
         SnakesProto.GameMessage message = StateMsg.createState();
+        sendState(message);
 
+    }
+
+    public void sendState(SnakesProto.GameMessage message){
+        synchronized (HOSTS_IP_PORT){
+
+        }
     }
 
     public void normalRun() {
