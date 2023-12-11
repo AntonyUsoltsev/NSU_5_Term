@@ -3,8 +3,10 @@ package ru.nsu.fit.usoltsev.network.Udp;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.listeners.GameStateListener;
+import ru.nsu.fit.usoltsev.listeners.NewGameListener;
 import ru.nsu.fit.usoltsev.listeners.SnakeAddListener;
-import ru.nsu.fit.usoltsev.listeners.StateChangeListener;
+import ru.nsu.fit.usoltsev.listeners.SteerListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
@@ -23,7 +25,12 @@ public class UdpController {
 
     @Setter
     @Getter
-    private StateChangeListener stateChangeListener;
+    private SteerListener steerListener;
+
+    @Setter
+    @Getter
+    private GameStateListener gameStateListener;
+
     DatagramSocket udpSocket;
     private final UdpSender udpSender;
     private final UdpReceiver udpReceiver;
@@ -123,8 +130,12 @@ public class UdpController {
         return result;
     }
 
-    public void notifyStateListener(int direction, int id) {
-        stateChangeListener.addNewState(direction, id);
+    public void notifySteerListener(int direction, int id) {
+        steerListener.setNewSteer(direction, id);
+    }
+
+    public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg){
+        gameStateListener.setNewState(msg);
     }
 
 

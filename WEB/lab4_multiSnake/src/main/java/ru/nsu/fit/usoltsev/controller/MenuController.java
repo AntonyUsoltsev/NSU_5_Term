@@ -182,7 +182,9 @@ public class MenuController implements NewGameListener {
 
                 GameController gameController = new GameController(gc, scene, udpController);
                 udpController.setSnakeAddListener(gameController);
-                udpController.setStateChangeListener(gameController);
+                udpController.setSteerListener(gameController);
+                udpController.setGameStateListener(gameController);
+
                 gameController.startGame();
             }
         });

@@ -29,7 +29,7 @@ public final class GameConfig {
     public static final CountDownLatch countDownLatch = new CountDownLatch(1);
     public static InetAddress MASTER_IP;
     public static int MASTER_PORT;
-    public static final HashMap<InetAddress, Integer> HOSTS_IP_PORT = new HashMap<>();
+
     public static void setConstants(int WIDTH, int HEIGHT, int FOOD_COUNT, int TIME_DELAY, String GAME_NAME, String PLAYER_NAME, int ROLE, int ID) {
         GameConfig.WIDTH = WIDTH * SQUARE_SIZE;
         GameConfig.HEIGHT = HEIGHT * SQUARE_SIZE;

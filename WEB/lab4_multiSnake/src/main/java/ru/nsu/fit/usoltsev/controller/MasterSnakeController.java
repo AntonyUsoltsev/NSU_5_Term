@@ -16,10 +16,10 @@ public class MasterSnakeController {
     public void control(Scene scene) {
         scene.setOnKeyPressed(event -> {
                     switch (event.getCode()) {
-                        case D, RIGHT -> gameController.addNewState(RIGHT, ID);
-                        case A, LEFT -> gameController.addNewState(LEFT, ID);
-                        case S, DOWN -> gameController.addNewState(DOWN, ID);
-                        case W, UP -> gameController.addNewState(UP, ID);
+                        case D, RIGHT -> gameController.setNewSteer(RIGHT, ID);
+                        case A, LEFT -> gameController.setNewSteer(LEFT, ID);
+                        case S, DOWN -> gameController.setNewSteer(DOWN, ID);
+                        case W, UP -> gameController.setNewSteer(UP, ID);
                     }
                 }
         );
