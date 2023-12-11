@@ -115,8 +115,7 @@ public class GameController implements SnakeAddListener, SteerListener, GameStat
         //   gameOver = snakeCrush();
         infoView.drawScore(gc, hosts.get(ID).getScore());
 
-        SnakesProto.GameMessage.Builder message = StateMsg.createState(hosts, foodModel.getFoodsMap());
-        sendState(message);
+        sendState();
 
     }
 
@@ -162,14 +161,20 @@ public class GameController implements SnakeAddListener, SteerListener, GameStat
         }
     }
 
-    public void sendState(SnakesProto.GameMessage.Builder message) {
+    public void sendState() {
         synchronized (hosts) {
-            try {
-                for (var host : hosts.values()) {
-                    udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
+            if (hosts.size() > 1) {
+                SnakesProto.GameMessage.Builder message = StateMsg.createState(hosts, foodModel.getFoodsMap());
+                try {
+                    for (var host : hosts.values()) {
+                        if (host.getID() != ID) {
+                            udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
+                            log.info("Send state to id: " + host.getID());
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    log.warn("Cannot send game state message", e);
                 }
-            } catch (InterruptedException e) {
-                log.warn("Cannot send game state message", e);
             }
         }
     }
@@ -184,16 +189,25 @@ public class GameController implements SnakeAddListener, SteerListener, GameStat
                         host.setRole(player.getRole().getNumber());
                         host.setScore(player.getScore());
                     } else {
+//                        byte[] ipBytes = new byte[4];
+//                        String[] parts = player.getIpAddress().split("\\.");
+//                        for (int i = 0; i < 4; i++) {
+//                            ipBytes[i] = (byte) Integer.parseInt(parts[i]);
+//                        }
+//
+//                        InetAddress address = InetAddress.getByAddress(ipBytes);
                         HostInfo host = new HostInfo(player.getName(), player.getId(), player.getPort(),
-                                InetAddress.getByName(player.getIpAddress()), player.getRole().getNumber(), null,
+                                InetAddress.getByName("192.168.1.172"), player.getRole().getNumber(), null,
                                 player.getScore(), false, 2);
                         hosts.put(player.getId(), host);
                     }
                 } catch (UnknownHostException e) {
-                    log.warn("Exception while parsing game state", e);
+                    log.warn("Exception while parsing game state, ip = " + player.getIpAddress(), e);
                 }
             }
         }
+
+       // log.info("Set new state in id: " + ID);
     }
 
     public void normalRun() {

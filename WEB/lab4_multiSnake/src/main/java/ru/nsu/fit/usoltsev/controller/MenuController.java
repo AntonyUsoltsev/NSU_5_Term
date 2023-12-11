@@ -185,6 +185,7 @@ public class MenuController implements NewGameListener {
                 udpController.setSteerListener(gameController);
                 udpController.setGameStateListener(gameController);
 
+                udpController.setMasterIpToMaster();
                 gameController.startGame();
             }
         });
@@ -199,7 +200,6 @@ public class MenuController implements NewGameListener {
             if (checkJoinConfig()) {
                 // DONE: send JoinMsg firstly
                 try {
-
                     udpController.startSendRecv();
 
                     MessageInfo messageInfo = gamesInfo.get(selectedGame);
@@ -223,6 +223,7 @@ public class MenuController implements NewGameListener {
                     if (latchCountedDown) {
                         setWindowProperties(scene, stage);
                         GameController gameController = new GameController(gc, scene, udpController);
+                        udpController.setGameStateListener(gameController);
                         gameController.startGame();
                     } else {
                         System.out.println("Failed to place new snake");

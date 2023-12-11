@@ -3,8 +3,8 @@ package ru.nsu.fit.usoltsev.network.Udp;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.GameStateListener;
-import ru.nsu.fit.usoltsev.listeners.NewGameListener;
 import ru.nsu.fit.usoltsev.listeners.SnakeAddListener;
 import ru.nsu.fit.usoltsev.listeners.SteerListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
@@ -52,9 +52,7 @@ public class UdpController {
 
     public UdpController(ThreadPoolExecutor executor) throws SocketException {
         udpSocket = new DatagramSocket();
-//        SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
-//        InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
-//        int localPort = ((InetSocketAddress) localSocketAddress).getPort();
+
 
         this.executor = executor;
 
@@ -67,6 +65,19 @@ public class UdpController {
         ackStore = new LinkedBlockingQueue<>();
         successMsgStore = new LinkedBlockingQueue<>();
         messageTimeSend = new HashMap<>();
+    }
+
+    public void setMasterIpToMaster()  {
+        try {
+
+            SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
+            InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
+            int localPort = ((InetSocketAddress) localSocketAddress).getPort();
+            GameConfig.MASTER_IP = InetAddress.getByName(localIpAddress.getHostAddress());
+            GameConfig.MASTER_PORT = localPort;
+        }catch (UnknownHostException e){
+
+        }
     }
 
     public void setOutputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) throws InterruptedException {
@@ -134,8 +145,10 @@ public class UdpController {
         steerListener.setNewSteer(direction, id);
     }
 
-    public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg){
-        gameStateListener.setNewState(msg);
+    public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg) {
+        if (gameStateListener != null) {
+            gameStateListener.setNewState(msg);
+        }
     }
 
 
