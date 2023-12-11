@@ -62,7 +62,7 @@ public class UdpReceiver implements Runnable {
                         else {
                             GameConfig.HOSTS_IP_PORT.put(inputPacket.getAddress(), inputPacket.getPort());
                             int newId = GameConfig.ID_JOIN.getAndIncrement();
-                            if (udpController.notifyAddListener(newId)) {
+                            if (udpController.notifyAddListener(gameMessage.getJoin().getPlayerName(),newId, inputPacket.getPort(), inputPacket.getAddress(),gameMessage.getJoin().getRequestedRole().getNumber())) {
                                 SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), newId);
                                 udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                             } else {

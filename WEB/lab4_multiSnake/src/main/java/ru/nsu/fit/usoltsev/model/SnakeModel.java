@@ -2,9 +2,9 @@ package ru.nsu.fit.usoltsev.model;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.view.SnakeView;
 
 import java.util.ArrayList;
@@ -13,32 +13,35 @@ import java.util.List;
 import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.*;
 
+@Slf4j
 public class SnakeModel {
-
     @Getter
     private final List<Light.Point> snakeBody = new ArrayList<>();
-
     @Getter
     private Light.Point snakeHead;
-
+    @Getter
     private int curDirection = RIGHT;
     private final SnakeView snakeView;
+    private final Color color;
 
-    public SnakeModel() {
+    public SnakeModel(int index) {
         snakeView = new SnakeView();
+
+        color = COLORS.get(index % COLORS.size());
+        log.info("COLOR = " + color + " Index = " + index);
     }
 
     public void setSnakeBody(int startX, int startY) {
         for (int i = 0; i < 2; i++) {
-            snakeBody.add(new Light.Point(startX, startY, 0, Color.BLUE));
+            snakeBody.add(new Light.Point(startX, startY, 0, color));
         }
         snakeHead = snakeBody.get(0);
     }
 
 
-    public void changeDirection(int direction){
-        switch (direction){
-            case RIGHT-> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
+    public void changeDirection(int direction) {
+        switch (direction) {
+            case RIGHT -> curDirection = (curDirection != LEFT ? RIGHT : LEFT);
             case LEFT -> curDirection = (curDirection != RIGHT ? LEFT : RIGHT);
             case DOWN -> curDirection = (curDirection != UP ? DOWN : UP);
             case UP -> curDirection = (curDirection != DOWN ? UP : DOWN);
@@ -88,7 +91,7 @@ public class SnakeModel {
     }
 
     public void raiseUp() {
-        snakeBody.add(new Light.Point(-1, -1, 0, Color.BLUE));
+        snakeBody.add(new Light.Point(-1, -1, 0, color));
     }
 
 

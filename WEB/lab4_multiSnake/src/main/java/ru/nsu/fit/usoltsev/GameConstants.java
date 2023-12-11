@@ -1,7 +1,10 @@
 package ru.nsu.fit.usoltsev;
 
+import javafx.scene.paint.Color;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class GameConstants {
     /**
@@ -28,7 +31,20 @@ public class GameConstants {
     public static final int MULTICAST_PORT = 9192;
     public static final InetAddress MULTICAST_IP;
 
+    public static final ArrayList<Color> COLORS = new ArrayList<>();
+
     static {
+        COLORS.add(Color.RED);
+        COLORS.add(Color.BLUE);
+        COLORS.add(Color.MAGENTA);
+        COLORS.add(Color.YELLOW);
+        COLORS.add(Color.AQUAMARINE);
+        COLORS.add(Color.BLACK);
+        COLORS.add(Color.GREEN);
+        COLORS.add(Color.LIGHTSALMON);
+        COLORS.add(Color.LIME);
+        COLORS.add(Color.DARKBLUE);
+        COLORS.add(Color.ORANGE);
         try {
             MULTICAST_IP = InetAddress.getByName("239.192.0.4");
         } catch (UnknownHostException e) {

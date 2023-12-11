@@ -8,7 +8,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
-import ru.nsu.fit.usoltsev.GameConfig;
+import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.listeners.SnakeAddListener;
 import ru.nsu.fit.usoltsev.listeners.StateChangeListener;
 import ru.nsu.fit.usoltsev.model.FoodModel;
@@ -19,9 +19,9 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 import ru.nsu.fit.usoltsev.view.BackgroundView;
 import ru.nsu.fit.usoltsev.view.InfoView;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
@@ -30,16 +30,17 @@ import static ru.nsu.fit.usoltsev.GameConstants.*;
 @Slf4j
 public class GameController implements SnakeAddListener, StateChangeListener {
     private boolean gameOver;
-    private int score;
+    private final HashMap<Integer, HostInfo> hosts; // id - host info
+    //   private final HashMap<Integer, Integer> scores;  // id - score
     public GraphicsContext gc;
 
     public Scene scene;
     public BackgroundView backgroundView;
     public InfoView infoView;
     public FoodModel foodModel;
-    public final HashMap<Integer, SnakeModel> snakeModelMap;
-    public final HashMap<Integer, Integer> stateChanges;
-    private final List<Integer> freeSquares;
+    // public final HashMap<Integer, SnakeModel> snakeModelMap;  // id - model
+    public final HashMap<Integer, Integer> stateChanges;    // id - change
+    private final ArrayList<Integer> freeSquares;
     private final UdpController udpController;
 
     public GameController(GraphicsContext gc, Scene scene, UdpController udpController) {
@@ -47,24 +48,25 @@ public class GameController implements SnakeAddListener, StateChangeListener {
         this.scene = scene;
         this.udpController = udpController;
         freeSquares = new ArrayList<>(ROWS * COLUMNS);
+        hosts = new HashMap<>();
         backgroundView = new BackgroundView();
         foodModel = new FoodModel(freeSquares);
         infoView = new InfoView();
-        snakeModelMap = new HashMap<>();
         stateChanges = new HashMap<>();
     }
 
     @Override
-    public boolean addNewSnake(int playerID) {
-        synchronized (snakeModelMap){
+    public boolean addNewSnake(String name, int playerID, int port, InetAddress ip, int role) {
+        synchronized (hosts) {
             Light.Point generatePoint = findFreeSpace();
             if (generatePoint != null) {
-                SnakeModel snakeModel = new SnakeModel();
-                snakeModelMap.put(playerID, snakeModel);
+                SnakeModel snakeModel = new SnakeModel(playerID);
                 snakeModel.setSnakeBody((int) generatePoint.getX(), (int) generatePoint.getY());
+                HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, snakeModel, 0, false, RIGHT);
+                hosts.put(playerID, hostInfo);
                 stateChanges.put(playerID, RIGHT);
-                log.info(String.format("Add new snake, id = %d, ", playerID));
-                log.info("Current snakes map = " + snakeModelMap);
+                log.info(String.format("Add new snake - name:%s, id: %d, port: %d, ip: %s, role: %d", name, playerID, port, ip, role));
+                log.info("Current snakes map = " + hosts);
                 return true;
             } else {
                 return false;
@@ -77,6 +79,7 @@ public class GameController implements SnakeAddListener, StateChangeListener {
     public void addNewState(int direction, int senderID) {
         synchronized (stateChanges) {
             stateChanges.put(senderID, direction);
+
         }
     }
 
@@ -100,9 +103,10 @@ public class GameController implements SnakeAddListener, StateChangeListener {
     public void startGame() {
         switch (ROLE) {
             case MASTER -> {
-                addNewSnake(ID);
+                log.info(String.format("New master: name:%s, id: %d, port: %d, ip: %s, role: %d", PLAYER_NAME, ID, MASTER_PORT, MASTER_IP, ROLE));
+                addNewSnake(PLAYER_NAME, ID, MASTER_PORT, MASTER_IP, ROLE);
                 new MasterSnakeController(scene, this);
-                foodModel.generateFood(snakeModelMap, freeSquares);
+                foodModel.generateFood(hosts, freeSquares);
                 Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> masterRun()));
                 timeline.setCycleCount(Animation.INDEFINITE);
                 timeline.play();
@@ -133,33 +137,43 @@ public class GameController implements SnakeAddListener, StateChangeListener {
         backgroundView.drawBackground(gc);
         foodModel.drawFood(gc);
 
-        synchronized (snakeModelMap) {
+        synchronized (hosts) {
             synchronized (stateChanges) {
-                for (Map.Entry<Integer, SnakeModel> entry : snakeModelMap.entrySet()) {
-                    Integer key = entry.getKey();
-                    SnakeModel curSnake = entry.getValue();
-                    if (stateChanges.containsKey(key)) {
-                        curSnake.changeDirection(stateChanges.get(key));
-                        stateChanges.remove(key);
+                for (Map.Entry<Integer, HostInfo> entry : hosts.entrySet()) {
+                    Integer id = entry.getKey();
+                    HostInfo curHost = entry.getValue();
+                    SnakeModel curSnake = curHost.getModel();
+                    if (stateChanges.containsKey(id)) {
+                        curSnake.changeDirection(stateChanges.get(id));
+                        stateChanges.remove(id);
+                        hosts.get(id).setDirection(curSnake.getCurDirection());
                     }
                     curSnake.snakeMovement();
                     curSnake.drawSnake(gc);
-                    eatFood(curSnake);
+                    if (eatFood(curSnake)) {
+                        curHost.addScore(FOOD_SCORE);
+                    }
                 }
             }
         }
 
-     //   gameOver = snakeCrush();
-        infoView.drawScore(gc, score);
+        //   gameOver = snakeCrush();
+        infoView.drawScore(gc, hosts.get(ID).getScore());
 
-        SnakesProto.GameMessage message = StateMsg.createState();
+        SnakesProto.GameMessage.Builder message = StateMsg.createState(hosts, foodModel.getFoodsMap());
         sendState(message);
 
     }
 
-    public void sendState(SnakesProto.GameMessage message){
-        synchronized (HOSTS_IP_PORT){
-
+    public void sendState(SnakesProto.GameMessage.Builder message) {
+        synchronized (hosts) {
+            try {
+                for (var host : hosts.values()) {
+                    udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
+                }
+            } catch (InterruptedException e) {
+                log.warn("Cannot send game state message", e);
+            }
         }
     }
 
@@ -168,24 +182,26 @@ public class GameController implements SnakeAddListener, StateChangeListener {
         foodModel.drawFood(gc);
     }
 
-    private void eatFood(SnakeModel snakeModel) {
+    private boolean eatFood(SnakeModel snakeModel) {
         int[][] foods = foodModel.getFoodsCoords();
         int snakeX = (int) snakeModel.getSnakeHead().getX();
         int snakeY = (int) snakeModel.getSnakeHead().getY();
 
         if (foods[snakeX][snakeY] == FOOD) {
-            score += FOOD_SCORE;
             foodModel.eraseOneFood(snakeX, snakeY, freeSquares);
-            foodModel.generateOneFood(snakeModelMap, freeSquares);
+            foodModel.generateOneFood(hosts, freeSquares);
             snakeModel.raiseUp();
+            return true;
         }
+        return false;
     }
 
     private boolean snakeCrush() {
-        for (SnakeModel snake : snakeModelMap.values()) {
-            for (SnakeModel curSnake : snakeModelMap.values()) {
-                for (int i = 1; i < curSnake.getSnakeBody().size(); i++) {
-                    if (snake.getSnakeHead().getX() == curSnake.getSnakeBody().get(i).getX() && snake.getSnakeHead().getY() == curSnake.getSnakeBody().get(i).getY()) {
+        for (HostInfo snake : hosts.values()) {
+            for (HostInfo curSnake : hosts.values()) {
+                for (int i = 1; i < curSnake.getModel().getSnakeBody().size(); i++) {
+                    if (snake.getModel().getSnakeHead().getX() == curSnake.getModel().getSnakeBody().get(i).getX()
+                            && snake.getModel().getSnakeHead().getY() == curSnake.getModel().getSnakeBody().get(i).getY()) {
                         return true;
                     }
                 }

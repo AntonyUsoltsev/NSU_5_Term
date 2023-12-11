@@ -4,21 +4,22 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.scene.image.Image;
 import lombok.Getter;
+import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.FOOD;
 
 public class FoodModel {
-
-    private final HashMap<Integer, Integer> foodsMap = new HashMap<>();
-
-    //TODO: matrix for all game
+    @Getter
+    private final HashSet<Integer> foodsMap = new HashSet<>(); // coords of food
 
     @Getter
+    // TODO: delete
     private final int[][] foodsCoords = new int[COLUMNS][ROWS];
 
     private final Image foodsImages = new Image("ru/nsu/fit/usoltsev/pictures/apple.png");
@@ -31,9 +32,9 @@ public class FoodModel {
         }
     }
 
-    public void generateFood(HashMap<Integer, SnakeModel> snakeModels, List<Integer> freeSquares) {
+    public void generateFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
         for (int i = 0; i < FOOD_COUNT; i++) {
-            generateOneFood(snakeModels, freeSquares);
+            generateOneFood(snakes, freeSquares);
         }
     }
 
@@ -43,10 +44,10 @@ public class FoodModel {
         foodsMap.remove(foodY * COLUMNS + foodX);
     }
 
-    public void generateOneFood(HashMap<Integer, SnakeModel> snakeModels, List<Integer> freeSquares) {
+    public void generateOneFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
         int totalLen = 0;
-        for (var snake : snakeModels.values()) {
-            totalLen += snake.getSnakeBody().size();
+        for (var snake : snakes.values()) {
+            totalLen += snake.getModel().getSnakeBody().size();
         }
         start:
         //TODO: fix loop when it is no free space
@@ -55,8 +56,8 @@ public class FoodModel {
                 Integer foodCoords = freeSquares.get((int) (Math.random() * freeSquares.size()));
                 int foodX = foodCoords % COLUMNS;
                 int foodY = foodCoords / COLUMNS;
-                for (var snake : snakeModels.values()) {
-                    for (Light.Point snakeBody : snake.getSnakeBody()) {
+                for (var snake : snakes.values()) {
+                    for (Light.Point snakeBody : snake.getModel().getSnakeBody()) {
                         if (snakeBody.getX() == foodX && snakeBody.getY() == foodY) {
                             continue start;
                         }
@@ -64,15 +65,15 @@ public class FoodModel {
                 }
                 freeSquares.remove(foodCoords);
                 foodsCoords[foodX][foodY] = FOOD;
-                foodsMap.put(foodCoords, FOOD);
+                foodsMap.add(foodCoords);
             }
             break;
         }
     }
 
     public void drawFood(GraphicsContext gc) {
-        for (var pair : foodsMap.entrySet()) {
-            foodView.drawFood(foodsImages, pair.getKey() % COLUMNS, pair.getKey() / COLUMNS, gc);
+        for (var key : foodsMap) {
+            foodView.drawFood(foodsImages, key % COLUMNS, key / COLUMNS, gc);
         }
     }
 }

@@ -1,5 +1,6 @@
 package ru.nsu.fit.usoltsev;
 
+import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
@@ -24,12 +25,11 @@ public final class GameConfig {
     public static final AtomicInteger ID_JOIN = new AtomicInteger(2);
     public static int ROLE;
     public static final AtomicLong MSG_SEQ = new AtomicLong(1);
+    public static final AtomicInteger STATE_SEQ = new AtomicInteger(1);
     public static final CountDownLatch countDownLatch = new CountDownLatch(1);
     public static InetAddress MASTER_IP;
     public static int MASTER_PORT;
     public static final HashMap<InetAddress, Integer> HOSTS_IP_PORT = new HashMap<>();
-
-
     public static void setConstants(int WIDTH, int HEIGHT, int FOOD_COUNT, int TIME_DELAY, String GAME_NAME, String PLAYER_NAME, int ROLE, int ID) {
         GameConfig.WIDTH = WIDTH * SQUARE_SIZE;
         GameConfig.HEIGHT = HEIGHT * SQUARE_SIZE;

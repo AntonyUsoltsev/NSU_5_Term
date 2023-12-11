@@ -8,9 +8,7 @@ import ru.nsu.fit.usoltsev.listeners.StateChangeListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -19,10 +17,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 public class UdpController {
-    @Setter @Getter
+    @Setter
+    @Getter
     private SnakeAddListener snakeAddListener;
 
-    @Setter @Getter
+    @Setter
+    @Getter
     private StateChangeListener stateChangeListener;
     DatagramSocket udpSocket;
     private final UdpSender udpSender;
@@ -45,6 +45,10 @@ public class UdpController {
 
     public UdpController(ThreadPoolExecutor executor) throws SocketException {
         udpSocket = new DatagramSocket();
+//        SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
+//        InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
+//        int localPort = ((InetSocketAddress) localSocketAddress).getPort();
+
         this.executor = executor;
 
         udpSender = new UdpSender(udpSocket, this);
@@ -110,15 +114,16 @@ public class UdpController {
         return inputMessageStore.take();
     }
 
-    public void setSuccessMsg(){
+    public void setSuccessMsg() {
 
     }
 
-    public boolean notifyAddListener(int id){
-        boolean result = snakeAddListener.addNewSnake(id);
+    public boolean notifyAddListener(String name, int playerID, int port, InetAddress ip, int role) {
+        boolean result = snakeAddListener.addNewSnake(name, playerID, port, ip, role);
         return result;
     }
-    public void notifyStateListener(int direction, int id){
+
+    public void notifyStateListener(int direction, int id) {
         stateChangeListener.addNewState(direction, id);
     }
 
