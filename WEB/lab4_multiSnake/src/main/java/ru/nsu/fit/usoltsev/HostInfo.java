@@ -21,7 +21,12 @@ public class HostInfo {
     private boolean gameOver;
     private int direction;
 
-    public void addScore(int delta){
+    public void addScore(int delta) {
         score += delta;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Name:%s, id: %d, port: %d, ip: %s, role: %d", name, ID, port, ip, role);
     }
 }

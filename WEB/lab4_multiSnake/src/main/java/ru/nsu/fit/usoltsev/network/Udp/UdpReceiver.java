@@ -35,8 +35,9 @@ public class UdpReceiver implements Runnable {
 
                 SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom
                         (Arrays.copyOfRange(inputPacket.getData(), 0, inputPacket.getLength()));
-
-                log.info("Receive message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
+                if (gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE) {
+                    log.info("Receive message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
+                }
                 switch (gameMessage.getTypeCase()) {
                     case ACK -> {
                         udpController.setAck(inputPacket.getAddress(), inputPacket.getPort(), gameMessage);
@@ -64,14 +65,13 @@ public class UdpReceiver implements Runnable {
                         udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), gameMessage.getSenderId());
                     }
                     case JOIN -> {
-                        if (hostsIpPort.containsKey(inputPacket.getAddress())){
+                        if (hostsIpPort.containsKey(inputPacket.getAddress())) {
                             SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), -1);
                             udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
-                        }
-                        else {
+                        } else {
                             hostsIpPort.put(inputPacket.getAddress(), inputPacket.getPort());
                             int newId = GameConfig.ID_JOIN.getAndIncrement();
-                            if (udpController.notifyAddListener(gameMessage.getJoin().getPlayerName(),newId, inputPacket.getPort(), inputPacket.getAddress(),gameMessage.getJoin().getRequestedRole().getNumber())) {
+                            if (udpController.notifyAddListener(gameMessage.getJoin().getPlayerName(), newId, inputPacket.getPort(), inputPacket.getAddress(), gameMessage.getJoin().getRequestedRole().getNumber())) {
                                 SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), newId);
                                 udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                             } else {

@@ -12,16 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
-import static ru.nsu.fit.usoltsev.GameConstants.FOOD;
 
 public class FoodModel {
     @Getter
-    private final HashSet<Integer> foodsMap = new HashSet<>(); // coords of food
-
-    @Getter
-    // TODO: delete
-    private final int[][] foodsCoords = new int[COLUMNS][ROWS];
-
+    private final HashSet<Integer> foodsSet = new HashSet<>(); // coords of food
     private final Image foodsImages = new Image("ru/nsu/fit/usoltsev/pictures/apple.png");
     private final FoodView foodView;
 
@@ -39,9 +33,9 @@ public class FoodModel {
     }
 
     public void eraseOneFood(int foodX, int foodY, List<Integer> freeSquares) {
-        foodsCoords[foodX][foodY] = 0;
+
         freeSquares.add(foodY * COLUMNS + foodX);
-        foodsMap.remove(foodY * COLUMNS + foodX);
+        foodsSet.remove(foodY * COLUMNS + foodX);
     }
 
     public void generateOneFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
@@ -64,15 +58,14 @@ public class FoodModel {
                     }
                 }
                 freeSquares.remove(foodCoords);
-                foodsCoords[foodX][foodY] = FOOD;
-                foodsMap.add(foodCoords);
+                foodsSet.add(foodCoords);
             }
             break;
         }
     }
 
     public void drawFood(GraphicsContext gc) {
-        for (var key : foodsMap) {
+        for (var key : foodsSet) {
             foodView.drawFood(foodsImages, key % COLUMNS, key / COLUMNS, gc);
         }
     }

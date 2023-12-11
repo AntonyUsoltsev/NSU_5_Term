@@ -94,5 +94,12 @@ public class SnakeModel {
         snakeBody.add(new Light.Point(-1, -1, 0, color));
     }
 
+    public void addPoint(double x, double y) {
+        snakeBody.add(new Light.Point(x, y, 0, color));
+        if (snakeBody.size() == 1){
+            snakeHead = snakeBody.get(0);
+        }
+    }
+
 
 }

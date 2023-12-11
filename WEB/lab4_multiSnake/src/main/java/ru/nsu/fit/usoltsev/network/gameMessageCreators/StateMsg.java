@@ -17,7 +17,6 @@ public class StateMsg {
         SnakesProto.GameState.Builder state = SnakesProto.GameState.newBuilder()
                 .setStateOrder(GameConfig.STATE_SEQ.getAndIncrement());
 
-        int i = 0;
 
         for (Integer oneFood : foods) {
             SnakesProto.GameState.Coord coord = SnakesProto.GameState.Coord.newBuilder()
@@ -25,7 +24,6 @@ public class StateMsg {
                     .setY(oneFood / COLUMNS)
                     .build();
             state.addFoods(coord);
-            i++;
         }
 
 
@@ -46,10 +44,10 @@ public class StateMsg {
                     .setState(SnakesProto.GameState.Snake.SnakeState.ALIVE)
                     .setHeadDirection(SnakesProto.Direction.forNumber(host.getDirection()))
                     .setPlayerId(host.getID());
-            for (int j = 1; j < host.getModel().getSnakeBody().size(); j++) {
+            for (int i = 0; i < host.getModel().getSnakeBody().size(); i++) {
                 SnakesProto.GameState.Coord coord = SnakesProto.GameState.Coord.newBuilder()
-                        .setX((int) host.getModel().getSnakeBody().get(j).getX())
-                        .setY((int) host.getModel().getSnakeBody().get(j).getY())
+                        .setX((int) host.getModel().getSnakeBody().get(i).getX())
+                        .setY((int) host.getModel().getSnakeBody().get(i).getY())
                         .build();
                 snake.addPoints(coord);
             }

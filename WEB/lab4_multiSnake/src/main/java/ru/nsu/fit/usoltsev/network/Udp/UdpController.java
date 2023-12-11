@@ -69,7 +69,6 @@ public class UdpController {
 
     public void setMasterIpToMaster()  {
         try {
-
             SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
             InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
             int localPort = ((InetSocketAddress) localSocketAddress).getPort();
