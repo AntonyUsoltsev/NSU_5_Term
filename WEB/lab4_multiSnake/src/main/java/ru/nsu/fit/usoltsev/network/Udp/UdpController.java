@@ -53,7 +53,6 @@ public class UdpController {
     public UdpController(ThreadPoolExecutor executor) throws SocketException {
         udpSocket = new DatagramSocket();
 
-
         this.executor = executor;
 
         udpSender = new UdpSender(udpSocket, this);

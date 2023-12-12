@@ -18,6 +18,7 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) {
         try {
+            System.out.println("Game start");
             stage.setTitle("Snake");
             Image icon = new Image("ru/nsu/fit/usoltsev/pictures/snakeIcon.png");
             stage.getIcons().add(icon);

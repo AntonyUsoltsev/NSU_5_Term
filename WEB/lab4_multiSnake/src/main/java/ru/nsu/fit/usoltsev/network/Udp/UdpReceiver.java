@@ -54,9 +54,12 @@ public class UdpReceiver implements Runnable {
                             GameConfig.countDownLatch.countDown();
                         }
                     }
-                    case PING, ROLE_CHANGE -> {
+                    case PING -> {
                         SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), gameMessage.getSenderId());
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
+                    }
+                    case ROLE_CHANGE -> {
+
                     }
                     case STATE -> {
                         SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), gameMessage.getSenderId());
