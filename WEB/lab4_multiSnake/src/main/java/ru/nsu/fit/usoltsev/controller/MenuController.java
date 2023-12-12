@@ -20,6 +20,7 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.file.LinkOption;
 import java.util.HashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -198,7 +199,6 @@ public class MenuController implements NewGameListener {
 
         joinButton.setOnAction(event -> {
             if (checkJoinConfig()) {
-                // DONE: send JoinMsg firstly
                 try {
                     udpController.startSendRecv();
 
@@ -208,17 +208,14 @@ public class MenuController implements NewGameListener {
                     SnakesProto.GameMessage joinMsg = JoinMsg.createJoin(joinPlayerNameValue, gameInfo.getGameName(), joinPlayerRole);
                     udpController.setOutputMessage(messageInfo.ipAddr(), messageInfo.port(), joinMsg);
 
-                    // System.out.println(messageInfo.ipAddr().toString() + " " +  messageInfo.port());
-                    // Todo: wait until ACK (?)
-
                     heightValue = gameInfo.getConfig().getHeight();
                     widthValue = gameInfo.getConfig().getWidth();
                     foodCountValue = gameInfo.getConfig().getFoodStatic();
                     timeValue = gameInfo.getConfig().getStateDelayMs();
-
-                    // log.info("height "+ heightValue + ",width " + widthValue + ",food count " + foodCountValue + ",time delay " + timeValue);
-
+                    log.info(String.format("widthValue: %d, heightValue: %d, foodCountValue: %d, timeValue: %d, gameNameValue: %s, joinPlayerNameValue: %s, joinPlayerRole: %d",
+                            widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole));
                     GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole, -1);
+
                     boolean latchCountedDown = GameConfig.countDownLatch.await(2, TimeUnit.SECONDS);
                     if (latchCountedDown) {
                         setWindowProperties(scene, stage);

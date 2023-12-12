@@ -5,7 +5,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.GameStateListener;
-import ru.nsu.fit.usoltsev.listeners.SnakeAddListener;
+import ru.nsu.fit.usoltsev.listeners.HostAddListener;
 import ru.nsu.fit.usoltsev.listeners.SteerListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class UdpController {
     @Setter
     @Getter
-    private SnakeAddListener snakeAddListener;
+    private HostAddListener snakeAddListener;
 
     @Setter
     @Getter
@@ -75,7 +75,7 @@ public class UdpController {
             GameConfig.MASTER_IP = InetAddress.getByName(localIpAddress.getHostAddress());
             GameConfig.MASTER_PORT = localPort;
         }catch (UnknownHostException e){
-
+            log.warn("Filed to parse ip in master to master ip", e);
         }
     }
 
@@ -139,6 +139,13 @@ public class UdpController {
         boolean result = snakeAddListener.addNewSnake(name, playerID, port, ip, role);
         return result;
     }
+
+    public boolean notifyViewListener(String name, int playerID, int port, InetAddress ip, int role) {
+        boolean result = snakeAddListener.addNewViewer(name, playerID, port, ip, role);
+        return result;
+    }
+
+
 
     public void notifySteerListener(int direction, int id) {
         steerListener.setNewSteer(direction, id);

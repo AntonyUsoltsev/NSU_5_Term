@@ -7,6 +7,7 @@ import lombok.Getter;
 import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.view.FoodView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -67,6 +68,14 @@ public class FoodModel {
     public void drawFood(GraphicsContext gc) {
         for (var key : foodsSet) {
             foodView.drawFood(foodsImages, key % COLUMNS, key / COLUMNS, gc);
+        }
+    }
+
+    public void crushSnake(ArrayList<Light.Point> snakeBody) {
+        for (var point : snakeBody) {
+            if (Math.random() > 0.5){
+                foodsSet.add((int) (point.getY() * COLUMNS + point.getX()));
+            }
         }
     }
 }

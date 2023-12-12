@@ -16,9 +16,12 @@ public class StateMsg {
 
         SnakesProto.GameState.Builder state = SnakesProto.GameState.newBuilder()
                 .setStateOrder(GameConfig.STATE_SEQ.getAndIncrement());
-
+        boolean flag = false;
 
         for (Integer oneFood : foods) {
+            if (oneFood < 0) {
+                flag = true;
+            }
             SnakesProto.GameState.Coord coord = SnakesProto.GameState.Coord.newBuilder()
                     .setX(oneFood % COLUMNS)
                     .setY(oneFood / COLUMNS)
@@ -45,11 +48,20 @@ public class StateMsg {
                     .setHeadDirection(SnakesProto.Direction.forNumber(host.getDirection()))
                     .setPlayerId(host.getID());
             for (int i = 0; i < host.getModel().getSnakeBody().size(); i++) {
+
+                int x = (int) host.getModel().getSnakeBody().get(i).getX();
+                int y = (int) host.getModel().getSnakeBody().get(i).getY();
+
                 SnakesProto.GameState.Coord coord = SnakesProto.GameState.Coord.newBuilder()
                         .setX((int) host.getModel().getSnakeBody().get(i).getX())
                         .setY((int) host.getModel().getSnakeBody().get(i).getY())
                         .build();
+
                 snake.addPoints(coord);
+
+                if (x < 0 || y < 0) {
+                    flag = true;
+                }
             }
 
             state.addSnakes(snake.build());
@@ -68,6 +80,11 @@ public class StateMsg {
                 .setMsgSeq(GameConfig.MSG_SEQ.getAndIncrement())
                 .setState(stateMsg)
                 .setSenderId(ID);
+
+        if (flag) {
+            System.out.println(gameMessage);
+        }
+
         return gameMessage;
     }
 }

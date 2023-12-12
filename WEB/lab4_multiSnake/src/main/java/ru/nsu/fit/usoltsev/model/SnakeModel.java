@@ -3,12 +3,10 @@ package ru.nsu.fit.usoltsev.model;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.scene.paint.Color;
+import java.util.ArrayList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.view.SnakeView;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.*;
@@ -16,7 +14,7 @@ import static ru.nsu.fit.usoltsev.GameConstants.*;
 @Slf4j
 public class SnakeModel {
     @Getter
-    private final List<Light.Point> snakeBody = new ArrayList<>();
+    private final ArrayList<Light.Point> snakeBody = new ArrayList<>();
     @Getter
     private Light.Point snakeHead;
     @Getter
@@ -33,11 +31,13 @@ public class SnakeModel {
 
     public void setSnakeBody(int startX, int startY) {
         for (int i = 0; i < 2; i++) {
-            snakeBody.add(new Light.Point(startX, startY, 0, color));
+            snakeBody.add(new Light.Point(startX - i, startY, 0, color));
         }
         snakeHead = snakeBody.get(0);
     }
-
+//    public void setSnakeHead(Light){
+//
+//    }
 
     public void changeDirection(int direction) {
         switch (direction) {
@@ -83,15 +83,17 @@ public class SnakeModel {
                     snakeHead.setY(snakeHead.getY() + 1);
                 }
             }
+
         }
+
     }
 
     public void drawSnake(GraphicsContext gc) {
         snakeView.drawSnake(gc, snakeHead, snakeBody);
     }
 
-    public void raiseUp() {
-        snakeBody.add(new Light.Point(-1, -1, 0, color));
+    public void raiseUp(int x, int y) {
+        snakeBody.add(new Light.Point(x, y, 0, color));
     }
 
     public void addPoint(double x, double y) {
