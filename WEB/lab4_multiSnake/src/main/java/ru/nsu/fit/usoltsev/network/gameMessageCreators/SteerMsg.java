@@ -3,7 +3,8 @@ package ru.nsu.fit.usoltsev.network.gameMessageCreators;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
 import static ru.nsu.fit.usoltsev.GameConfig.ID;
-import static ru.nsu.fit.usoltsev.GameConfig.MSG_SEQ;
+import static ru.nsu.fit.usoltsev.network.NetworkUtils.MSG_SEQ;
+
 
 public class SteerMsg {
 

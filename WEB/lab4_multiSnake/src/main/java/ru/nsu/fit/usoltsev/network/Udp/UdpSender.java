@@ -27,12 +27,14 @@ public class UdpSender implements Runnable {
                 DatagramPacket outputPacket = new DatagramPacket(newAppBuff, newAppBuff.length, messageInfo.ipAddr(), messageInfo.port());
                 udpSocket.send(outputPacket);
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.DISCOVER
-                &&  messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
+//                &&  messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
                 ) {
                     udpController.setMessageTimeSend(messageInfo);
                 }
-                log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
-
+                if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
+                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK) {
+                    log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
+                }
             } catch (InterruptedException | IOException e) {
                 throw new RuntimeException(e);
             }

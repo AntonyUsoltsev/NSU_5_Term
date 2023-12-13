@@ -3,7 +3,6 @@ package ru.nsu.fit.usoltsev.network.Udp;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.GameStateListener;
 import ru.nsu.fit.usoltsev.listeners.HostAddListener;
 import ru.nsu.fit.usoltsev.listeners.SteerListener;
@@ -16,6 +15,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static ru.nsu.fit.usoltsev.network.NetworkUtils.*;
 
 @Slf4j
 public class UdpController {
@@ -71,8 +71,8 @@ public class UdpController {
             SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
             InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
             int localPort = ((InetSocketAddress) localSocketAddress).getPort();
-            GameConfig.MASTER_IP = InetAddress.getByName(localIpAddress.getHostAddress());
-            GameConfig.MASTER_PORT = localPort;
+            MASTER_IP = InetAddress.getByName(localIpAddress.getHostAddress());
+            MASTER_PORT = localPort;
         }catch (UnknownHostException e){
             log.warn("Filed to parse ip in master to master ip", e);
         }

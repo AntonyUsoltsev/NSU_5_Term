@@ -2,6 +2,7 @@ package ru.nsu.fit.usoltsev.network.Udp;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
+import ru.nsu.fit.usoltsev.network.NetworkUtils;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.AckMsg;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.AnnouncementMsg;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.ErrorMsg;
@@ -10,23 +11,23 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 
-import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.SQUARE_SIZE;
+import static ru.nsu.fit.usoltsev.network.NetworkUtils.*;
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 
 @Slf4j
 public class UdpReceiver implements Runnable {
     private final DatagramSocket udpSocket;
     private final UdpController udpController;
-    public final HashMap<Integer, InetAddress> hostsPortIp;
+    public final HashSet<String> hostsPortIp;  // "ip:port"
 
     public UdpReceiver(DatagramSocket udpSocket, UdpController udpController) {
         this.udpSocket = udpSocket;
         this.udpController = udpController;
-        hostsPortIp = new HashMap<>();
+        hostsPortIp = new HashSet<>();
     }
 
     @Override
@@ -39,19 +40,20 @@ public class UdpReceiver implements Runnable {
 
                 SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom
                         (Arrays.copyOfRange(inputPacket.getData(), 0, inputPacket.getLength()));
-                if (gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE) {
+                if (gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
+                        && gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
+                ) {
                     log.info("Receive message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
                 }
                 switch (gameMessage.getTypeCase()) {
                     case ACK -> {
                         udpController.setAck(inputPacket.getAddress(), inputPacket.getPort(), gameMessage);
-                        log.info(String.format("ACK: GC.Id = %d, gm.rid = %d", GameConfig.ID, gameMessage.getReceiverId()));
                         if (GameConfig.ID == -1 && gameMessage.getReceiverId() != -1) {
                             GameConfig.ID = gameMessage.getReceiverId();
-                            GameConfig.MASTER_IP = inputPacket.getAddress();
-                            GameConfig.MASTER_PORT = inputPacket.getPort();
+                            MASTER_IP = inputPacket.getAddress();
+                            MASTER_PORT = inputPacket.getPort();
                             log.info("Get new id from Master after join: " + GameConfig.ID);
-                            GameConfig.countDownLatch.countDown();
+                            countDownLatch.countDown();
                         }
                     }
                     case PING -> {
@@ -72,12 +74,13 @@ public class UdpReceiver implements Runnable {
                         udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), gameMessage.getSenderId());
                     }
                     case JOIN -> {
-                        if (hostsPortIp.containsKey(inputPacket.getPort())) {
+                        String ipPortInfo = inputPacket.getAddress() + ":" + inputPacket.getPort();
+                        if (hostsPortIp.contains(ipPortInfo)) {
                             SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), -1);
                             udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                         } else {
-                            hostsPortIp.put(inputPacket.getPort(), inputPacket.getAddress());
-                            int newId = GameConfig.ID_JOIN.getAndIncrement();
+                            hostsPortIp.add(ipPortInfo);
+                            int newId = NetworkUtils.ID_JOIN.getAndIncrement();
                             boolean placingResult = false;
                             if (gameMessage.getJoin().getRequestedRole() == SnakesProto.NodeRole.NORMAL ||
                                     gameMessage.getJoin().getRequestedRole() == SnakesProto.NodeRole.DEPUTY) {
@@ -103,7 +106,7 @@ public class UdpReceiver implements Runnable {
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                     }
                     case DISCOVER -> {
-                        SnakesProto.GameMessage gameAnswer = AnnouncementMsg.createAnnouncement(WIDTH / SQUARE_SIZE, HEIGHT / SQUARE_SIZE, FOOD_COUNT, TIME_DELAY, GAME_NAME, PLAYER_NAME, ROLE);
+                        SnakesProto.GameMessage gameAnswer = AnnouncementMsg.createAnnouncement(GameConfig.WIDTH / SQUARE_SIZE, GameConfig.HEIGHT / SQUARE_SIZE, FOOD_COUNT, TIME_DELAY, GAME_NAME, PLAYER_NAME, ROLE);
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                     }
                 }

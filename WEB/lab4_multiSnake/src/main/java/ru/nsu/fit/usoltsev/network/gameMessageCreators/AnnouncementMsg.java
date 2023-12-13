@@ -3,7 +3,7 @@ package ru.nsu.fit.usoltsev.network.gameMessageCreators;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
-import static ru.nsu.fit.usoltsev.GameConfig.*;
+import static ru.nsu.fit.usoltsev.network.NetworkUtils.MSG_SEQ;
 
 @Slf4j
 public class AnnouncementMsg {

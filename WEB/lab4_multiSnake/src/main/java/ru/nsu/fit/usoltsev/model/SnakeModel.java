@@ -24,9 +24,7 @@ public class SnakeModel {
 
     public SnakeModel(int index) {
         snakeView = new SnakeView();
-
         color = COLORS.get(index % COLORS.size());
-        log.info("COLOR = " + color + " Index = " + index);
     }
 
     public void setSnakeBody(int startX, int startY) {

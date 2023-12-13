@@ -13,9 +13,11 @@ public class InfoView {
         gc.fillText("Score = " + score, 10, 30);
     }
 
-    public void drawGameOver(GraphicsContext gc) {
+    public void drawGameOver(GraphicsContext gc, int maxScore) {
         gc.setFill(Color.RED);
         gc.setFont(new Font("Arial", (double) WIDTH / 10));
         gc.fillText("Game over", (double) WIDTH / 4, (double) HEIGHT / 2);
+        gc.setFont(new Font("Arial", (double) WIDTH / 15));
+        gc.fillText("Max score: " + maxScore, (double) WIDTH / 4, (double) HEIGHT * 2 / 3);
     }
 }

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.listeners.NewGameListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
+import ru.nsu.fit.usoltsev.network.NetworkUtils;
 import ru.nsu.fit.usoltsev.network.Udp.UdpController;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.JoinMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
@@ -216,7 +217,7 @@ public class MenuController implements NewGameListener {
                             widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole));
                     GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole, -1);
 
-                    boolean latchCountedDown = GameConfig.countDownLatch.await(2, TimeUnit.SECONDS);
+                    boolean latchCountedDown = NetworkUtils.countDownLatch.await(2, TimeUnit.SECONDS);
                     if (latchCountedDown) {
                         setWindowProperties(scene, stage);
                         GameController gameController = new GameController(gc, scene, udpController);
