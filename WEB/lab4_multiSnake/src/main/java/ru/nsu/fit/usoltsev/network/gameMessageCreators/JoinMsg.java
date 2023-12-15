@@ -20,7 +20,7 @@ public class JoinMsg {
                 .setMsgSeq(MSG_SEQ.getAndIncrement())
 //                .setSenderId(ID)
                 .build();
-        //log.info("Join message created");
+
         return gameMessage;
     }
 }

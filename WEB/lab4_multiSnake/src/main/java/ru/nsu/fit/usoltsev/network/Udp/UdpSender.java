@@ -26,13 +26,20 @@ public class UdpSender implements Runnable {
                 byte[] newAppBuff = messageInfo.gameMessage().toByteArray();
                 DatagramPacket outputPacket = new DatagramPacket(newAppBuff, newAppBuff.length, messageInfo.ipAddr(), messageInfo.port());
                 udpSocket.send(outputPacket);
-                if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.DISCOVER
-//                &&  messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
+                if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK &&
+                        messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT &&
+                        messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.DISCOVER &&
+                        messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.JOIN
                 ) {
                     udpController.setMessageTimeSend(messageInfo);
                 }
+                if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT &&
+                        messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.JOIN) {
+                    udpController.setLastMessageSendTime(messageInfo.ipAddr().getCanonicalHostName() + ":" + messageInfo.port());
+                }
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
-                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK) {
+                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
+                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING) {
                     log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
                 }
             } catch (InterruptedException | IOException e) {

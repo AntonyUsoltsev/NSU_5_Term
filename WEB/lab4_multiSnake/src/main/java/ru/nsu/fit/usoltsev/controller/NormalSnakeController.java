@@ -22,15 +22,11 @@ public class NormalSnakeController {
 
     public void control(Scene scene) {
         scene.setOnKeyPressed(event -> {
-            try {
-                switch (event.getCode()) {
-                    case D, RIGHT -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(RIGHT));
-                    case A, LEFT -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(LEFT));
-                    case S, DOWN -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(DOWN));
-                    case W, UP -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(UP));
-                }
-            } catch (InterruptedException ie) {
-                log.warn("InterruptedException while sending direction", ie.getCause());
+            switch (event.getCode()) {
+                case D, RIGHT -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(RIGHT));
+                case A, LEFT -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(LEFT));
+                case S, DOWN -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(DOWN));
+                case W, UP -> udpController.setOutputMessage(MASTER_IP, MASTER_PORT, SteerMsg.createSteer(UP));
             }
         });
     }

@@ -1,5 +1,6 @@
 package ru.nsu.fit.usoltsev.network.Udp;
 
+import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.CopyOfMessage;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 
 import static ru.nsu.fit.usoltsev.GameConfig.TIME_DELAY;
 
+@Slf4j
 public class AckChecker implements Runnable {
     private final UdpController udpController;
 
@@ -40,11 +42,9 @@ public class AckChecker implements Runnable {
 //                                    System.out.println(entry.getKey());
 //                                    System.out.println("make copy");
                                     SnakesProto.GameMessage gameMessage = CopyOfMessage.makeMessageCopy(message);
-                                    try {
-                                        udpController.setOutputMessage(ip, port, gameMessage);
-                                    } catch (InterruptedException e) {
-                                        throw new RuntimeException(e);
-                                    }
+
+                                    udpController.setOutputMessage(ip, port, gameMessage);
+
                                     return true; // Возвращаем true, чтобы элемент был удален
                                 }
                                 return false; // Возвращаем false, чтобы элемент остался в HashMap

@@ -6,7 +6,9 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.paint.ImagePattern;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -21,7 +23,6 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.nio.file.LinkOption;
 import java.util.HashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -149,7 +150,7 @@ public class MenuController implements NewGameListener {
 
     private void setWindowProperties(Scene scene, Stage stage) {
         Group group = new Group();
-        Canvas canvas = new Canvas(WIDTH, HEIGHT);
+        Canvas canvas = new Canvas(WIDTH * 1.4, HEIGHT);
         group.getChildren().add(canvas);
         scene.setRoot(group);
         stage.setX(Screen.getPrimary().getVisualBounds().getWidth() / 2 - (double) (WIDTH) / 2);
@@ -175,11 +176,11 @@ public class MenuController implements NewGameListener {
         startButton.setOnAction(event -> {
             if (checkNewGameConfig()) {
 
-                udpController.startSendRecv();
 
                 GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER, 1);
                 setWindowProperties(scene, stage);
 
+                udpController.startSendRecv();
                 udpController.startAnnouncement();
 
                 GameController gameController = new GameController(gc, scene, udpController);
