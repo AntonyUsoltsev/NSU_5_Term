@@ -8,7 +8,8 @@ import java.util.HashSet;
 
 import static ru.nsu.fit.usoltsev.GameConfig.COLUMNS;
 import static ru.nsu.fit.usoltsev.GameConfig.ID;
-import static ru.nsu.fit.usoltsev.network.NetworkUtils.*;
+import static ru.nsu.fit.usoltsev.network.NetworkUtils.MSG_SEQ;
+import static ru.nsu.fit.usoltsev.network.NetworkUtils.STATE_SEQ;
 
 public class StateMsg {
 
@@ -32,17 +33,6 @@ public class StateMsg {
 
         SnakesProto.GamePlayers.Builder gamePlayers = SnakesProto.GamePlayers.newBuilder();
         for (var host : hosts.values()) {
-            SnakesProto.GamePlayer player = SnakesProto.GamePlayer.newBuilder()
-                    .setName(host.getName())
-                    .setId(host.getID())
-                    .setIpAddress(String.valueOf(host.getIp()))
-                    .setPort(host.getPort())
-                    .setRole(SnakesProto.NodeRole.forNumber(host.getRole()))
-                    .setType(SnakesProto.PlayerType.HUMAN)
-                    .setScore(host.getScore())
-                    .build();
-
-
             SnakesProto.GameState.Snake.Builder snake = SnakesProto.GameState.Snake.newBuilder()
                     .setState(SnakesProto.GameState.Snake.SnakeState.ALIVE)
                     .setHeadDirection(SnakesProto.Direction.forNumber(host.getDirection()))
@@ -63,26 +53,16 @@ public class StateMsg {
                     flag = true;
                 }
             }
-
             state.addSnakes(snake.build());
-            gamePlayers.addPlayers(player);
+
+            gamePlayers.addPlayers(onePlayerInfo(host));
 
         }
-        for(var viewer: viewers.values()){
-            SnakesProto.GamePlayer player = SnakesProto.GamePlayer.newBuilder()
-                    .setName(viewer.getName())
-                    .setId(viewer.getID())
-                    .setIpAddress(String.valueOf(viewer.getIp()))
-                    .setPort(viewer.getPort())
-                    .setRole(SnakesProto.NodeRole.forNumber(viewer.getRole()))
-                    .setType(SnakesProto.PlayerType.HUMAN)
-                    .setScore(viewer.getScore())
-                    .build();
-            gamePlayers.addPlayers(player);
+        for (var viewer : viewers.values()) {
+            gamePlayers.addPlayers(onePlayerInfo(viewer));
         }
 
         state.setPlayers(gamePlayers.build());
-
 
         SnakesProto.GameMessage.StateMsg stateMsg = SnakesProto.GameMessage.StateMsg.newBuilder()
                 .setState(state.build())
@@ -99,4 +79,17 @@ public class StateMsg {
 
         return gameMessage;
     }
+
+    private static SnakesProto.GamePlayer onePlayerInfo(HostInfo host) {
+        return SnakesProto.GamePlayer.newBuilder()
+                .setName(host.getName())
+                .setId(host.getID())
+                .setIpAddress(String.valueOf(host.getIp()))
+                .setPort(host.getPort())
+                .setRole(SnakesProto.NodeRole.forNumber(host.getRole()))
+                .setType(SnakesProto.PlayerType.HUMAN)
+                .setScore(host.getScore())
+                .build();
+    }
+
 }

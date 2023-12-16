@@ -75,6 +75,9 @@ public class UdpController {
         setGameStateListener(gameController);
         setRoleChangeListener(gameController);
     }
+    public void setGamerInfoToAnons(GameController gameController){
+        announcementAdder.setGamersInfo(gameController);
+    }
 
     public void setMasterIpToMaster() {
         try {

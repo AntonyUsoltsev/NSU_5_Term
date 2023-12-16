@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.Light;
 import javafx.util.Duration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.listeners.GameStateListener;
@@ -34,7 +35,9 @@ import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_PORT;
 
 @Slf4j
 public class GameController implements HostAddListener, SteerListener, GameStateListener, RoleChangeListener {
+    @Getter
     private final HashMap<Integer, HostInfo> players;  // id - host info
+    @Getter
     private final HashMap<Integer, HostInfo> viewers;  // id - host info
     private final HashMap<Integer, Integer> stateChanges;  // id - change
     private final ArrayList<Integer> freeSquares;
@@ -246,12 +249,12 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 for (var host : players.values()) {
                     if (host.getID() != ID) {
                         udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
-                        log.info("Send state to normal, id: " + host.getID());
+                      //  log.info("Send state to normal, id: " + host.getID());
                     }
                 }
                 for (var host : viewers.values()) {
                     udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
-                    log.info("Send state to viewer, id: " + host.getID());
+                   // log.info("Send state to viewer, id: " + host.getID());
                 }
             }
         }
@@ -329,6 +332,9 @@ public class GameController implements HostAddListener, SteerListener, GameState
 //            }
 //            infoView.drawPlayersInfo(gc, players, viewers);
 //        }
+        if (ROLE == VIEWER) {
+            scene.setOnKeyPressed(null);
+        }
         backgroundView.drawBackground(gc);
         if (lastMessage != null) {
             FoodView.drawFood(gc, lastMessage);

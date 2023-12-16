@@ -44,7 +44,6 @@ public class FoodModel {
             totalLen += snake.getModel().getSnakeBody().size();
         }
         start:
-        //TODO: fix loop when it is no free space
         while (true) {
             if (freeSquares.size() > totalLen) {
                 Integer foodCoords = freeSquares.get((int) (Math.random() * freeSquares.size()));

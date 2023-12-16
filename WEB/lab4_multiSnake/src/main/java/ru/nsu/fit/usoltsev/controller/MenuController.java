@@ -100,7 +100,6 @@ public class MenuController implements NewGameListener {
             textField.setPromptText("Must be integer");
             return -1;
         }
-
     }
 
     private boolean checkNewGameConfig() {
@@ -142,8 +141,6 @@ public class MenuController implements NewGameListener {
             return true;
         }
         return false;
-
-
     }
 
     private void setWindowProperties(Scene scene, Stage stage) {
@@ -164,7 +161,8 @@ public class MenuController implements NewGameListener {
             log.info("Map new game " + gameName);
             MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
             gamesInfo.put(gameName, messageInfo);
-            Platform.runLater(() -> existGamesView.getItems().add(gameName));
+            String nameWithPlayers = gameName + " players:" + gameMessage.getAnnouncement().getGames(0).getPlayers().getPlayersList().size();
+            Platform.runLater(() -> existGamesView.getItems().add(nameWithPlayers));
         }
     }
 
@@ -174,7 +172,6 @@ public class MenuController implements NewGameListener {
         startButton.setOnAction(event -> {
             if (checkNewGameConfig()) {
 
-
                 GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER, 1);
                 setWindowProperties(scene, stage);
 
@@ -183,7 +180,7 @@ public class MenuController implements NewGameListener {
 
                 GameController gameController = new GameController(gc, scene, udpController);
                 udpController.setListeners(gameController);
-
+                udpController.setGamerInfoToAnons(gameController);
                 udpController.setMasterIpToMaster();
                 gameController.startGame();
             }
@@ -191,7 +188,7 @@ public class MenuController implements NewGameListener {
 
         existGamesView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                selectedGame = newValue;
+                selectedGame = newValue.substring(0, newValue.lastIndexOf(" "));
             }
         });
 
@@ -233,7 +230,6 @@ public class MenuController implements NewGameListener {
 
         });
     }
-
 
 }
 
