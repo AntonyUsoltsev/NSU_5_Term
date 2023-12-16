@@ -33,9 +33,14 @@ public class FoodModel {
     }
 
     public void eraseOneFood(int foodX, int foodY, List<Integer> freeSquares) {
-
         freeSquares.add(foodY * COLUMNS + foodX);
         foodsSet.remove(foodY * COLUMNS + foodX);
+    }
+
+    public void regenerateFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
+        while (foodsSet.size() < FOOD_COUNT) {
+            generateOneFood(snakes, freeSquares);
+        }
     }
 
     public void generateOneFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {

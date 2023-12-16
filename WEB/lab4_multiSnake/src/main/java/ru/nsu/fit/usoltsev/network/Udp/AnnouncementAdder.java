@@ -6,8 +6,6 @@ import ru.nsu.fit.usoltsev.controller.GameController;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.AnnouncementMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
-import java.nio.file.LinkOption;
-
 import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.*;
 @Slf4j

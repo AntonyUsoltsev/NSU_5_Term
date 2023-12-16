@@ -166,7 +166,6 @@ public class MenuController implements NewGameListener {
         }
     }
 
-
     public void newMenu(Stage stage, Scene scene) {
 
         startButton.setOnAction(event -> {
@@ -218,7 +217,7 @@ public class MenuController implements NewGameListener {
                         udpController.setListeners(gameController);
                         gameController.startGame();
                     } else {
-                        System.out.println("Failed to place new snake");
+                        System.out.println("Failed to place new snake (time out)");
                     }
                 } catch (InterruptedException ex) {
                     ex.printStackTrace(System.err);

@@ -119,6 +119,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                         deputyChosen = false;
                     }
                     iterator.remove();
+                    FOOD_COUNT --;
                     System.out.println("players = " + players + " viewers = " + viewers);
                 }
             }
@@ -212,6 +213,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 stateChanges.put(playerID, RIGHT);
                 log.info("Add new snake " + hostInfo);
                 log.info("Current snakes map = " + players);
+                FOOD_COUNT ++;
                 return true;
             } else {
                 return false;
@@ -351,7 +353,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
         if (foods.contains(snakeY * COLUMNS + snakeX)) {
             foodModel.eraseOneFood(snakeX, snakeY, freeSquares);
-            foodModel.generateOneFood(players, freeSquares);
+            foodModel.regenerateFood(players, freeSquares);
             snakeModel.raiseUp((int) snakeModel.getSnakeBody().get(1).getX(),
                     (int) snakeModel.getSnakeBody().get(1).getY());
             return true;
