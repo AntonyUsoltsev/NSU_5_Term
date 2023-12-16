@@ -38,12 +38,13 @@ public class FoodModel {
     }
 
     public void regenerateFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
-        while (foodsSet.size() < FOOD_COUNT) {
-            generateOneFood(snakes, freeSquares);
+        boolean result = true;
+        while (foodsSet.size() < FOOD_COUNT && result) {
+            result = generateOneFood(snakes, freeSquares);
         }
     }
 
-    public void generateOneFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
+    public boolean generateOneFood(HashMap<Integer, HostInfo> snakes, List<Integer> freeSquares) {
         int totalLen = 0;
         for (var snake : snakes.values()) {
             totalLen += snake.getModel().getSnakeBody().size();
@@ -63,8 +64,9 @@ public class FoodModel {
                 }
                 freeSquares.remove(foodCoords);
                 foodsSet.add(foodCoords);
+                return true;
             }
-            break;
+            return false;
         }
     }
 

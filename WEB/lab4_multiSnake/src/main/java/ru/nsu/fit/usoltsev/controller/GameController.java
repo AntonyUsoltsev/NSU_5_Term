@@ -40,6 +40,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
     @Getter
     private final HashMap<Integer, HostInfo> viewers;  // id - host info
     private final HashMap<Integer, Integer> stateChanges;  // id - change
+    private final HashMap<String, Integer> ipPortId; // ip:port - id
     private final ArrayList<Integer> freeSquares;
     private final BackgroundView backgroundView;
     private final UdpController udpController;
@@ -62,6 +63,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         players = new HashMap<>();
         viewers = new HashMap<>();
         stateChanges = new HashMap<>();
+        ipPortId = new HashMap<>();
 
         backgroundView = new BackgroundView();
         foodModel = new FoodModel(freeSquares);
@@ -119,7 +121,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                         deputyChosen = false;
                     }
                     iterator.remove();
-                    FOOD_COUNT --;
+                    FOOD_COUNT--;
                     System.out.println("players = " + players + " viewers = " + viewers);
                 }
             }
@@ -210,10 +212,11 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 snakeModel.setSnakeBody((int) generatePoint.getX(), (int) generatePoint.getY());
                 HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, snakeModel, 0, false, RIGHT);
                 players.put(playerID, hostInfo);
+                ipPortId.put(ip + ":" + port, playerID);
                 stateChanges.put(playerID, RIGHT);
                 log.info("Add new snake " + hostInfo);
                 log.info("Current snakes map = " + players);
-                FOOD_COUNT ++;
+                FOOD_COUNT++;
                 return true;
             } else {
                 return false;
@@ -244,6 +247,14 @@ public class GameController implements HostAddListener, SteerListener, GameState
         }
     }
 
+    @Override
+    public void setNewSteer(int direction, String ipPortInfo) {
+        int id = ipPortId.get(ipPortInfo);
+        synchronized (stateChanges) {
+            stateChanges.put(id, direction);
+        }
+    }
+
     private void sendState() {
         synchronized (players) {
             if (players.size() > 1 || !viewers.isEmpty()) {
@@ -251,12 +262,12 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 for (var host : players.values()) {
                     if (host.getID() != ID) {
                         udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
-                      //  log.info("Send state to normal, id: " + host.getID());
+                        //  log.info("Send state to normal, id: " + host.getID());
                     }
                 }
                 for (var host : viewers.values()) {
                     udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
-                   // log.info("Send state to viewer, id: " + host.getID());
+                    // log.info("Send state to viewer, id: " + host.getID());
                 }
             }
         }

@@ -78,7 +78,13 @@ public class UdpReceiver implements Runnable {
                     case STEER -> executor.submit(() -> {
                         SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), gameMessage.getSenderId());
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
-                        udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), gameMessage.getSenderId());
+                        if (gameMessage.hasSenderId()) {
+                            udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), gameMessage.getSenderId());
+                        }
+                        else {
+                            String ipPortInfo = inputPacket.getAddress() + ":" + inputPacket.getPort();
+                            udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), ipPortInfo);
+                        }
                     });
                     case JOIN -> executor.submit(() -> {
                         String ipPortInfo = inputPacket.getAddress() + ":" + inputPacket.getPort();

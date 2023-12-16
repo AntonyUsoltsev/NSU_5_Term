@@ -12,6 +12,7 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
+import ru.nsu.fit.usoltsev.GameConstants;
 import ru.nsu.fit.usoltsev.listeners.NewGameListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.network.NetworkUtils;
@@ -83,12 +84,18 @@ public class MenuController implements NewGameListener {
         return false;
     }
 
-    private boolean isValueInvalidate(TextField textField, int value) {
-        if (value <= 0) {
+    private boolean isValueInvalidate(TextField textField, int value, int leftBorder, int rightBorder) {
+        if (value < leftBorder) {
             textField.clear();
-            textField.setPromptText("Must be > 0");
+            textField.setPromptText("Must be >= " + leftBorder);
             return true;
         }
+        if (value > rightBorder) {
+            textField.clear();
+            textField.setPromptText("Must be <= " + rightBorder);
+            return true;
+        }
+
         return false;
     }
 
@@ -119,10 +126,10 @@ public class MenuController implements NewGameListener {
             gameNameValue = gameName.getText();
             playerNameValue = playerName.getText();
 
-            if (isValueInvalidate(width, widthValue) ||
-                    isValueInvalidate(height, heightValue) ||
-                    isValueInvalidate(foodCount, foodCountValue) ||
-                    isValueInvalidate(timeDelay, timeValue)) {
+            if (isValueInvalidate(width, widthValue,10,100) ||
+                    isValueInvalidate(height, heightValue,10,100) ||
+                    isValueInvalidate(foodCount, foodCountValue,0,100) ||
+                    isValueInvalidate(timeDelay, timeValue,45,1000)) {
                 return false;
             }
         }
@@ -170,6 +177,7 @@ public class MenuController implements NewGameListener {
 
         startButton.setOnAction(event -> {
             if (checkNewGameConfig()) {
+                GameConstants.updateSquareSize(widthValue, heightValue);
 
                 GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, playerNameValue, MASTER, 1);
                 setWindowProperties(scene, stage);
@@ -206,6 +214,8 @@ public class MenuController implements NewGameListener {
                     widthValue = gameInfo.getConfig().getWidth();
                     foodCountValue = gameInfo.getConfig().getFoodStatic();
                     timeValue = gameInfo.getConfig().getStateDelayMs();
+                    GameConstants.updateSquareSize(widthValue, heightValue);
+
                     log.info(String.format("widthValue: %d, heightValue: %d, foodCountValue: %d, timeValue: %d, gameNameValue: %s, joinPlayerNameValue: %s, joinPlayerRole: %d",
                             widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole));
                     GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole, -1);

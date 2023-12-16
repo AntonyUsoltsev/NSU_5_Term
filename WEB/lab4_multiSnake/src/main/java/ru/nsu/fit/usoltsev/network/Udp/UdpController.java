@@ -162,7 +162,9 @@ public class UdpController {
     public void notifySteerListener(int direction, int id) {
         steerListener.setNewSteer(direction, id);
     }
-
+    public void notifySteerListener(int direction, String ipPortInfo) {
+        steerListener.setNewSteer(direction, ipPortInfo);
+    }
     public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg) {
         if (gameStateListener != null) {
             gameStateListener.setNewState(msg);

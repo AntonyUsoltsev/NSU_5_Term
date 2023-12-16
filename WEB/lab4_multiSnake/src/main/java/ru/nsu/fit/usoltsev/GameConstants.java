@@ -27,17 +27,16 @@ public class GameConstants {
             DEPUTY = 2,
             VIEWER = 3;
 
-    public static final HashMap<Integer, String> roles= new HashMap<>();
-
-    public static final int FOOD = 1;
+    public static final HashMap<Integer, String> roles = new HashMap<>();
     public static final int FOOD_SCORE = 1;
-    public static final int SQUARE_SIZE = 20;
+    public static int SQUARE_SIZE = 20;
     public static final int FREE_SQUARE_SIZE = 5;
     public static final int MULTICAST_PORT = 9192;
     public static final InetAddress MULTICAST_IP;
     public static final ArrayList<Color> COLORS = new ArrayList<>();
 
     public static Image backgroundImage = new Image("ru/nsu/fit/usoltsev/pictures/menuBackground.png");
+
     static {
         COLORS.add(Color.RED);
         COLORS.add(Color.BLUE);
@@ -51,10 +50,10 @@ public class GameConstants {
         COLORS.add(Color.DARKBLUE);
         COLORS.add(Color.ORANGE);
 
-        roles.put(0,"Normal");
-        roles.put(1,"Master");
-        roles.put(2,"Deputy");
-        roles.put(3,"Viewer");
+        roles.put(0, "Normal");
+        roles.put(1, "Master");
+        roles.put(2, "Deputy");
+        roles.put(3, "Viewer");
 
         try {
             MULTICAST_IP = InetAddress.getByName("239.192.0.4");
@@ -63,4 +62,8 @@ public class GameConstants {
         }
     }
 
+
+    public static void updateSquareSize(int widthValue, int heightValue) {
+        SQUARE_SIZE = 600 / (Math.max(widthValue, heightValue));
+    }
 }
