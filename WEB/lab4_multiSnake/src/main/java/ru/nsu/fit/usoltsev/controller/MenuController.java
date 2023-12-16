@@ -6,9 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.paint.ImagePattern;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -184,9 +182,7 @@ public class MenuController implements NewGameListener {
                 udpController.startAnnouncement();
 
                 GameController gameController = new GameController(gc, scene, udpController);
-                udpController.setSnakeAddListener(gameController);
-                udpController.setSteerListener(gameController);
-                udpController.setGameStateListener(gameController);
+                udpController.setListeners(gameController);
 
                 udpController.setMasterIpToMaster();
                 gameController.startGame();
@@ -222,7 +218,7 @@ public class MenuController implements NewGameListener {
                     if (latchCountedDown) {
                         setWindowProperties(scene, stage);
                         GameController gameController = new GameController(gc, scene, udpController);
-                        udpController.setGameStateListener(gameController);
+                        udpController.setListeners(gameController);
                         gameController.startGame();
                     } else {
                         System.out.println("Failed to place new snake");

@@ -1,8 +1,8 @@
 package ru.nsu.fit.usoltsev.listeners;
 
+import ru.nsu.fit.usoltsev.snakes.SnakesProto;
+
 public interface RoleChangeListener {
-    void normalToDeputy();
-    void normalToViewer();
-    void deputyToMaster();
+    void setRoleChange(SnakesProto.GameMessage.RoleChangeMsg msg);
 
 }

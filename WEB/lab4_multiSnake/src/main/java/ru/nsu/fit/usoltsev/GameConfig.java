@@ -19,7 +19,7 @@ public final class GameConfig {
     public static String PLAYER_NAME;
 
     public static int ID;
-    public static int ROLE;
+    public static volatile int ROLE;
 
 
 

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.listeners.GameStateListener;
 import ru.nsu.fit.usoltsev.listeners.HostAddListener;
+import ru.nsu.fit.usoltsev.listeners.RoleChangeListener;
 import ru.nsu.fit.usoltsev.listeners.SteerListener;
 import ru.nsu.fit.usoltsev.model.FoodModel;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
@@ -32,7 +33,7 @@ import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_IP;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_PORT;
 
 @Slf4j
-public class GameController implements HostAddListener, SteerListener, GameStateListener {
+public class GameController implements HostAddListener, SteerListener, GameStateListener, RoleChangeListener {
     private final HashMap<Integer, HostInfo> players;  // id - host info
     private final HashMap<Integer, HostInfo> viewers;  // id - host info
     private final HashMap<Integer, Integer> stateChanges;  // id - change
@@ -98,7 +99,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
     private void masterRun() {
         if (!deputyChosen && players.size() >= 2) {
             int id = chooseDeputy();
-            changeRole(NORMAL, DEPUTY, players.get(id));
+            sendChangeRole(NORMAL, DEPUTY, players.get(id));
             deputyPretend = id;
             deputyChosen = true;
         }
@@ -110,7 +111,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 if (host.isGameOver()) {
                     foodModel.crushSnake(host.getModel().getSnakeBody());
                     host.getModel().getSnakeBody().clear();
-                    changeRole(NORMAL, VIEWER, host);
+                    sendChangeRole(NORMAL, VIEWER, host);
                     if (host.getID() == deputyPretend) {
                         deputyChosen = false;
                     }
@@ -165,7 +166,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         return -1;
     }
 
-    public void changeRole(int oldRole, int newRole, HostInfo host) {
+    public void sendChangeRole(int oldRole, int newRole, HostInfo host) {
         try {
             if (oldRole == NORMAL && newRole == VIEWER) {
                 host.setRole(VIEWER);
@@ -333,7 +334,6 @@ public class GameController implements HostAddListener, SteerListener, GameState
             FoodView.drawFood(gc, lastMessage);
             SnakeView.drawSnake(gc, lastMessage);
             infoView.drawPlayersInfo(gc, lastMessage);
-
         }
 
     }
@@ -373,5 +373,11 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 }
             }
         }
+    }
+
+    @Override
+    public void setRoleChange(SnakesProto.GameMessage.RoleChangeMsg msg) {
+        log.info("Role changed from " + roles.get(ROLE) + " to " + roles.get(msg.getReceiverRole().getNumber()) + " in id " + ID);
+        ROLE = msg.getReceiverRole().getNumber();
     }
 }

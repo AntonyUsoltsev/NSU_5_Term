@@ -70,6 +70,7 @@ public class UdpReceiver implements Runnable {
                     case ROLE_CHANGE -> {
                         SnakesProto.GameMessage gameAnswer = AckMsg.createAck(gameMessage.getMsgSeq(), gameMessage.getSenderId());
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
+                        udpController.notifyRoleChangeListener(gameMessage.getRoleChange());
                     }
                     case STATE -> {
                         executor.submit(() -> {

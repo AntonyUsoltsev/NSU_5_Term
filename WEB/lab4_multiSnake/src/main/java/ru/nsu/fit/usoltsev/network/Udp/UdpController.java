@@ -4,8 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.GameConfig;
+import ru.nsu.fit.usoltsev.controller.GameController;
 import ru.nsu.fit.usoltsev.listeners.GameStateListener;
 import ru.nsu.fit.usoltsev.listeners.HostAddListener;
+import ru.nsu.fit.usoltsev.listeners.RoleChangeListener;
 import ru.nsu.fit.usoltsev.listeners.SteerListener;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
@@ -19,18 +21,14 @@ import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_IP;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_PORT;
 
 @Slf4j
+@Setter
+@Getter
 public class UdpController {
-    @Setter
-    @Getter
+
     private HostAddListener snakeAddListener;
-
-    @Setter
-    @Getter
     private SteerListener steerListener;
-
-    @Setter
-    @Getter
     private GameStateListener gameStateListener;
+    private RoleChangeListener roleChangeListener;
 
     DatagramSocket udpSocket;
     private final UdpSender udpSender;
@@ -40,22 +38,18 @@ public class UdpController {
     private final PingChecker pingChecker;
     private final ThreadPoolExecutor executor;
     private final LinkedBlockingQueue<MessageInfo> outputMessageStore;
+
     private final BlockingQueue<MessageInfo> inputMessageStore;
 
-    @Getter
     private final BlockingQueue<String> ackStore;
 
-    @Getter
     private final BlockingQueue<String> successMsgStore;
 
-    @Getter
     private final HashMap<Long, MessageInfo> messageTimeSend;
 
-    @Getter
     private final ConcurrentHashMap<String, Long> lastMessageSendTime;
 
     Future<?> pingFuture;
-
 
     public UdpController(ThreadPoolExecutor executor) throws SocketException {
         udpSocket = new DatagramSocket();
@@ -73,6 +67,13 @@ public class UdpController {
         successMsgStore = new LinkedBlockingQueue<>();
         messageTimeSend = new HashMap<>();
         lastMessageSendTime = new ConcurrentHashMap<>();
+    }
+
+    public void setListeners(GameController gameController) {
+        setSnakeAddListener(gameController);
+        setSteerListener(gameController);
+        setGameStateListener(gameController);
+        setRoleChangeListener(gameController);
     }
 
     public void setMasterIpToMaster() {
@@ -165,7 +166,11 @@ public class UdpController {
         }
     }
 
-
+    public void notifyRoleChangeListener(SnakesProto.GameMessage.RoleChangeMsg roleChange) {
+        if (gameStateListener != null) {
+            roleChangeListener.setRoleChange(roleChange);
+        }
+    }
     public void startAnnouncement() {
         executor.submit(announcementAdder);
     }
@@ -187,6 +192,9 @@ public class UdpController {
             System.out.println("Ping not canceled");
         }
     }
+
+
+
 
 
 }

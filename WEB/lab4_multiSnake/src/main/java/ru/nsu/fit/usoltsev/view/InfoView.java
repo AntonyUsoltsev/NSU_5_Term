@@ -8,8 +8,7 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
 import java.util.HashMap;
 
-import static ru.nsu.fit.usoltsev.GameConfig.HEIGHT;
-import static ru.nsu.fit.usoltsev.GameConfig.WIDTH;
+import static ru.nsu.fit.usoltsev.GameConfig.*;
 import static ru.nsu.fit.usoltsev.GameConstants.roles;
 
 public class InfoView {
@@ -30,38 +29,45 @@ public class InfoView {
 
     public void drawPlayersInfo(GraphicsContext gc, HashMap<Integer, HostInfo> players, HashMap<Integer, HostInfo> viewers) {
         int i = 0;
-        gc.setFill(Color.WHITE);
         gc.setFont(new Font("Arial", 22));
         for (var player : players.values()) {
-            gc.fillText(String.format("""
-                    Player: %s,
-                       score = %d,
-                       role = %s
-                    """, player.getName(), player.getScore(), roles.get(player.getRole())), WIDTH + 10, 30 + (i * 80));
+            drawOnePlayerInfo(player, gc, i);
             i++;
         }
         for (var viewer : viewers.values()) {
-            gc.fillText(String.format("""
-                    Player: %s,
-                       score = %d,
-                       role = %s
-                    """, viewer.getName(), viewer.getScore(), roles.get(viewer.getRole())), WIDTH + 10, 30 + (i * 80));
+            drawOnePlayerInfo(viewer, gc, i);
             i++;
         }
     }
 
     public void drawPlayersInfo(GraphicsContext gc, SnakesProto.GameMessage.StateMsg msg) {
         int i = 0;
-        gc.setFill(Color.WHITE);
+
         gc.setFont(new Font("Arial", 22));
         for (var player : msg.getState().getPlayers().getPlayersList()) {
+            gc.setFill(Color.WHITE);
+            if (player.getId() == ID) {
+                gc.setFill(Color.YELLOW);
+            }
             gc.fillText(String.format("""
                     Player: %s,
                        score = %d,
                        role = %s
                     """, player.getName(), player.getScore(), roles.get(player.getRole().getNumber())), WIDTH + 10, 30 + (i * 80));
             i++;
-
         }
+    }
+
+    public void drawOnePlayerInfo(HostInfo player, GraphicsContext gc, int i) {
+        gc.setFill(Color.WHITE);
+        if (player.getID() == ID) {
+            gc.setFill(Color.YELLOW);
+        }
+        gc.fillText(String.format("""
+                Player: %s,
+                   score = %d,
+                   role = %s
+                """, player.getName(), player.getScore(), roles.get(player.getRole())), WIDTH + 10, 30 + (i * 80));
+
     }
 }
