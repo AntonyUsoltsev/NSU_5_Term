@@ -33,7 +33,8 @@ public class UdpController {
     private final AckChecker ackChecker;
     private final PingChecker pingChecker;
     private final DisconnectChecker disconnectChecker;
-    private final ThreadPoolExecutor executor;
+    private ThreadPoolExecutor executor;
+    private ThreadPoolExecutor pingExecutor;
 
     private final LinkedBlockingQueue<MessageInfo> outputMessageStore;
 
@@ -51,10 +52,11 @@ public class UdpController {
 
     Future<?> pingFuture;
 
-    public UdpController(ThreadPoolExecutor executor) throws SocketException {
+    public UdpController() throws SocketException {
         udpSocket = new DatagramSocket();
 
-        this.executor = executor;
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+        this.pingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
         udpSender = new UdpSender(udpSocket, this);
         udpReceiver = new UdpReceiver(udpSocket, this);
@@ -98,8 +100,8 @@ public class UdpController {
 
     public void setOutputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
         try {
-//            log.info("add message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
-//            log.info("Storage size:" + outputMessageStore.size());
+            log.info("add message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
+            log.info("Storage size:" + outputMessageStore.size());
             MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
             outputMessageStore.put(messageInfo);
         } catch (InterruptedException e) {
@@ -201,10 +203,14 @@ public class UdpController {
     }
 
     public void startAnnouncement() {
-        executor.submit(announcementAdder);
+        log.info("Start Anouns");
+        executor.execute(announcementAdder);
     }
 
     public void startSendRecv() {
+        if (executor.isShutdown()) {
+            executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+        }
         executor.submit(udpSender);
         executor.submit(udpReceiver);
         executor.submit(ackChecker);
@@ -213,20 +219,26 @@ public class UdpController {
     }
 
     public void startSendRecv(InetAddress ip, int port) {
+        if (executor.isShutdown()) {
+            executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+        }
         setLastMessageSendTime(ip.toString() + ":" + port);
-        pingFuture = executor.submit(pingChecker);
+        pingFuture = pingExecutor.submit(pingChecker);
         executor.submit(udpSender);
         executor.submit(udpReceiver);
         executor.submit(ackChecker);
         executor.submit(disconnectChecker);
     }
 
-    public void stopPing() {
-        boolean canceled = pingFuture.cancel(true);
-        if (canceled) {
-            System.out.println("Ping canceled");
-        } else {
-            System.out.println("Ping not canceled");
+    public void stopThreads() {
+        if (!executor.isShutdown()) {
+            System.out.println(executor.getActiveCount());
+            System.out.println(executor.shutdownNow());
         }
+    }
+
+    public void stopPing() {
+        System.out.println(pingExecutor.getActiveCount());
+        System.out.println(pingExecutor.shutdownNow());
     }
 }

@@ -43,7 +43,7 @@ public class MenuController implements NewGameListener {
     private final ListView<String> existGamesView;
     private final HashMap<String, MessageInfo> gamesInfo;
 
-    public MenuController(AnchorPane root, ThreadPoolExecutor executor) throws SocketException {
+    public MenuController(AnchorPane root) throws SocketException {
         width = (TextField) root.lookup("#width");
         height = (TextField) root.lookup("#height");
         foodCount = (TextField) root.lookup("#foodCount");
@@ -70,7 +70,7 @@ public class MenuController implements NewGameListener {
             }
         });
 
-        udpController = new UdpController(executor);
+        udpController = new UdpController();
         existGamesView = (ListView<String>) root.lookup("#existGames");
 
         gamesInfo = new HashMap<>();
@@ -216,8 +216,8 @@ public class MenuController implements NewGameListener {
                     GameConstants.updateSquareSize(widthValue, heightValue);
 
                     log.info(String.format("widthValue: %d, heightValue: %d, foodCountValue: %d, timeValue: %d, gameNameValue: %s, joinPlayerNameValue: %s, joinPlayerRole: %d",
-                            widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole));
-                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue, gameNameValue, joinPlayerNameValue, joinPlayerRole, -1);
+                            widthValue, heightValue, foodCountValue, timeValue, gameInfo.getGameName(), joinPlayerNameValue, joinPlayerRole));
+                    GameConfig.setConstants(widthValue, heightValue, foodCountValue, timeValue,  gameInfo.getGameName(), joinPlayerNameValue, joinPlayerRole, -1);
 
                     boolean latchCountedDown = NetworkUtils.countDownLatch.await(2, TimeUnit.SECONDS);
                     if (latchCountedDown) {
@@ -227,6 +227,7 @@ public class MenuController implements NewGameListener {
                         gameController.startGame();
                     } else {
                         System.out.println("Failed to place new snake (time out)");
+                        udpController.stopThreads();
                     }
                 } catch (InterruptedException ex) {
                     ex.printStackTrace(System.err);

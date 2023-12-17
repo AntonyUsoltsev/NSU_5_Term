@@ -8,6 +8,7 @@ import java.util.HashSet;
 
 import static ru.nsu.fit.usoltsev.GameConfig.COLUMNS;
 import static ru.nsu.fit.usoltsev.GameConfig.ID;
+import static ru.nsu.fit.usoltsev.GameConstants.MASTER;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.MSG_SEQ;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.STATE_SEQ;
 
@@ -34,7 +35,7 @@ public class StateMsg {
         SnakesProto.GamePlayers.Builder gamePlayers = SnakesProto.GamePlayers.newBuilder();
         for (var host : hosts.values()) {
             SnakesProto.GameState.Snake.Builder snake = SnakesProto.GameState.Snake.newBuilder()
-                    .setState(SnakesProto.GameState.Snake.SnakeState.ALIVE)
+                    .setState(SnakesProto.GameState.Snake.SnakeState.forNumber(host.getStatus()))
                     .setHeadDirection(SnakesProto.Direction.forNumber(host.getDirection()))
                     .setPlayerId(host.getID());
             for (int i = 0; i < host.getModel().getSnakeBody().size(); i++) {
@@ -81,15 +82,25 @@ public class StateMsg {
     }
 
     private static SnakesProto.GamePlayer onePlayerInfo(HostInfo host) {
-        return SnakesProto.GamePlayer.newBuilder()
-                .setName(host.getName())
-                .setId(host.getID())
-                .setIpAddress(String.valueOf(host.getIp()))
-                .setPort(host.getPort())
-                .setRole(SnakesProto.NodeRole.forNumber(host.getRole()))
-                .setType(SnakesProto.PlayerType.HUMAN)
-                .setScore(host.getScore())
-                .build();
+        if (host.getRole() == MASTER) {
+            return SnakesProto.GamePlayer.newBuilder()
+                    .setName(host.getName())
+                    .setId(host.getID())
+                    .setRole(SnakesProto.NodeRole.forNumber(host.getRole()))
+                    .setType(SnakesProto.PlayerType.HUMAN)
+                    .setScore(host.getScore())
+                    .build();
+        } else {
+            return SnakesProto.GamePlayer.newBuilder()
+                    .setName(host.getName())
+                    .setId(host.getID())
+                    .setIpAddress(String.valueOf(host.getIp()))
+                    .setPort(host.getPort())
+                    .setRole(SnakesProto.NodeRole.forNumber(host.getRole()))
+                    .setType(SnakesProto.PlayerType.HUMAN)
+                    .setScore(host.getScore())
+                    .build();
+        }
     }
 
 }

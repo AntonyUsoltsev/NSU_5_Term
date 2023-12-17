@@ -26,12 +26,12 @@ public class Main extends Application {
             AnchorPane root = FXMLLoader.load(Objects.requireNonNull(Main.class.getResource("snakeMenu.fxml")));
             Scene scene = new Scene(root);
 
-            ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+            ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(5);
 
-            MenuController menuController = new MenuController(root, executor);
+            MenuController menuController = new MenuController(root);
+
             MulticastInputController multicastInputController = new MulticastInputController();
             multicastInputController.setNewGameListener(menuController);
-
             executor.submit(multicastInputController);
 
             menuController.newMenu(stage, scene);
@@ -39,6 +39,7 @@ public class Main extends Application {
             stage.setScene(scene);
             stage.setResizable(false);
             stage.setOnCloseRequest(event -> {
+                menuController.getUdpController().stopThreads();
                 System.out.println(executor.getActiveCount());
                 System.out.println(executor.shutdownNow());
                 System.exit(0);

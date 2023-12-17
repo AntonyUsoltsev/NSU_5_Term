@@ -30,7 +30,7 @@ public class UdpSender implements Runnable {
 
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
                         && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
-//                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING
+                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING
                 ) {
                     log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
                 }

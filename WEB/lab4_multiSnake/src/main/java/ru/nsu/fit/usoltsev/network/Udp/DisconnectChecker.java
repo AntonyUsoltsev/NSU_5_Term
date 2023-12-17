@@ -26,6 +26,7 @@ public class DisconnectChecker implements Runnable {
         while (!Thread.interrupted()) {
             ConcurrentHashMap<String, Long> lastMessageReceiveTime = udpController.getLastMessageReceiveTime();
 //            System.out.println("SIZE = " + lastMessageReceiveTime.size());
+          //  log.info("CHECK AFK");
             if (!lastMessageReceiveTime.isEmpty()) {
                 lastMessageReceiveTime.forEach(((inetInfo, time) -> {
                     if (time < (System.currentTimeMillis() - (TIME_DELAY * 8L) / 10)) {
@@ -35,8 +36,8 @@ public class DisconnectChecker implements Runnable {
                             InetAddress ip = NetworkUtils.parseIp(ipPort[0]);
                             int port = Integer.parseInt(ipPort[1]);
                             valueToDelete.add(inetInfo);
-                            udpController.removeDisconnectMessages(ip, port);
                             udpController.notifyDisconnectListener(inetInfo);
+                            udpController.removeDisconnectMessages(ip, port);
                         } catch (UnknownHostException | NumberFormatException e) {
                             log.warn("Failed to parse inet info in disconnect checker", e);
                         }

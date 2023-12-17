@@ -13,6 +13,7 @@ import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.listeners.*;
 import ru.nsu.fit.usoltsev.model.FoodModel;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
+import ru.nsu.fit.usoltsev.network.NetworkUtils;
 import ru.nsu.fit.usoltsev.network.Udp.UdpController;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.RoleChangeMsg;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.StateMsg;
@@ -23,6 +24,7 @@ import ru.nsu.fit.usoltsev.view.InfoView;
 import ru.nsu.fit.usoltsev.view.SnakeView;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
@@ -51,6 +53,8 @@ public class GameController implements HostAddListener, SteerListener, GameState
     private boolean deputyChosen = false;
     private volatile SnakesProto.GameMessage.StateMsg lastMessage;
 
+    private Timeline timeline;
+
     public GameController(GraphicsContext gc, Scene scene, UdpController udpController) {
         this.gc = gc;
         this.scene = scene;
@@ -74,20 +78,20 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 addNewSnake(PLAYER_NAME, ID, MASTER_PORT, MASTER_IP, ROLE);
                 new MasterSnakeController(scene, this);
                 foodModel.generateFood(players, freeSquares);
-                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> masterRun()));
+                timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> masterRun()));
                 timeline.setCycleCount(Animation.INDEFINITE);
                 timeline.play();
                 log.info("Master timeline started");
             }
             case VIEWER -> {
-                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> normalRun()));
+                timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> normalRun()));
                 timeline.setCycleCount(Animation.INDEFINITE);
                 timeline.play();
                 log.info("Viewer timeline started");
             }
             case NORMAL -> {
                 new NormalSnakeController(scene, udpController);
-                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> normalRun()));
+                timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> normalRun()));
                 timeline.setCycleCount(Animation.INDEFINITE);
                 timeline.play();
                 log.info("Normal timeline started");
@@ -148,7 +152,6 @@ public class GameController implements HostAddListener, SteerListener, GameState
                     }
                     curSnake.snakeMovement();
                     curSnake.drawSnake(gc);
-
                 }
             }
         }
@@ -175,7 +178,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     public void sendChangeRole(int oldRole, int newRole, HostInfo host) {
         try {
-            if ((oldRole == NORMAL || oldRole == DEPUTY)  && newRole == VIEWER) {
+            if ((oldRole == NORMAL || oldRole == DEPUTY) && newRole == VIEWER) {
                 host.setRole(VIEWER);
                 host.setModel(null);
                 viewers.put(host.getID(), host);
@@ -188,7 +191,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 SnakesProto.GameMessage message = RoleChangeMsg.createRoleChange(DEPUTY, MASTER, host.getID());
                 udpController.setOutputMessage(host.getIp(), host.getPort(), message);
             } else {
-                log.warn("Unknown role change");
+                log.warn("Unknown role change: oldRole " + oldRole + " newRole " + newRole);
             }
 
         } catch (Exception e) {
@@ -334,6 +337,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
     }
 
     private void normalRun() {
+ //       System.out.println("MASTER_IP = " + MASTER_IP + " MASTER_PORT = " + MASTER_PORT);
 //        backgroundView.drawBackground(gc);
 //        foodModel.drawFood(gc);
 //        synchronized (players) {
@@ -348,6 +352,8 @@ public class GameController implements HostAddListener, SteerListener, GameState
 //            }
 //            infoView.drawPlayersInfo(gc, players, viewers);
 //        }
+
+
         if (ROLE == VIEWER) {
             scene.setOnKeyPressed(null);
         }
@@ -403,12 +409,98 @@ public class GameController implements HostAddListener, SteerListener, GameState
         ROLE = msg.getReceiverRole().getNumber();
     }
 
+    private void restoreStateFromMessage() {
+        log.info("Restore State");
+        for (var player : lastMessage.getState().getPlayers().getPlayersList()) {
+            InetAddress ip = null;
+            try {
+                ip = InetAddress.getByName("192.168.1.172");
+                if (player.hasIpAddress()) {
+                    ip = NetworkUtils.parseIp(player.getIpAddress().toString());
+                    ipPortId.put(player.getIpAddress() + ":" + player.getPort(), player.getId());
+                }
+                if (player.getRole() == SnakesProto.NodeRole.MASTER) {
+                    ipPortId.put(MASTER_IP.toString() + ":" + MASTER_PORT, player.getId());
+                }
+            } catch (UnknownHostException e) {
+                log.warn("Exception while parsing game state, ip = " + player.getIpAddress(), e);
+            }
+            HostInfo host = new HostInfo(player.getName(), player.getId(), player.getPort(),
+                    ip, player.getRole().getNumber(), null,
+                    player.getScore(), false, 0, ALIVE);
+            if (player.getRole().getNumber() == VIEWER) {
+                viewers.put(player.getId(), host);
+            } else {
+                host.setModel(new SnakeModel(player.getId()));
+                players.put(player.getId(), host);
+            }
+        }
+        for (var snake : lastMessage.getState().getSnakesList()) {
+            HostInfo curHost = players.get(snake.getPlayerId());
+            curHost.setDirection(snake.getHeadDirection().getNumber());
+            curHost.setStatus(snake.getState().getNumber());
+            curHost.getModel().getSnakeBody().clear();
+            for (var point : snake.getPointsList()) {
+                curHost.getModel().addPoint(point.getX(), point.getY());
+            }
+        }
+        foodModel.getFoodsSet().clear();
+        for (var food : lastMessage.getState().getFoodsList()) {
+            foodModel.getFoodsSet().add(food.getY() * COLUMNS + food.getX());
+        }
+    }
+
     @Override
     public void disconnectPlayer(String inetInfo) {
+        if (ROLE != MASTER){
+            restoreStateFromMessage();
+        }
+        System.out.println(ipPortId);
+        System.out.println(inetInfo);
+        System.out.println(ipPortId.containsKey(inetInfo));
         int id = ipPortId.get(inetInfo);
         synchronized (players) {
+            System.out.println(players.containsKey(id));
             if (players.containsKey(id)) {
-                players.get(id).setStatus(ZOMBIE);
+                HostInfo player = players.get(id);
+                System.out.println(player);
+                player.setStatus(ZOMBIE);
+                if (player.getRole() == DEPUTY) {
+                    log.info("AFK was DEPUTY");
+                    player.setRole(NORMAL);
+                    deputyChosen = false;
+                    deputyPretend = -1;
+                }
+                if (player.getRole() == MASTER && players.get(ID).getRole() == DEPUTY) {
+                    log.info("AFK was MASTER, Noticed DEPUTY");
+                    scene.setOnKeyPressed(null);
+                    new MasterSnakeController(scene, this);
+                    ROLE = MASTER;
+                    players.get(ID).setRole(MASTER);
+                    udpController.stopPing();
+                    udpController.startAnnouncement();
+                    deputyPretend = -1;
+                    deputyChosen = false;
+                    timeline.stop();
+                    log.info("Deputy became MASTER");
+                    timeline = new Timeline(new KeyFrame(Duration.millis(TIME_DELAY), e -> masterRun()));
+                    timeline.setCycleCount(Animation.INDEFINITE);
+                    timeline.play();
+                }
+                if (player.getRole() == MASTER && (ROLE == NORMAL || ROLE == VIEWER)) {
+                    log.info("AFK was MASTER, noticed NORMAL");
+                    for (var statePlayer : lastMessage.getState().getPlayers().getPlayersList()) {
+                        try {
+                            if (statePlayer.getRole() == SnakesProto.NodeRole.DEPUTY) {
+                                MASTER_IP = NetworkUtils.parseIp(statePlayer.getIpAddress());
+                                MASTER_PORT = statePlayer.getPort();
+                                break;
+                            }
+                        } catch (UnknownHostException e) {
+                            log.error("Failed to parse IP in disconnectPlayer", e);
+                        }
+                    }
+                }
                 log.info("Set status Zombie to player " + id);
                 return;
             }
@@ -421,5 +513,6 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
         }
     }
+
 
 }
