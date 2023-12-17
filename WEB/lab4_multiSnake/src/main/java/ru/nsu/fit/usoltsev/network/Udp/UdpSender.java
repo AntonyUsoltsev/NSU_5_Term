@@ -28,6 +28,13 @@ public class UdpSender implements Runnable {
                 DatagramPacket outputPacket = new DatagramPacket(newAppBuff, newAppBuff.length, messageInfo.ipAddr(), messageInfo.port());
                 udpSocket.send(outputPacket);
 
+                if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
+                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
+//                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING
+                ) {
+                    log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
+                }
+
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT &&
@@ -39,14 +46,8 @@ public class UdpSender implements Runnable {
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.JOIN) {
                     udpController.setLastMessageSendTime(messageInfo.ipAddr().toString() + ":" + messageInfo.port());
+                }
 
-                }
-                if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
-                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
-                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING
-                ) {
-                    log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
-                }
             } catch (InterruptedException | IOException e) {
                 throw new RuntimeException(e);
             }

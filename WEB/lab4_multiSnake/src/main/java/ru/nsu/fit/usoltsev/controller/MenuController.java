@@ -128,7 +128,7 @@ public class MenuController implements NewGameListener {
 
             if (isValueInvalidate(width, widthValue,10,100) ||
                     isValueInvalidate(height, heightValue,10,100) ||
-                    isValueInvalidate(foodCount, foodCountValue,0,100) ||
+                    isValueInvalidate(foodCount, foodCountValue,0,1000) ||
                     isValueInvalidate(timeDelay, timeValue,45,1000)) {
                 return false;
             }
@@ -202,9 +202,8 @@ public class MenuController implements NewGameListener {
         joinButton.setOnAction(event -> {
             if (checkJoinConfig()) {
                 try {
-                    udpController.startSendRecv();
-
                     MessageInfo messageInfo = gamesInfo.get(selectedGame);
+                    udpController.startSendRecv(messageInfo.ipAddr(), messageInfo.port());
                     SnakesProto.GameAnnouncement gameInfo = messageInfo.gameMessage().getAnnouncement().getGames(0);
 
                     SnakesProto.GameMessage joinMsg = JoinMsg.createJoin(joinPlayerNameValue, gameInfo.getGameName(), joinPlayerRole);

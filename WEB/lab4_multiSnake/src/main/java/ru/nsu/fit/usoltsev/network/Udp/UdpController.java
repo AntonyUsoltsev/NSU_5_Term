@@ -3,12 +3,8 @@ package ru.nsu.fit.usoltsev.network.Udp;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import ru.nsu.fit.usoltsev.GameConfig;
 import ru.nsu.fit.usoltsev.controller.GameController;
-import ru.nsu.fit.usoltsev.listeners.GameStateListener;
-import ru.nsu.fit.usoltsev.listeners.HostAddListener;
-import ru.nsu.fit.usoltsev.listeners.RoleChangeListener;
-import ru.nsu.fit.usoltsev.listeners.SteerListener;
+import ru.nsu.fit.usoltsev.listeners.*;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
@@ -16,7 +12,6 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.concurrent.*;
 
-import static ru.nsu.fit.usoltsev.GameConstants.MASTER;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_IP;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_PORT;
 
@@ -29,6 +24,7 @@ public class UdpController {
     private SteerListener steerListener;
     private GameStateListener gameStateListener;
     private RoleChangeListener roleChangeListener;
+    private DisconnectListener disconnectListener;
 
     DatagramSocket udpSocket;
     private final UdpSender udpSender;
@@ -81,8 +77,10 @@ public class UdpController {
         setSteerListener(gameController);
         setGameStateListener(gameController);
         setRoleChangeListener(gameController);
+        setDisconnectListener(gameController);
     }
-    public void setGamerInfoToAnons(GameController gameController){
+
+    public void setGamerInfoToAnons(GameController gameController) {
         announcementAdder.setGamersInfo(gameController);
     }
 
@@ -133,6 +131,13 @@ public class UdpController {
         }
     }
 
+    public void removeDisconnectMessages(InetAddress ip, int port) {
+        synchronized (messageTimeSend) {
+            messageTimeSend.entrySet()
+                    .removeIf(entry -> entry.getValue().ipAddr().equals(ip) && entry.getValue().port() == port);
+        }
+    }
+
     public void setLastMessageSendTime(String inetInfo) {
         lastMessageSendTime.put(inetInfo, System.currentTimeMillis());
     }
@@ -148,7 +153,7 @@ public class UdpController {
 //        }
 //    }
 
-//    public void setInputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) throws InterruptedException {
+    //    public void setInputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) throws InterruptedException {
 //        MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
 //        inputMessageStore.put(messageInfo);
 //        //log.info("Set new input message");
@@ -162,6 +167,9 @@ public class UdpController {
 //    public void setSuccessMsg() {
 //
 //    }
+    public void notifyDisconnectListener(String inetInfo) {
+        disconnectListener.disconnectPlayer(inetInfo);
+    }
 
     public boolean notifyAddListener(String name, int playerID, int port, InetAddress ip, int role) {
         return snakeAddListener.addNewSnake(name, playerID, port, ip, role);
@@ -175,9 +183,11 @@ public class UdpController {
     public void notifySteerListener(int direction, int id) {
         steerListener.setNewSteer(direction, id);
     }
+
     public void notifySteerListener(int direction, String ipPortInfo) {
         steerListener.setNewSteer(direction, ipPortInfo);
     }
+
     public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg) {
         if (gameStateListener != null) {
             gameStateListener.setNewState(msg);
@@ -189,6 +199,7 @@ public class UdpController {
             roleChangeListener.setRoleChange(roleChange);
         }
     }
+
     public void startAnnouncement() {
         executor.submit(announcementAdder);
     }
@@ -197,10 +208,17 @@ public class UdpController {
         executor.submit(udpSender);
         executor.submit(udpReceiver);
         executor.submit(ackChecker);
-     //   executor.submit(disconnectChecker);
-        if (GameConfig.ROLE != MASTER) {
-            pingFuture = executor.submit(pingChecker);
-        }
+        executor.submit(disconnectChecker);
+
+    }
+
+    public void startSendRecv(InetAddress ip, int port) {
+        setLastMessageSendTime(ip.toString() + ":" + port);
+        pingFuture = executor.submit(pingChecker);
+        executor.submit(udpSender);
+        executor.submit(udpReceiver);
+        executor.submit(ackChecker);
+        executor.submit(disconnectChecker);
     }
 
     public void stopPing() {
@@ -211,9 +229,4 @@ public class UdpController {
             System.out.println("Ping not canceled");
         }
     }
-
-
-
-
-
 }

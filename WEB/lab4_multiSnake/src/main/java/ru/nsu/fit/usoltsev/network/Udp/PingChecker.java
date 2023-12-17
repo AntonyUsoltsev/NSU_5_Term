@@ -1,6 +1,7 @@
 package ru.nsu.fit.usoltsev.network.Udp;
 
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.network.NetworkUtils;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.PingMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
@@ -28,8 +29,8 @@ public class PingChecker implements Runnable {
                     if (time < (System.currentTimeMillis() - TIME_DELAY / 10)) {
                         try {
                             SnakesProto.GameMessage message = PingMsg.createPing();
-                            String[] ipPort = inetInfo.split(":");;
-                            InetAddress ip = InetAddress.getByName(ipPort[0].substring(1));
+                            String[] ipPort = inetInfo.split(":");
+                            InetAddress ip = NetworkUtils.parseIp(ipPort[0]);
                             int port = Integer.parseInt(ipPort[1]);
                             udpController.setOutputMessage(ip, port, message);
                         } catch (UnknownHostException | NumberFormatException e) {

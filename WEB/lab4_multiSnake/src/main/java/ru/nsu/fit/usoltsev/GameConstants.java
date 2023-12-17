@@ -27,6 +27,13 @@ public class GameConstants {
             DEPUTY = 2,
             VIEWER = 3;
 
+    /**
+     * Statuses
+     */
+    public static final int
+            ALIVE = 0,
+            ZOMBIE = 1;
+
     public static final HashMap<Integer, String> roles = new HashMap<>();
     public static final int FOOD_SCORE = 1;
     public static int SQUARE_SIZE = 20;

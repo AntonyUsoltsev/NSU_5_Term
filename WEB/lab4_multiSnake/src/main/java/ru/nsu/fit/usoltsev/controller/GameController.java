@@ -10,10 +10,7 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nsu.fit.usoltsev.HostInfo;
-import ru.nsu.fit.usoltsev.listeners.GameStateListener;
-import ru.nsu.fit.usoltsev.listeners.HostAddListener;
-import ru.nsu.fit.usoltsev.listeners.RoleChangeListener;
-import ru.nsu.fit.usoltsev.listeners.SteerListener;
+import ru.nsu.fit.usoltsev.listeners.*;
 import ru.nsu.fit.usoltsev.model.FoodModel;
 import ru.nsu.fit.usoltsev.model.SnakeModel;
 import ru.nsu.fit.usoltsev.network.Udp.UdpController;
@@ -34,7 +31,7 @@ import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_IP;
 import static ru.nsu.fit.usoltsev.network.NetworkUtils.MASTER_PORT;
 
 @Slf4j
-public class GameController implements HostAddListener, SteerListener, GameStateListener, RoleChangeListener {
+public class GameController implements HostAddListener, SteerListener, GameStateListener, RoleChangeListener, DisconnectListener {
     @Getter
     private final HashMap<Integer, HostInfo> players;  // id - host info
     @Getter
@@ -104,9 +101,11 @@ public class GameController implements HostAddListener, SteerListener, GameState
     private void masterRun() {
         if (!deputyChosen && players.size() >= 2) {
             int id = chooseDeputy();
-            sendChangeRole(NORMAL, DEPUTY, players.get(id));
-            deputyPretend = id;
-            deputyChosen = true;
+            if (id != -1) {
+                sendChangeRole(NORMAL, DEPUTY, players.get(id));
+                deputyPretend = id;
+                deputyChosen = true;
+            }
         }
 
         synchronized (players) {
@@ -116,7 +115,9 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 if (host.isGameOver()) {
                     foodModel.crushSnake(host.getModel().getSnakeBody());
                     host.getModel().getSnakeBody().clear();
-                    sendChangeRole(NORMAL, VIEWER, host);
+                    if (host.getStatus() != ZOMBIE) {
+                        sendChangeRole(host.getRole(), VIEWER, host);
+                    }
                     if (host.getID() == deputyPretend) {
                         deputyChosen = false;
                     }
@@ -164,7 +165,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     public int chooseDeputy() {
         for (var player : players.values()) {
-            if (player.getID() == ID) {
+            if (player.getID() == ID || player.getStatus() == ZOMBIE) {
                 continue;
             }
             return player.getID();
@@ -174,11 +175,11 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     public void sendChangeRole(int oldRole, int newRole, HostInfo host) {
         try {
-            if (oldRole == NORMAL && newRole == VIEWER) {
+            if ((oldRole == NORMAL || oldRole == DEPUTY)  && newRole == VIEWER) {
                 host.setRole(VIEWER);
                 host.setModel(null);
                 viewers.put(host.getID(), host);
-                log.info("Change role from Normal to Viewer on " + host);
+                log.info("Change role from " + oldRole + " to Viewer on " + host);
                 SnakesProto.GameMessage message = RoleChangeMsg.createRoleChange(VIEWER, MASTER, host.getID());
                 udpController.setOutputMessage(host.getIp(), host.getPort(), message);
             } else if (oldRole == NORMAL && newRole == DEPUTY) {
@@ -197,7 +198,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     @Override
     public boolean addNewViewer(String name, int playerID, int port, InetAddress ip, int role) {
-        HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, null, 0, false, RIGHT);
+        HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, null, 0, false, RIGHT, ALIVE);
         viewers.put(playerID, hostInfo);
         System.out.println("viewers = " + viewers);
         return true;
@@ -210,7 +211,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
             if (generatePoint != null) {
                 SnakeModel snakeModel = new SnakeModel(playerID);
                 snakeModel.setSnakeBody((int) generatePoint.getX(), (int) generatePoint.getY());
-                HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, snakeModel, 0, false, RIGHT);
+                HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, snakeModel, 0, false, RIGHT, ALIVE);
                 players.put(playerID, hostInfo);
                 ipPortId.put(ip + ":" + port, playerID);
                 stateChanges.put(playerID, RIGHT);
@@ -260,11 +261,13 @@ public class GameController implements HostAddListener, SteerListener, GameState
             if (players.size() > 1 || !viewers.isEmpty()) {
                 SnakesProto.GameMessage.Builder message = StateMsg.createState(players, viewers, foodModel.getFoodsSet());
                 for (var host : players.values()) {
-                    if (host.getID() != ID) {
+                    if (host.getID() != ID && host.getStatus() == ALIVE) {
                         udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
                         //  log.info("Send state to normal, id: " + host.getID());
                     }
                 }
+                viewers.entrySet()
+                        .removeIf(entry -> entry.getValue().getStatus() == ZOMBIE);
                 for (var host : viewers.values()) {
                     udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
                     // log.info("Send state to viewer, id: " + host.getID());
@@ -399,4 +402,24 @@ public class GameController implements HostAddListener, SteerListener, GameState
         log.info("Role changed from " + roles.get(ROLE) + " to " + roles.get(msg.getReceiverRole().getNumber()) + " in id " + ID);
         ROLE = msg.getReceiverRole().getNumber();
     }
+
+    @Override
+    public void disconnectPlayer(String inetInfo) {
+        int id = ipPortId.get(inetInfo);
+        synchronized (players) {
+            if (players.containsKey(id)) {
+                players.get(id).setStatus(ZOMBIE);
+                log.info("Set status Zombie to player " + id);
+                return;
+            }
+        }
+        synchronized (viewers) {
+            if (viewers.containsKey(id)) {
+                viewers.get(id).setStatus(ZOMBIE);
+                log.info("Set status Zombie to viewer " + id);
+                return;
+            }
+        }
+    }
+
 }

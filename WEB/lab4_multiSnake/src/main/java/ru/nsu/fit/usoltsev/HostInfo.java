@@ -20,6 +20,7 @@ public class HostInfo {
     private int score;
     private boolean gameOver;
     private int direction;
+    private int status;
 
     public void addScore(int delta) {
         score += delta;
