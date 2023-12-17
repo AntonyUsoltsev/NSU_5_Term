@@ -7,6 +7,7 @@ import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.Arrays;
 
 @Slf4j
 public class UdpSender implements Runnable {
@@ -26,7 +27,9 @@ public class UdpSender implements Runnable {
                 byte[] newAppBuff = messageInfo.gameMessage().toByteArray();
                 DatagramPacket outputPacket = new DatagramPacket(newAppBuff, newAppBuff.length, messageInfo.ipAddr(), messageInfo.port());
                 udpSocket.send(outputPacket);
+
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK &&
+                        messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.DISCOVER &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.JOIN
@@ -35,11 +38,13 @@ public class UdpSender implements Runnable {
                 }
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT &&
                         messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.JOIN) {
-                    udpController.setLastMessageSendTime(messageInfo.ipAddr().getCanonicalHostName() + ":" + messageInfo.port());
+                    udpController.setLastMessageSendTime(messageInfo.ipAddr().toString() + ":" + messageInfo.port());
+
                 }
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
                         && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
-                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING) {
+                        && messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.PING
+                ) {
                     log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
                 }
             } catch (InterruptedException | IOException e) {

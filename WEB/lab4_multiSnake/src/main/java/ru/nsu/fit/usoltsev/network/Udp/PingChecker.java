@@ -16,7 +16,6 @@ public class PingChecker implements Runnable {
 
     public PingChecker(UdpController udpController) {
         this.udpController = udpController;
-
     }
 
     @Override
@@ -25,15 +24,14 @@ public class PingChecker implements Runnable {
             ConcurrentHashMap<String, Long> lastMessageSendTime = udpController.getLastMessageSendTime();
             if (!lastMessageSendTime.isEmpty()) {
                 //log.info("size = " + lastMessageSendTime.size());
-                lastMessageSendTime.forEach(((messageInfo, time) -> {
+                lastMessageSendTime.forEach(((inetInfo, time) -> {
                     if (time < (System.currentTimeMillis() - TIME_DELAY / 10)) {
                         try {
                             SnakesProto.GameMessage message = PingMsg.createPing();
-                            String[] ipPort = messageInfo.split(":");
-                            InetAddress ip = InetAddress.getByName(ipPort[0]);
+                            String[] ipPort = inetInfo.split(":");;
+                            InetAddress ip = InetAddress.getByName(ipPort[0].substring(1));
                             int port = Integer.parseInt(ipPort[1]);
                             udpController.setOutputMessage(ip, port, message);
-
                         } catch (UnknownHostException | NumberFormatException e) {
                             log.warn("Failed to set ping msg", e);
                         }

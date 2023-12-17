@@ -44,6 +44,8 @@ public class UdpReceiver implements Runnable {
 
                 SnakesProto.GameMessage gameMessage = SnakesProto.GameMessage.parseFrom
                         (Arrays.copyOfRange(inputPacket.getData(), 0, inputPacket.getLength()));
+
+                udpController.setLastMessageReceiveTime(inputPacket.getAddress().toString() + ":" + inputPacket.getPort());
                 if (gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE
                         && gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.ACK
                         && gameMessage.getTypeCase() != SnakesProto.GameMessage.TypeCase.PING

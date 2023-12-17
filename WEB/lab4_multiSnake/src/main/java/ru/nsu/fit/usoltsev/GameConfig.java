@@ -14,7 +14,7 @@ public final class GameConfig {
     public static int WIDTH, HEIGHT;
     public static int ROWS, COLUMNS;
     public static int FOOD_COUNT;
-    public static int TIME_DELAY;
+    public static int TIME_DELAY = 100;
     public static String GAME_NAME;
     public static String PLAYER_NAME;
 

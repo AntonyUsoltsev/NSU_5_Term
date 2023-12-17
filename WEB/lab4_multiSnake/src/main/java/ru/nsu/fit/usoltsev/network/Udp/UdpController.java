@@ -36,18 +36,22 @@ public class UdpController {
     private final AnnouncementAdder announcementAdder;
     private final AckChecker ackChecker;
     private final PingChecker pingChecker;
+    private final DisconnectChecker disconnectChecker;
     private final ThreadPoolExecutor executor;
+
     private final LinkedBlockingQueue<MessageInfo> outputMessageStore;
 
-    private final BlockingQueue<MessageInfo> inputMessageStore;
+//    private final BlockingQueue<MessageInfo> inputMessageStore;
 
     private final BlockingQueue<String> ackStore;
 
-    private final BlockingQueue<String> successMsgStore;
+//    private final BlockingQueue<String> successMsgStore;
 
-    private final HashMap<Long, MessageInfo> messageTimeSend;
+    private final HashMap<Long, MessageInfo> messageTimeSend;  // time - msgInfo
 
-    private final ConcurrentHashMap<String, Long> lastMessageSendTime;
+    private final ConcurrentHashMap<String, Long> lastMessageSendTime; // ip:port - time
+
+    private final ConcurrentHashMap<String, Long> lastMessageReceiveTime; // ip:port - time
 
     Future<?> pingFuture;
 
@@ -61,12 +65,15 @@ public class UdpController {
         announcementAdder = new AnnouncementAdder(this);
         ackChecker = new AckChecker(this);
         pingChecker = new PingChecker(this);
+        disconnectChecker = new DisconnectChecker(this);
+
         outputMessageStore = new LinkedBlockingQueue<>();
-        inputMessageStore = new LinkedBlockingQueue<>();
+//        inputMessageStore = new LinkedBlockingQueue<>();
         ackStore = new LinkedBlockingQueue<>();
-        successMsgStore = new LinkedBlockingQueue<>();
+//        successMsgStore = new LinkedBlockingQueue<>();
         messageTimeSend = new HashMap<>();
         lastMessageSendTime = new ConcurrentHashMap<>();
+        lastMessageReceiveTime = new ConcurrentHashMap<>();
     }
 
     public void setListeners(GameController gameController) {
@@ -93,6 +100,8 @@ public class UdpController {
 
     public void setOutputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
         try {
+//            log.info("add message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
+//            log.info("Storage size:" + outputMessageStore.size());
             MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
             outputMessageStore.put(messageInfo);
         } catch (InterruptedException e) {
@@ -124,8 +133,12 @@ public class UdpController {
         }
     }
 
-    public void setLastMessageSendTime(String messageInfo) {
-        lastMessageSendTime.put(messageInfo, System.currentTimeMillis());
+    public void setLastMessageSendTime(String inetInfo) {
+        lastMessageSendTime.put(inetInfo, System.currentTimeMillis());
+    }
+
+    public void setLastMessageReceiveTime(String inetInfo) {
+        lastMessageReceiveTime.put(inetInfo, System.currentTimeMillis());
     }
 
 
@@ -184,6 +197,7 @@ public class UdpController {
         executor.submit(udpSender);
         executor.submit(udpReceiver);
         executor.submit(ackChecker);
+     //   executor.submit(disconnectChecker);
         if (GameConfig.ROLE != MASTER) {
             pingFuture = executor.submit(pingChecker);
         }
