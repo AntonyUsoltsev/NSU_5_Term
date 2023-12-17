@@ -21,29 +21,29 @@ public class PingChecker implements Runnable {
 
     @Override
     public void run() {
-        while (!Thread.interrupted()) {
-            ConcurrentHashMap<String, Long> lastMessageSendTime = udpController.getLastMessageSendTime();
-            if (!lastMessageSendTime.isEmpty()) {
-                //log.info("size = " + lastMessageSendTime.size());
-                lastMessageSendTime.forEach(((inetInfo, time) -> {
-                    if (time < (System.currentTimeMillis() - TIME_DELAY / 10)) {
-                        try {
-                            SnakesProto.GameMessage message = PingMsg.createPing();
-                            String[] ipPort = inetInfo.split(":");
-                            InetAddress ip = NetworkUtils.parseIp(ipPort[0]);
-                            int port = Integer.parseInt(ipPort[1]);
-                            udpController.setOutputMessage(ip, port, message);
-                        } catch (UnknownHostException | NumberFormatException e) {
-                            log.warn("Failed to set ping msg", e);
+        try {
+            while (!Thread.interrupted()) {
+                ConcurrentHashMap<String, Long> lastMessageSendTime = udpController.getLastMessageSendTime();
+                if (!lastMessageSendTime.isEmpty()) {
+                    //log.info("size = " + lastMessageSendTime.size());
+                    lastMessageSendTime.forEach(((inetInfo, time) -> {
+                        if (time < (System.currentTimeMillis() - TIME_DELAY / 10)) {
+                            try {
+                                SnakesProto.GameMessage message = PingMsg.createPing();
+                                String[] ipPort = inetInfo.split(":");
+                                InetAddress ip = NetworkUtils.parseIp(ipPort[0]);
+                                int port = Integer.parseInt(ipPort[1]);
+                                udpController.setOutputMessage(ip, port, message);
+                            } catch (UnknownHostException | NumberFormatException e) {
+                                log.warn("Failed to set ping msg", e);
+                            }
                         }
-                    }
-                }));
-            }
-            try {
+                    }));
+                }
                 Thread.sleep(TIME_DELAY / 10);
-            } catch (InterruptedException e) {
-                log.warn("Failed to sleep in ping checker", e);
             }
+        } catch (InterruptedException e) {
+            log.warn("Failed to sleep in ping checker", e);
         }
     }
 }

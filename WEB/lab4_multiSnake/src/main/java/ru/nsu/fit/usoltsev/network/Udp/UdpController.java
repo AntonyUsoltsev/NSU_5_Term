@@ -38,11 +38,7 @@ public class UdpController {
 
     private final LinkedBlockingQueue<MessageInfo> outputMessageStore;
 
-//    private final BlockingQueue<MessageInfo> inputMessageStore;
-
     private final BlockingQueue<String> ackStore;
-
-//    private final BlockingQueue<String> successMsgStore;
 
     private final HashMap<Long, MessageInfo> messageTimeSend;  // time - msgInfo
 
@@ -66,9 +62,7 @@ public class UdpController {
         disconnectChecker = new DisconnectChecker(this);
 
         outputMessageStore = new LinkedBlockingQueue<>();
-//        inputMessageStore = new LinkedBlockingQueue<>();
         ackStore = new LinkedBlockingQueue<>();
-//        successMsgStore = new LinkedBlockingQueue<>();
         messageTimeSend = new HashMap<>();
         lastMessageSendTime = new ConcurrentHashMap<>();
         lastMessageReceiveTime = new ConcurrentHashMap<>();
@@ -80,126 +74,6 @@ public class UdpController {
         setGameStateListener(gameController);
         setRoleChangeListener(gameController);
         setDisconnectListener(gameController);
-    }
-
-    public void setGamerInfoToAnons(GameController gameController) {
-        announcementAdder.setGamersInfo(gameController);
-    }
-
-    public void setMasterIpToMaster() {
-        try {
-            SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
-            InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
-            int localPort = ((InetSocketAddress) localSocketAddress).getPort();
-            MASTER_IP = InetAddress.getByName(localIpAddress.getHostAddress());
-            MASTER_PORT = localPort;
-        } catch (UnknownHostException e) {
-            log.warn("Filed to parse ip in master to master ip", e);
-        }
-    }
-
-    public void setOutputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
-        try {
-            log.info("add message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
-            log.info("Storage size:" + outputMessageStore.size());
-            MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
-            outputMessageStore.put(messageInfo);
-        } catch (InterruptedException e) {
-            log.warn("Failed to set output message", e);
-        }
-    }
-
-    public MessageInfo getOutputMessage() throws InterruptedException {
-        return outputMessageStore.take();
-    }
-
-    public void setAck(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
-        try {
-            String string = ip.toString() + " " + port + " " + gameMessage.getMsgSeq();
-            ackStore.put(string);
-        } catch (InterruptedException e) {
-            log.warn("Failed to put ack in ackStore", e);
-        }
-    }
-
-//    public MessageInfo getAck() throws InterruptedException {
-//        //log.info("Take output message");
-//        return ackStore.take();
-//    }
-
-    public void setMessageTimeSend(MessageInfo messageInfo) {
-        synchronized (messageTimeSend) {
-            messageTimeSend.put(System.currentTimeMillis(), messageInfo);
-        }
-    }
-
-    public void removeDisconnectMessages(InetAddress ip, int port) {
-        synchronized (messageTimeSend) {
-            messageTimeSend.entrySet()
-                    .removeIf(entry -> entry.getValue().ipAddr().equals(ip) && entry.getValue().port() == port);
-        }
-    }
-
-    public void setLastMessageSendTime(String inetInfo) {
-        lastMessageSendTime.put(inetInfo, System.currentTimeMillis());
-    }
-
-    public void setLastMessageReceiveTime(String inetInfo) {
-        lastMessageReceiveTime.put(inetInfo, System.currentTimeMillis());
-    }
-
-
-//    public void getMessageTimeSend(MessageInfo messageInfo){
-//        synchronized (messageTimeSend){
-//            messageTimeSend.put(System.currentTimeMillis(),messageInfo);
-//        }
-//    }
-
-    //    public void setInputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) throws InterruptedException {
-//        MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
-//        inputMessageStore.put(messageInfo);
-//        //log.info("Set new input message");
-//    }
-//
-//    public MessageInfo getInputMessage() throws InterruptedException {
-//        //log.info("Take input message");
-//        return inputMessageStore.take();
-//    }
-//
-//    public void setSuccessMsg() {
-//
-//    }
-    public void notifyDisconnectListener(String inetInfo) {
-        disconnectListener.disconnectPlayer(inetInfo);
-    }
-
-    public boolean notifyAddListener(String name, int playerID, int port, InetAddress ip, int role) {
-        return snakeAddListener.addNewSnake(name, playerID, port, ip, role);
-    }
-
-    public boolean notifyViewListener(String name, int playerID, int port, InetAddress ip, int role) {
-        return snakeAddListener.addNewViewer(name, playerID, port, ip, role);
-    }
-
-
-    public void notifySteerListener(int direction, int id) {
-        steerListener.setNewSteer(direction, id);
-    }
-
-    public void notifySteerListener(int direction, String ipPortInfo) {
-        steerListener.setNewSteer(direction, ipPortInfo);
-    }
-
-    public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg) {
-        if (gameStateListener != null) {
-            gameStateListener.setNewState(msg);
-        }
-    }
-
-    public void notifyRoleChangeListener(SnakesProto.GameMessage.RoleChangeMsg roleChange) {
-        if (gameStateListener != null) {
-            roleChangeListener.setRoleChange(roleChange);
-        }
     }
 
     public void startAnnouncement() {
@@ -241,4 +115,101 @@ public class UdpController {
         System.out.println(pingExecutor.getActiveCount());
         System.out.println(pingExecutor.shutdownNow());
     }
+
+    public void setGamerInfoToAnons(GameController gameController) {
+        announcementAdder.setGamersInfo(gameController);
+    }
+
+    public void setMasterIpToMaster() {
+        try {
+            SocketAddress localSocketAddress = udpSocket.getLocalSocketAddress();
+            InetAddress localIpAddress = ((InetSocketAddress) localSocketAddress).getAddress();
+            int localPort = ((InetSocketAddress) localSocketAddress).getPort();
+            MASTER_IP = InetAddress.getByName(localIpAddress.getHostAddress());
+            MASTER_PORT = localPort;
+        } catch (UnknownHostException e) {
+            log.warn("Filed to parse ip in master to master ip", e);
+        }
+    }
+
+    public void setOutputMessage(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
+        try {
+//            log.info("add message " + gameMessage.getTypeCase().name() + ", msg seq = " + gameMessage.getMsgSeq() + ", time = " + System.currentTimeMillis());
+//            log.info("Storage size:" + outputMessageStore.size());
+            MessageInfo messageInfo = new MessageInfo(ip, port, gameMessage);
+            outputMessageStore.put(messageInfo);
+        } catch (InterruptedException e) {
+            log.warn("Failed to set output message", e);
+        }
+    }
+
+    public MessageInfo getOutputMessage() throws InterruptedException {
+        return outputMessageStore.take();
+    }
+
+    public void setAck(InetAddress ip, int port, SnakesProto.GameMessage gameMessage) {
+        try {
+            String string = ip.toString() + " " + port + " " + gameMessage.getMsgSeq();
+            ackStore.put(string);
+        } catch (InterruptedException e) {
+            log.warn("Failed to put ack in ackStore", e);
+        }
+    }
+
+    public void setMessageTimeSend(MessageInfo messageInfo) {
+        synchronized (messageTimeSend) {
+            messageTimeSend.put(System.currentTimeMillis(), messageInfo);
+        }
+    }
+
+    public void removeDisconnectMessages(InetAddress ip, int port) {
+        synchronized (messageTimeSend) {
+            messageTimeSend.entrySet()
+                    .removeIf(entry -> entry.getValue().ipAddr().equals(ip) && entry.getValue().port() == port);
+            udpReceiver.deleteHostInetInfo(ip.toString() + ":" + port);
+        }
+    }
+
+    public void setLastMessageSendTime(String inetInfo) {
+        lastMessageSendTime.put(inetInfo, System.currentTimeMillis());
+    }
+
+    public void setLastMessageReceiveTime(String inetInfo) {
+        lastMessageReceiveTime.put(inetInfo, System.currentTimeMillis());
+    }
+
+    public void notifyDisconnectListener(String inetInfo) {
+        disconnectListener.disconnectPlayer(inetInfo);
+    }
+
+    public boolean notifyAddListener(String name, int playerID, int port, InetAddress ip, int role) {
+        return snakeAddListener.addNewSnake(name, playerID, port, ip, role);
+    }
+
+    public boolean notifyViewListener(String name, int playerID, int port, InetAddress ip, int role) {
+        return snakeAddListener.addNewViewer(name, playerID, port, ip, role);
+    }
+
+
+    public void notifySteerListener(int direction, int id) {
+        steerListener.setNewSteer(direction, id);
+    }
+
+    public void notifySteerListener(int direction, String ipPortInfo) {
+        steerListener.setNewSteer(direction, ipPortInfo);
+    }
+
+    public void notifyStateListener(SnakesProto.GameMessage.StateMsg msg) {
+        if (gameStateListener != null) {
+            gameStateListener.setNewState(msg);
+        }
+    }
+
+    public void notifyRoleChangeListener(SnakesProto.GameMessage.RoleChangeMsg roleChange) {
+        if (gameStateListener != null) {
+            roleChangeListener.setRoleChange(roleChange);
+        }
+    }
+
+
 }

@@ -34,6 +34,10 @@ public class UdpReceiver implements Runnable {
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
     }
 
+    public void deleteHostInetInfo(String info){
+        hostsPortIp.remove(info);
+    }
+
     @Override
     public void run() {
         while (!Thread.interrupted()) {
@@ -96,6 +100,9 @@ public class UdpReceiver implements Runnable {
                         } else {
                             hostsPortIp.add(ipPortInfo);
                             int newId = NetworkUtils.ID_JOIN.getAndIncrement();
+                            if(newId == ID){
+                                newId = NetworkUtils.ID_JOIN.getAndIncrement();
+                            }
                             boolean placingResult = false;
                             if (gameMessage.getJoin().getRequestedRole() == SnakesProto.NodeRole.NORMAL ||
                                     gameMessage.getJoin().getRequestedRole() == SnakesProto.NodeRole.DEPUTY) {

@@ -33,7 +33,6 @@ public class AnnouncementAdder implements Runnable {
                     gameMessage = AnnouncementMsg.createAnnouncement(WIDTH / SQUARE_SIZE,
                             HEIGHT / SQUARE_SIZE, FOOD_COUNT, TIME_DELAY, GAME_NAME, PLAYER_NAME, ROLE);
                 }
-                log.info("set anouns");
                 udpController.setOutputMessage(MULTICAST_IP, MULTICAST_PORT, gameMessage);
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
