@@ -1,0 +1,33 @@
+.subject-header {
+    font-size: 2em;
+    margin-top: 10vh;
+    color: #000;
+    background-size: cover;
+    min-height: 10vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.subject-container {
+    height: 100vh; /* Задаем высоту контейнера в 100% высоты видимого экрана */
+    overflow: auto; /* Добавляем прокрутку по необходимости */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.subject-select {
+    width: 70%;
+    margin-bottom: 20px;
+}
+
+.subject-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.subject-buttons button {
+    margin-top: 10px;
+}
