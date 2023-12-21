@@ -1,0 +1,16 @@
+body {
+    margin: 0;
+    overflow: auto;
+}
+
+.App {
+    background-image: url("bookBackground.jpg");
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    min-height: 150vh;
+}

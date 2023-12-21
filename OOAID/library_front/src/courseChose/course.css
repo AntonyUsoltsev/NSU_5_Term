@@ -1,0 +1,31 @@
+.course-header {
+    font-size: 2em;
+    margin-top: 7vh;
+    color: #000;
+    min-height: 10vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.course-buttons-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px; /* Отступ между кнопками */
+}
+
+.course-button {
+    border-radius: 45px;
+    border-color: blueviolet;
+    width: 100px;
+    font-size: 14px;
+}
+.course-button:hover {
+    background-color: #d7c7f6;
+}
+
+.course-button:active {
+    background-color: #b97ce8;
+}
+
