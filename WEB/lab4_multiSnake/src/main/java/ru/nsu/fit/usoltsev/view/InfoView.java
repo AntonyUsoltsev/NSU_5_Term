@@ -6,6 +6,8 @@ import javafx.scene.text.Font;
 import ru.nsu.fit.usoltsev.HostInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
@@ -30,13 +32,12 @@ public class InfoView {
 
     public void drawPlayersInfo(GraphicsContext gc, HashMap<Integer, HostInfo> players, HashMap<Integer, HostInfo> viewers) {
         int i = 0;
+        ArrayList<HostInfo> playersList = new java.util.ArrayList<>(players.values().stream().toList());
+        playersList.addAll(viewers.values());
+        playersList.sort(Comparator.comparingInt(HostInfo::getScore).reversed());
         gc.setFont(new Font("Arial", scoreTextSize));
-        for (var player : players.values()) {
+        for (var player : playersList) {
             drawOnePlayerInfo(player, gc, i);
-            i++;
-        }
-        for (var viewer : viewers.values()) {
-            drawOnePlayerInfo(viewer, gc, i);
             i++;
         }
     }
@@ -44,14 +45,22 @@ public class InfoView {
     public void drawPlayersInfo(GraphicsContext gc, SnakesProto.GameMessage.StateMsg msg) {
         int i = 0;
         gc.setFont(new Font("Arial", scoreTextSize));
-        for (var player : msg.getState().getPlayers().getPlayersList()) {
+        ArrayList<SnakesProto.GamePlayer> players = new ArrayList<>(msg.getState().getPlayers().getPlayersList());
+        players.sort(Comparator.comparingInt(SnakesProto.GamePlayer::getScore).reversed());
+        for (var player : players) {
             gc.setFill(Color.WHITE);
             if (player.getId() == ID) {
                 gc.setFill(Color.YELLOW);
             }
+            String name;
+            if (player.getName().length() > 10) {
+                name = player.getName().substring(0, 2) + "..." + player.getName().substring(player.getName().length() - 2);
+            } else {
+                name = player.getName();
+            }
             gc.fillText(String.format("""
                             %s(%s) - score = %d
-                            """, player.getName(), roles.get(player.getRole().getNumber()), player.getScore()),
+                            """, name, roles.get(player.getRole().getNumber()), player.getScore()),
                     xStartScoreText, textScale + (i * 30));
             i++;
         }

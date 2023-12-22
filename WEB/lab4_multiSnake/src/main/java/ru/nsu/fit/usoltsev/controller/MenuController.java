@@ -20,6 +20,7 @@ import ru.nsu.fit.usoltsev.network.Udp.UdpController;
 import ru.nsu.fit.usoltsev.network.gameMessageCreators.JoinMsg;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.HashMap;
@@ -43,7 +44,7 @@ public class MenuController implements NewGameListener {
     private final ListView<String> existGamesView;
     private final HashMap<String, MessageInfo> gamesInfo;
 
-    public MenuController(AnchorPane root) throws SocketException {
+    public MenuController(AnchorPane root) throws IOException {
         width = (TextField) root.lookup("#width");
         height = (TextField) root.lookup("#height");
         foodCount = (TextField) root.lookup("#foodCount");
@@ -128,7 +129,7 @@ public class MenuController implements NewGameListener {
 
             if (isValueInvalidate(width, widthValue,10,100) ||
                     isValueInvalidate(height, heightValue,10,100) ||
-                    isValueInvalidate(foodCount, foodCountValue,0,1000) ||
+                    isValueInvalidate(foodCount, foodCountValue,0,100) ||
                     isValueInvalidate(timeDelay, timeValue,45,1000)) {
                 return false;
             }

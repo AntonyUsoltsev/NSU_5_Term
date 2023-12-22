@@ -13,7 +13,6 @@ public class NetworkUtils {
     public static final CountDownLatch countDownLatch = new CountDownLatch(1);
     public static InetAddress MASTER_IP;
     public static int MASTER_PORT;
-    public static final String IP_REGEX = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
 
     public static InetAddress parseIp(String ipString) throws UnknownHostException {
         if (ipString.indexOf("/") == 0) {

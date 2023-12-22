@@ -28,6 +28,6 @@ public class HostInfo {
 
     @Override
     public String toString() {
-        return String.format("Name:%s, id: %d, port: %d, ip: %s, role: %d", name, ID, port, ip, role);
+        return String.format("Name:%s, id: %d, port: %d, ip: %s, role: %d, status: %d", name, ID, port, ip, role, status);
     }
 }

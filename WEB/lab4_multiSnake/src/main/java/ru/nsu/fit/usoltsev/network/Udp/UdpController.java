@@ -3,11 +3,13 @@ package ru.nsu.fit.usoltsev.network.Udp;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import ru.nsu.fit.usoltsev.GameConstants;
 import ru.nsu.fit.usoltsev.controller.GameController;
 import ru.nsu.fit.usoltsev.listeners.*;
 import ru.nsu.fit.usoltsev.network.MessageInfo;
 import ru.nsu.fit.usoltsev.snakes.SnakesProto;
 
+import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
 import java.util.concurrent.*;
@@ -46,12 +48,24 @@ public class UdpController {
 
     private final ConcurrentHashMap<String, Long> lastMessageReceiveTime; // ip:port - time
 
-    Future<?> pingFuture;
-
-    public UdpController() throws SocketException {
+    public UdpController() throws IOException {
         udpSocket = new DatagramSocket();
+        NetworkInterface networkInterface = NetworkInterface.getByName("wlan1");
+        var net = NetworkInterface.getNetworkInterfaces();
+        while (net.hasMoreElements()){
+            var inter = net.nextElement();
+            if(inter.supportsMulticast()){
+                System.out.println(inter.getName());
+                var addres = inter.getInetAddresses();
+                while (addres.hasMoreElements()){
+                    System.out.println(addres.nextElement());
+                };
+            }
+            System.out.println();
+        }
+        udpSocket.joinGroup(new InetSocketAddress(GameConstants.MULTICAST_IP, GameConstants.MULTICAST_PORT), networkInterface);
 
-        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
         this.pingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
         udpSender = new UdpSender(udpSocket, this);
@@ -97,7 +111,7 @@ public class UdpController {
             executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         }
         setLastMessageSendTime(ip.toString() + ":" + port);
-        pingFuture = pingExecutor.submit(pingChecker);
+        pingExecutor.submit(pingChecker);
         executor.submit(udpSender);
         executor.submit(udpReceiver);
         executor.submit(ackChecker);
@@ -108,6 +122,8 @@ public class UdpController {
         if (!executor.isShutdown()) {
             System.out.println(executor.getActiveCount());
             System.out.println(executor.shutdownNow());
+            System.out.println(pingExecutor.getActiveCount());
+            System.out.println(pingExecutor.shutdownNow());
         }
     }
 
@@ -210,6 +226,4 @@ public class UdpController {
             roleChangeListener.setRoleChange(roleChange);
         }
     }
-
-
 }
