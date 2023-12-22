@@ -1,55 +1,49 @@
 // UniversityPage.jsx
-
-import React, {useState} from 'react';
-import {Row, Col} from 'antd';
+import React, {useEffect, useState} from 'react';
+import {Row, Col, Spin} from 'antd';
 import {Link} from 'react-router-dom';
-import CourseList from '../courseChose/course'; // Предполагается, что у вас есть компонент CourseList
+import CourseList from '../courseChose/course';
+import PostService from '../postService/PostService';
 import './university.css';
 
-// @ts-ignore
-import nsuImg from './nsuLogo.jpg';
-// @ts-ignore
-import tsuImg from './tsuLogo.png';
-// @ts-ignore
-import nstuImg from './nstuLogo.png';
-
 const UniversityPage: React.FC = () => {
-    const universities = [
-        {name: 'НГУ', link: '/nsu', icon: nsuImg},
-        {name: 'ТГУ', link: '/tsu', icon: tsuImg},
-        {name: 'НГТУ', link: '/nstu', icon: nstuImg},
-    ];
-
+    const [loading, setLoading] = useState(true);
+    const [universities, setUniversities] = useState([]);
     const [selectedUniversity, setSelectedUniversity] = useState(null);
 
-    const handleUniversityClick = (university) => {
+    useEffect(() => {
+        // Загрузка списка университетов при монтировании компонента
+        PostService.getUniversities(1).then((response) => {
+            setUniversities(response.data);
+            setLoading(false);
+        });
+    }, []);
+
+    const handleUniversityClick = (university: any) => {
+        setLoading(true);
         setSelectedUniversity(university);
     };
 
     return (
         <div>
             <header className="university-header">Выберите университет</header>
-            <Row gutter={[48, 16]} justify="center" align="middle">
-                {universities.map((university, index) => (
-                    <Col key={index} xs={24} sm={12} md={8} lg={4}>
-                        <div onClick={() => handleUniversityClick(university)}>
-                            <Link to={university.link}>
-
-                                <img
-                                    src={university.icon}
-                                    alt={university.name}
-                                    className="icon"
-                                />
-
-                            </Link>
-                        </div>
-                    </Col>
-                ))}
-            </Row>
-            {selectedUniversity && <CourseList university={selectedUniversity}
-                                               onCourseSelect={(course) => console.log('Selected course:', course)}/>}
+            {loading ? (
+                <Spin size="large"/>
+            ) : (
+                <Row gutter={[48, 16]} justify="center" align="middle">
+                    {universities.map((university, index) => (
+                        <Col key={index} xs={24} sm={12} md={8} lg={4}>
+                            <div onClick={() => handleUniversityClick(university)}>
+                                <Link to={university.link}>
+                                    <img src={university.imageUrl} alt={university.name} className="icon"/>
+                                </Link>
+                            </div>
+                        </Col>
+                    ))}
+                </Row>
+            )}
+            {selectedUniversity && <CourseList university={selectedUniversity}/>}
         </div>
-
     );
 };
 

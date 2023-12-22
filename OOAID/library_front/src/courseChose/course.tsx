@@ -1,54 +1,47 @@
-import React, {useState} from 'react';
-import {Button} from 'antd';
+// CourseList.jsx
+import React, { useEffect, useState } from 'react';
+import { Button, Spin } from 'antd';
 import SubjectList from "../subjectChose/subject";
-import "./course.css"
+import PostService from '../postService/PostService';
+import "./course.css";
 
-const CourseList = ({university, onCourseSelect}) => {
-    const courseData = {
-        НГУ: ['1 курс', '2 курс', '3 курс', '4 курс'],
-        ТГУ: ['1 курс', '2 курс', '3 курс', '4 курс'],
-        НГТУ: ['1 курс', '2 курс', '3 курс'],
-    };
-
+const CourseList = ({ university }) => {
+    const [loading, setLoading] = useState(true);
+    const [courses, setCourses] = useState([]);
     const [selectedCourse, setSelectedCourse] = useState(null);
-    const [showSubjectList, setShowSubjectList] = useState(false);
+
+    useEffect(() => {
+        // Загрузка списка курсов для выбранного университета
+        PostService.getCourses(university.name).then((response) => {
+            setCourses(response.data);
+            setLoading(false);
+        });
+    }, [university]);
 
     const handleCourseClick = (course: any) => {
+        setLoading(true);
         setSelectedCourse(course);
-        setShowSubjectList(true);
-    };
-
-    const handleSubjectSelect = (subject: any) => {
-        // Обработка выбранного предмета, например, отправка данных на сервер или переход к следующему этапу
-        console.log('Selected Subject:', subject);
-        // Добавьте здесь вашу логику
-
-        // Скрыть SubjectList после выбора предмета
-        //setShowSubjectList(false);
     };
 
     return (
         <div>
             <header className="course-header">Выберите курс для {university.name}</header>
-            <div className="course-buttons-container">
-                {courseData[university.name].map((course, index) => (
-                    <Button
-                        key={index}
-                        type={selectedCourse === course ? 'primary' : 'default'}
-                        onClick={() => handleCourseClick(course)}
-                        className="course-button">
-                        {course}
-                    </Button>
-                ))}
-            </div>
-            {showSubjectList && (
-                <SubjectList
-                    course={selectedCourse}
-                    onSubjectSelect={handleSubjectSelect}
-                    // onNextClick={() => setShowSubjectList(false)}
-                    onNextClick={() => console.log("Next clicked")}
-                />
+            {loading ? (
+                <Spin size="large" />
+            ) : (
+                <div className="course-buttons-container">
+                    {courses.map((course, index) => (
+                        <Button
+                            key={index}
+                            type={selectedCourse === course ? 'primary' : 'default'}
+                            onClick={() => handleCourseClick(course)}
+                            className="course-button">
+                            {course.name}
+                        </Button>
+                    ))}
+                </div>
             )}
+            {selectedCourse && <SubjectList university={university} course={selectedCourse} />}
         </div>
     );
 };
