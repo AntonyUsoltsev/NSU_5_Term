@@ -26,7 +26,7 @@ export default class PostService {
 
     static async getCourses(universityName: any) {
         try {
-            const value = await axios.get("http://localhost:8080/student_compass/" + universityName);
+            const value = await axios.get(`http://localhost:8080/student_compass/${universityName}`);
             console.log(value)
             return value;
         } catch (error) {
@@ -36,9 +36,7 @@ export default class PostService {
 
     static async getSubjects(universityName: string, courseValue: string) {
         try {
-            const value = await axios.get("http://localhost:8080/student_compass/" +
-                universityName + "/" +
-                courseValue);
+            const value = await axios.get(`http://localhost:8080/student_compass/${universityName}/${courseValue}`);
             console.log(value)
             return value;
         } catch (error) {
@@ -46,12 +44,18 @@ export default class PostService {
         }
     }
 
-    static async getBooks(universityName: string, courseValue: string, selectedSubject: string) {
+    static async getBooks(universityName: any, courseValue: any, selectedSubject: any) {
         try {
-            const value = await axios.get("http://localhost:8080/student_compass/" +
-                universityName + "/" +
-                courseValue + "/" +
-                selectedSubject);
+            const value = await axios.get(`http://localhost:8080/student_compass/${universityName}/${courseValue}/${selectedSubject}`);
+            console.log(value)
+            return value;
+        } catch (error) {
+            this.errorHandler(error);
+        }
+    }
+    static async getReviews(universityName: any, courseValue: any, selectedSubject: any) {
+        try {
+            const value = await axios.get(`http://localhost:8080/student_compass/${universityName}/${courseValue}/${selectedSubject}/reviews`);
             console.log(value)
             return value;
         } catch (error) {
