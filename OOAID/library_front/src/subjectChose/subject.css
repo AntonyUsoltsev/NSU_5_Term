@@ -10,8 +10,8 @@
 }
 
 .subject-container {
-    height: 100vh; /* Задаем высоту контейнера в 100% высоты видимого экрана */
-    overflow: auto; /* Добавляем прокрутку по необходимости */
+    height: 100vh;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     align-items: center;

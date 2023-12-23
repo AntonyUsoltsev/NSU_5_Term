@@ -1,29 +1,20 @@
-
 import React from 'react';
-import {BrowserRouter as Router} from 'react-router-dom';
+import {BrowserRouter as Router, Route} from 'react-router-dom';
 import UniversityPage from './universityChose/university';
 import './App.css';
+import {Switch} from "antd";
+import BookListPage from "./materialList/MaterislList";
 
 
 const App = () => {
     return (
         <div className="App">
-            <header className="App-header">
-                <UniversityPage/>
-
-                {/*<p>*/}
-                {/*    Edit <code>src/App.jsx</code> and save to reload.*/}
-                {/*</p>*/}
-
-                {/*<a*/}
-                {/*    className="App-link"*/}
-                {/*    href="https://reactjs.org"*/}
-                {/*    target="_blank"*/}
-                {/*    rel="noopener noreferrer"*/}
-                {/*>*/}
-                {/*    Learn React*/}
-                {/*</a>*/}
-            </header>
+            <Router>
+                <Switch>
+                    <Route path="/student_compass/:university/:course/:subject" component={BookListPage} />
+                    <Route path="/" component={UniversityPage}/>
+                </Switch>
+            </Router>
         </div>
     );
 }

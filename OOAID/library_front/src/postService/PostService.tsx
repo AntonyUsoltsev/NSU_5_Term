@@ -46,4 +46,17 @@ export default class PostService {
         }
     }
 
+    static async getBooks(universityName: string, courseValue: string, selectedSubject: string) {
+        try {
+            const value = await axios.get("http://localhost:8080/student_compass/" +
+                universityName + "/" +
+                courseValue + "/" +
+                selectedSubject);
+            console.log(value)
+            return value;
+        } catch (error) {
+            this.errorHandler(error);
+        }
+    }
+
 }
