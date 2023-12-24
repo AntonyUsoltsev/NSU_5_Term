@@ -1,61 +1,57 @@
 // SubjectList.jsx
-import React, { useEffect, useState } from 'react';
-import { Select, Button, Spin } from 'antd';
+import React, {useEffect, useState} from 'react';
+import {Select, Button} from 'antd';
+import {useHistory} from 'react-router-dom';
 import './subject.css';
 import PostService from '../postService/PostService';
 
-const SubjectList = ({ university, course }) => {
-    const [loading, setLoading] = useState(true);
+const SubjectList = ({university, course}: any) => {
+
     const [subjects, setSubjects] = useState([]);
     const [selectedSubject, setSelectedSubject] = useState(null);
+    const history = useHistory();
 
     useEffect(() => {
         // Загрузка списка предметов для выбранного курса
-        PostService.getSubjects(university.name, course).then((response) => {
+        PostService.getSubjects(university.name, course).then((response: any) => {
             setSubjects(response.data);
-            setLoading(false);
         });
     }, [university, course]);
 
-    const handleSubjectChange = (value) => {
+    const handleSubjectChange = (value: any) => {
         setSelectedSubject(value);
     };
 
     const handleContinueClick = () => {
         if (selectedSubject) {
-            // Обработка выбранного предмета, например, отправка данных на сервер или переход к следующему этапу
-            console.log('Selected Subject:', selectedSubject);
+            // Перенаправление на страницу с книгами, передавая параметры университета, курса и предмета
+            const booksRoute = `/student_compass/${university.name}/${course.number}/${selectedSubject.id}`;
+            history.push(booksRoute);
         }
     };
 
     return (
         <div className="subject-container">
-            <header className="subject-header">Выберите предмет для {course}</header>
-            {loading ? (
-                <Spin size="large" />
-            ) : (
-                <>
-                    <Select
-                        className="subject-select"
-                        placeholder="Выберите предмет"
-                        onChange={handleSubjectChange}
-                        value={selectedSubject}>
-                        {subjects.map((subject, index) => (
-                            <Select.Option key={index} value={subject}>
-                                {subject.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
-                    <div className="subject-buttons">
-                        <Button
-                            type="primary"
-                            onClick={handleContinueClick}
-                            disabled={!selectedSubject}>
-                            Продолжить
-                        </Button>
-                    </div>
-                </>
-            )}
+            <header className="subject-header">Выберите предмет для {course} курса</header>
+            <Select
+                className="subject-select"
+                placeholder="Выберите предмет"
+                onChange={handleSubjectChange}
+                value={selectedSubject}>
+                {subjects.map((subject: any, index) => (
+                    <Select.Option key={index} value={subject.name}>
+                        {subject.name}
+                    </Select.Option>
+                ))}
+            </Select>
+            <div className="subject-buttons">
+                <Button
+                    type="primary"
+                    onClick={handleContinueClick}
+                    disabled={!selectedSubject}>
+                    Продолжить
+                </Button>
+            </div>
         </div>
     );
 };
