@@ -44,9 +44,12 @@ const AuthButtons = () => {
         setUserInitial(username.charAt(0));
         closeRegisterModal();
     };
+    const exitHandle = () => {
+        localStorage.setItem('token', null);
+    };
 
     const buttonStyle = { width: '160px' };
-
+    const exitButtonStyle = { width: '160px', color:"red"};
     return (
         <Row justify="end" align="top" style={{ position: 'fixed', top: 10, right: 10 }}>
             {isLoggedIn ? (
@@ -60,6 +63,9 @@ const AuthButtons = () => {
                     </Button>
                     <Button style={buttonStyle} onClick={showRegisterModal}>
                         Зарегистрироваться
+                    </Button>
+                    <Button style={exitButtonStyle} onClick={exitHandle}>
+                        Выйти
                     </Button>
                 </Space>
             )}
