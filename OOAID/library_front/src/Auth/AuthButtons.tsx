@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { Button, Space, Row, Avatar } from 'antd';
+import {Button, Space, Row, Avatar} from 'antd';
 import AuthModal from './AuthModal';
 import RegisterModal from './RegisterModal';
 
@@ -11,7 +11,7 @@ const AuthButtons = () => {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (token){
+        if (token) {
             setLoggedIn(true);
             setUserInitial(token.charAt(0));
         }
@@ -33,13 +33,13 @@ const AuthButtons = () => {
         setRegisterModalVisible(false);
     };
 
-    const handleAuthenticationSuccess = (username:any) => {
+    const handleAuthenticationSuccess = (username: any) => {
         setLoggedIn(true);
         setUserInitial(username.charAt(0));
         closeAuthModal();
     };
 
-    const handleRegistrationSuccess = (username:any) => {
+    const handleRegistrationSuccess = (username: any) => {
         setLoggedIn(true);
         setUserInitial(username.charAt(0));
         closeRegisterModal();
@@ -48,14 +48,19 @@ const AuthButtons = () => {
         localStorage.setItem('token', null);
     };
 
-    const buttonStyle = { width: '160px' };
-    const exitButtonStyle = { width: '160px', color:"red"};
+    const buttonStyle = {width: '160px'};
+    const exitButtonStyle = {width: '160px', color: "red"};
     return (
-        <Row justify="end" align="top" style={{ position: 'fixed', top: 10, right: 10 }}>
+        <Row justify="end" align="top" style={{position: 'fixed', top: 10, right: 10}}>
             {isLoggedIn ? (
-                <Avatar>
-                    {userInitial}
-                </Avatar>
+                <div>
+                    <Avatar>
+                        {userInitial}
+                    </Avatar>
+                    <Button style={exitButtonStyle} onClick={exitHandle}>
+                        Выйти
+                    </Button>
+                </div>
             ) : (
                 <Space direction="vertical">
                     <Button style={buttonStyle} onClick={showAuthModal}>
@@ -64,14 +69,13 @@ const AuthButtons = () => {
                     <Button style={buttonStyle} onClick={showRegisterModal}>
                         Зарегистрироваться
                     </Button>
-                    <Button style={exitButtonStyle} onClick={exitHandle}>
-                        Выйти
-                    </Button>
                 </Space>
             )}
 
-            <AuthModal visible={authModalVisible} onClose={closeAuthModal} onAuthenticationSuccess={handleAuthenticationSuccess} />
-            <RegisterModal visible={registerModalVisible} onClose={closeRegisterModal} onRegistrationSuccess={handleRegistrationSuccess} />
+            <AuthModal visible={authModalVisible} onClose={closeAuthModal}
+                       onAuthenticationSuccess={handleAuthenticationSuccess}/>
+            <RegisterModal visible={registerModalVisible} onClose={closeRegisterModal}
+                           onRegistrationSuccess={handleRegistrationSuccess}/>
         </Row>
     );
 };
