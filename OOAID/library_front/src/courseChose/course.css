@@ -17,15 +17,8 @@
 
 .course-button {
     border-radius: 45px;
-    border-color: blueviolet;
+    border-color: black;
     width: 100px;
     font-size: 14px;
-}
-.course-button:hover {
-    background-color: #d7c7f6;
-}
-
-.course-button:active {
-    background-color: #b97ce8;
 }
 

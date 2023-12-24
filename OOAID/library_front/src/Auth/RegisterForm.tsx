@@ -3,8 +3,8 @@ import React from 'react';
 import {Form, Input, Button, message} from 'antd';
 import axios from 'axios';
 
-const RegisterForm = ({onClose, onRegistrationSuccess}) => {
-    const onFinish = (values:any) => {
+const RegisterForm = ({onRegistrationSuccess}) => {
+    const onFinish = (values: any) => {
         // Здесь обработайте отправку данных на бэкенд для регистрации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
 
@@ -19,7 +19,6 @@ const RegisterForm = ({onClose, onRegistrationSuccess}) => {
                 // Вызовите колбэк для закрытия модального окна
                 const username = values.firstname;
                 onRegistrationSuccess(username);
-                onClose();
             })
             .catch((error) => {
                 console.error('Ошибка регистрации:', error);

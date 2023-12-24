@@ -6,7 +6,7 @@ import RegisterForm from './RegisterForm'; // Подключите компон�
 const RegisterModal = ({ visible, onClose, onRegistrationSuccess }) => {
   return (
     <Modal title="Регистрация" visible={visible} onCancel={onClose} footer={null}>
-      <RegisterForm onClose={onClose} onRegistrationSuccess={onRegistrationSuccess} />
+      <RegisterForm  onRegistrationSuccess={onRegistrationSuccess} />
     </Modal>
   );
 };

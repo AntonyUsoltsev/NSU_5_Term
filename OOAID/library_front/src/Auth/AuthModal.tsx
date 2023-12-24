@@ -6,7 +6,7 @@ import AuthForm from './AuthForm'; // Подключите компонент с
 const AuthModal = ({ visible, onClose , onAuthenticationSuccess}) => {
     return (
         <Modal title="Авторизация" visible={visible} onCancel={onClose} footer={null}>
-            <AuthForm onClose={onClose} onAuthenticationSuccess={onAuthenticationSuccess} />
+            <AuthForm  onAuthenticationSuccess={onAuthenticationSuccess} />
         </Modal>
     );
 };

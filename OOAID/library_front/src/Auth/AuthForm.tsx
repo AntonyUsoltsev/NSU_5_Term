@@ -3,7 +3,7 @@ import React from 'react';
 import {Form, Input, Button, message} from 'antd';
 import axios from 'axios';
 
-const AuthForm = ({onClose, onAuthenticationSuccess}) => {
+const AuthForm = ({ onAuthenticationSuccess}) => {
     const onFinish = (values) => {
         // Здесь обработайте отправку данных на бэкенд для авторизации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
@@ -18,7 +18,6 @@ const AuthForm = ({onClose, onAuthenticationSuccess}) => {
                 localStorage.setItem('token', response.data.token);
                 const username = values.firstname;
                 onAuthenticationSuccess(username);
-                onClose();
             })
             .catch((error) => {
                 console.error('Ошибка авторизации:', error);
