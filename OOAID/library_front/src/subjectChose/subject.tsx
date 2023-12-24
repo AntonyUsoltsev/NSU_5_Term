@@ -1,6 +1,7 @@
 // SubjectList.jsx
 import React, {useEffect, useState} from 'react';
 import {Select, Button} from 'antd';
+// @ts-ignore
 import {useHistory} from 'react-router-dom';
 import './subject.css';
 import PostService from '../postService/PostService';
