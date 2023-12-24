@@ -8,8 +8,8 @@ const RegisterForm = ({onClose}) => {
         // Здесь обработайте отправку данных на бэкенд для регистрации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
 
-        const endpoint = 'http://localhost:8080/student_compass/register';
-
+        const endpoint = 'http://localhost:8080/auth/student_compass/register';
+        console.log(values)
         axios
             .post(endpoint, values)
             .then((response) => {
@@ -26,10 +26,10 @@ const RegisterForm = ({onClose}) => {
 
     return (
         <Form onFinish={onFinish}>
-            <Form.Item name="name" rules={[{required: true, message: 'Name'}]}>
+            <Form.Item name="firstname" rules={[{required: true, message: 'firstname'}]}>
                 <Input placeholder="Имя"/>
             </Form.Item>
-            <Form.Item name="surname" rules={[{required: true, message: 'SecondName'}]}>
+            <Form.Item name="lastname" rules={[{required: true, message: 'lastname'}]}>
                 <Input placeholder="Фамилия"/>
             </Form.Item>
             <Form.Item name="email" rules={[{required: true, message: 'Email'}]}>

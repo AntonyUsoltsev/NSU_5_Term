@@ -8,7 +8,7 @@ const AuthForm = ({ onClose }) => {
         // Здесь обработайте отправку данных на бэкенд для авторизации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
 
-        const endpoint = 'http://localhost:8080/student_compass/authenticate';
+        const endpoint = 'http://localhost:8080/auth/student_compass/authenticate';
 
         axios
             .post(endpoint, values)
