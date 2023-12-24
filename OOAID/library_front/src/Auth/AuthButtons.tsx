@@ -45,7 +45,8 @@ const AuthButtons = () => {
         closeRegisterModal();
     };
     const exitHandle = () => {
-        localStorage.setItem('token', null);
+        setLoggedIn(false);
+        localStorage.removeItem('token');
     };
 
     const buttonStyle = {width: '160px'};

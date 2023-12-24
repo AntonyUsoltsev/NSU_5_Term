@@ -22,7 +22,7 @@ const App = () => {
 
 const Root = () => {
     return (
-        <Router>
+        <Router basename={process.env.PUBLIC_URL}>
             <App/>
         </Router>
     );

@@ -34,7 +34,7 @@ const ReviewList = ({ selectedSubject, selectedSubjectName, inputReviews}) => {
             .then(response => {
                 message.success('Отзыв успешно добавлен.');
                 // Обновление списка отзывов после успешной отправки
-                setReviews([...reviews, response.data]);
+                setReviews([...reviews, response.data.reviews[0]]);
                 // Очистка поля ввода
                 setNewReviewText('');
             })
