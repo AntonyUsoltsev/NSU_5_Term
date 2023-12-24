@@ -1,9 +1,9 @@
 // BookList.jsx
-import React, { useState, useEffect } from 'react';
-import { List, Button, message } from 'antd';
+import React, {useState, useEffect} from 'react';
+import {List, Button, message} from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
-import { useParams } from "react-router-dom";
+import {useParams} from "react-router-dom";
 import "./MaterialStyle.css"
 
 const BookList = () => {
@@ -11,7 +11,7 @@ const BookList = () => {
     const [books, setBooks]: any = useState([]);
     const [reviews, setReviews]: any = useState([]);
 
-    const { university, course, subject }: any = useParams();
+    const {university, course, subject}: any = useParams();
 
     useEffect(() => {
         // Загрузка списка книг для выбранного предмета
@@ -41,9 +41,25 @@ const BookList = () => {
     };
 
     const checkUserAuthentication = () => {
-        // Временная заглушка (замените на реальную логику)
-        const isAuthenticated = localStorage.getItem('token') !== null;
-        return isAuthenticated;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return false;
+        }
+
+        // Выполнение запроса к бэкенду для проверки авторизации
+        return axios.get('ваш-эндпоинт-проверки-авторизации', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then(response => {
+                // В данном случае, успешный ответ считается подтверждением авторизации
+                return true;
+            })
+            .catch(error => {
+                // В случае ошибки, например, если токен недействителен
+                return false;
+            });
     };
 
     const showWarning = () => {
@@ -62,7 +78,7 @@ const BookList = () => {
                     </List.Item>
                 )}
             />
-            <ReviewList selectedSubject={data.name} inputReviews={reviews} />
+            <ReviewList selectedSubject={data.name} inputReviews={reviews}/>
         </div>
     );
 };
