@@ -3,7 +3,7 @@ import React from 'react';
 import {Form, Input, Button, message} from 'antd';
 import axios from 'axios';
 
-const AuthForm = ({onClose}) => {
+const AuthForm = ({onClose, onAuthenticationSuccess}) => {
     const onFinish = (values) => {
         // Здесь обработайте отправку данных на бэкенд для авторизации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
@@ -16,7 +16,8 @@ const AuthForm = ({onClose}) => {
                 console.log('Успешная авторизация:', response.data);
                 message.success('Успешная авторизация');
                 localStorage.setItem('token', response.data.token);
-                // Вызовите колбэк для закрытия модального окна
+                const username = values.firstname;
+                onAuthenticationSuccess(username);
                 onClose();
             })
             .catch((error) => {

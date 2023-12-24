@@ -3,10 +3,10 @@ import React from 'react';
 import { Modal } from 'antd';
 import AuthForm from './AuthForm'; // Подключите компонент с формой авторизации
 
-const AuthModal = ({ visible, onClose }) => {
+const AuthModal = ({ visible, onClose , onAuthenticationSuccess}) => {
     return (
         <Modal title="Авторизация" visible={visible} onCancel={onClose} footer={null}>
-            <AuthForm onClose={onClose} />
+            <AuthForm onClose={onClose} onAuthenticationSuccess={onAuthenticationSuccess} />
         </Modal>
     );
 };

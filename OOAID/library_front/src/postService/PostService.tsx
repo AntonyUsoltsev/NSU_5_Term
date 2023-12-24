@@ -65,5 +65,7 @@ export default class PostService {
             this.errorHandler(error);
         }
     }
+    static async postReview(){
 
+    }
 }

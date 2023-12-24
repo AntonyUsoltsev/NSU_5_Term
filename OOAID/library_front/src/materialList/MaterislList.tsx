@@ -87,7 +87,7 @@ const BookList = () => {
                             </List.Item>
                         )}
                     />
-                    <ReviewList selectedSubject={data.name} inputReviews={reviews} />
+                    <ReviewList universityName={university} courseValue={course} selectedSubject={data.name} inputReviews={reviews} />
                 </>
             )}
         </div>

@@ -1,12 +1,13 @@
-// AuthButtons.jsx
 import React, { useState } from 'react';
-import { Button, Space, Row } from 'antd';
+import { Button, Space, Row, Avatar } from 'antd';
 import AuthModal from './AuthModal';
 import RegisterModal from './RegisterModal';
 
 const AuthButtons = () => {
     const [authModalVisible, setAuthModalVisible] = useState(false);
     const [registerModalVisible, setRegisterModalVisible] = useState(false);
+    const [isLoggedIn, setLoggedIn] = useState(false);
+    const [userInitial, setUserInitial] = useState('');
 
     const showAuthModal = () => {
         setAuthModalVisible(true);
@@ -24,21 +25,39 @@ const AuthButtons = () => {
         setRegisterModalVisible(false);
     };
 
-    const buttonStyle = { width: '160px' }; // Задаем фиксированную ширину
+    const handleAuthenticationSuccess = (username:any) => {
+        setLoggedIn(true);
+        setUserInitial(username.charAt(0));
+        closeAuthModal();
+    };
+
+    const handleRegistrationSuccess = (username:any) => {
+        setLoggedIn(true);
+        setUserInitial(username.charAt(0));
+        closeRegisterModal();
+    };
+
+    const buttonStyle = { width: '160px' };
 
     return (
         <Row justify="end" align="top" style={{ position: 'fixed', top: 10, right: 10 }}>
-            <Space direction="vertical">
-                <Button style={buttonStyle} onClick={showAuthModal}>
-                    Авторизоваться
-                </Button>
-                <Button style={buttonStyle} onClick={showRegisterModal}>
-                    Зарегистрироваться
-                </Button>
-            </Space>
+            {isLoggedIn ? (
+                <Avatar style={buttonStyle} size="large">
+                    {userInitial}
+                </Avatar>
+            ) : (
+                <Space direction="vertical">
+                    <Button style={buttonStyle} onClick={showAuthModal}>
+                        Авторизоваться
+                    </Button>
+                    <Button style={buttonStyle} onClick={showRegisterModal}>
+                        Зарегистрироваться
+                    </Button>
+                </Space>
+            )}
 
-            <AuthModal visible={authModalVisible} onClose={closeAuthModal} />
-            <RegisterModal visible={registerModalVisible} onClose={closeRegisterModal} />
+            <AuthModal visible={authModalVisible} onClose={closeAuthModal} onAuthenticationSuccess={handleAuthenticationSuccess} />
+            <RegisterModal visible={registerModalVisible} onClose={closeRegisterModal} onRegistrationSuccess={handleRegistrationSuccess} />
         </Row>
     );
 };
