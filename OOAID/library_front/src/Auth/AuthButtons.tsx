@@ -8,6 +8,7 @@ const AuthButtons = () => {
     const [registerModalVisible, setRegisterModalVisible] = useState(false);
     const [isLoggedIn, setLoggedIn] = useState(false);
     const [userInitial, setUserInitial] = useState('');
+    const [avatarClicked, setAvatarClicked] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -44,6 +45,7 @@ const AuthButtons = () => {
         setUserInitial(username.charAt(0));
         closeRegisterModal();
     };
+
     const exitHandle = () => {
         setLoggedIn(false);
         localStorage.removeItem('token');
@@ -51,27 +53,33 @@ const AuthButtons = () => {
 
     const buttonStyle = {width: '160px'};
     const exitButtonStyle = {width: '160px', color: "red"};
+    const avatarStyle = {cursor: 'pointer'};
+
     return (
         <Row justify="end" align="top" style={{position: 'fixed', top: 10, right: 10}}>
-            {isLoggedIn ? (
-                <div>
-                    <Avatar>
-                        {userInitial}
-                    </Avatar>
-                    <Button style={exitButtonStyle} onClick={exitHandle}>
-                        Выйти
-                    </Button>
-                </div>
-            ) : (
-                <Space direction="vertical">
-                    <Button style={buttonStyle} onClick={showAuthModal}>
-                        Авторизоваться
-                    </Button>
-                    <Button style={buttonStyle} onClick={showRegisterModal}>
-                        Зарегистрироваться
-                    </Button>
-                </Space>
-            )}
+            <div onClick={() => setAvatarClicked(true)} style={avatarStyle}>
+                {isLoggedIn ? (
+                    <div>
+                        <Avatar>
+                            {userInitial}
+                        </Avatar>
+                        {avatarClicked && (
+                            <Button style={exitButtonStyle} onClick={exitHandle}>
+                                Выйти
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <Space direction="vertical">
+                        <Button style={buttonStyle} onClick={showAuthModal}>
+                            Авторизоваться
+                        </Button>
+                        <Button style={buttonStyle} onClick={showRegisterModal}>
+                            Зарегистрироваться
+                        </Button>
+                    </Space>
+                )}
+            </div>
 
             <AuthModal visible={authModalVisible} onClose={closeAuthModal}
                        onAuthenticationSuccess={handleAuthenticationSuccess}/>

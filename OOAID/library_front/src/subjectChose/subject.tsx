@@ -29,6 +29,7 @@ const SubjectList = ({university, course}: any) => {
             // Перенаправление на страницу с книгами, передавая параметры университета, курса и предмета
             const booksRoute = `/student_compass/${university.name}/${course}/${selectedSubject.data_id}`;
             history.push(booksRoute);
+            window.location.reload();
         }
     };
 

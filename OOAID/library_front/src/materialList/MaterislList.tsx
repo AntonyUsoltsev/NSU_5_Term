@@ -3,7 +3,7 @@ import React, {useState, useEffect} from 'react';
 import {List, Button, message, Spin} from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
-import {useParams} from "react-router-dom";
+import {useHistory, useParams} from "react-router-dom";
 import "./MaterialStyle.css"
 import axios from "axios";
 
@@ -14,6 +14,7 @@ const BookList = () => {
     const [loading, setLoading] = useState(true);
 
     const {university, course, subject}: any = useParams();
+    const history = useHistory();
 
     useEffect(() => {
         // Загрузка списка книг для выбранного предмета
@@ -70,6 +71,11 @@ const BookList = () => {
     const showWarning = () => {
         message.warning('Прежде чем скачать, необходимо авторизоваться.');
     };
+    const handleBackClick = () => {
+        const booksRoute = "/";
+        history.push(booksRoute);
+        window.location.reload();
+    }
 
     return (
         <div>
@@ -88,6 +94,9 @@ const BookList = () => {
                         )}
                     />
                     <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
+                    <Button type="primary" onClick={handleBackClick}>
+                        Назад
+                    </Button>
                 </>
             )}
         </div>
