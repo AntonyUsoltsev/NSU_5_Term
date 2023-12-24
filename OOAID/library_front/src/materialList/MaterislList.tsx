@@ -1,40 +1,37 @@
 // BookList.jsx
-import React, {useState, useEffect} from 'react';
-import {List, Button, Modal} from 'antd';
-import AuthenticationForm from '../authorizitaion/AuthPage';
+import React, { useState, useEffect } from 'react';
+import { List, Button, message } from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
-import {useParams} from "react-router-dom"; // Импортируйте компонент AuthenticationForm
+import { useParams } from "react-router-dom";
+import "./MaterialStyle.css"
 
 const BookList = () => {
     const [data, setData]: any = useState();
     const [books, setBooks]: any = useState([]);
     const [reviews, setReviews]: any = useState([]);
 
-    const {university, course, subject}: any = useParams();
+    const { university, course, subject }: any = useParams();
 
     useEffect(() => {
-        console.log("Запуск")
         // Загрузка списка книг для выбранного предмета
         PostService.getBooks(university, course, subject).then((response: any) => {
-            const sortedCourses = response.data;
-            console.log(sortedCourses)
-            setData(sortedCourses);
-            setBooks(sortedCourses.materials)
-            setReviews(sortedCourses.reviews)
+            const inputData = response.data;
+            setData(inputData);
+            setBooks(inputData.materials)
+            setReviews(inputData.reviews)
         });
     }, [university, course, subject]);
 
     const handleDownload = (book: any) => {
-
-        const isUserAuthenticated = checkUserAuthentication(); // Реализуйте функцию checkUserAuthentication
+        const isUserAuthenticated = checkUserAuthentication();
 
         if (isUserAuthenticated) {
             // Выполнить скачивание книги
             downloadBook(book);
         } else {
-            // Отобразить форму авторизации/регистрации
-            showAuthenticationForm();
+            // Показать предупреждение
+            showWarning();
         }
     };
 
@@ -44,58 +41,18 @@ const BookList = () => {
     };
 
     const checkUserAuthentication = () => {
-
         // Временная заглушка (замените на реальную логику)
         const isAuthenticated = localStorage.getItem('token') !== null;
         return isAuthenticated;
     };
 
-    const showAuthenticationForm = () => {
-        // Отобразить модальное окно с формой авторизации/регистрации
-        Modal.info({
-            title: 'Внимание',
-            content: (
-                <div>
-                    <p>Для скачивания книги необходимо войти или зарегистрироваться.</p>
-                    {/* Интегрируйте компонент с формой авторизации/регистрации */}
-                    <AuthenticationForm
-                        onAuthenticationSuccess={handleAuthenticationSuccess}
-                        onRegistrationSuccess={handleRegistrationSuccess}
-                    />
-                </div>
-            ),
-            onOk() {
-                // Обработчик закрытия модального окна
-                console.log('Модальное окно закрыто');
-            },
-        });
-    };
-
-    const handleAuthenticationSuccess = () => {
-        // Обработчик успешной авторизации
-        // Вы можете выполнить необходимые действия, например, обновить компонент или выполнить скачивание книги
-        console.log('Успешная авторизация');
-        // Продолжить скачивание книги или другие действия
-        // ...
-
-        // Закрыть модальное окно
-        Modal.destroyAll();
-    };
-
-    const handleRegistrationSuccess = () => {
-        // Обработчик успешной регистрации
-        // Вы можете выполнить необходимые действия, например, обновить компонент или выполнить скачивание книги
-        console.log('Успешная регистрация');
-        // Продолжить скачивание книги или другие действия
-        // ...
-
-        // Закрыть модальное окно
-        Modal.destroyAll();
+    const showWarning = () => {
+        message.warning('Прежде чем скачать, необходимо авторизоваться.');
     };
 
     return (
         <div>
-            <header className="book-list-header">Список книг для {subject} предмета</header>
+            <header className="subjects-header">Список книг для {subject} предмета</header>
             <List
                 dataSource={books}
                 renderItem={(item: any) => (

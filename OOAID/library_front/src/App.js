@@ -3,14 +3,14 @@ import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
 import UniversityPage from './universityChose/university';
 import './App.css';
 import BookListPage from "./materialList/MaterislList";
-import AuthenticationForm from "./authorizitaion/AuthPage";
+import AuthButtons from "./Auth/AuthButtons";
 
 
 const App = () => {
     return (
         <div className="App">
             <Router>
-                <AuthenticationForm/>
+                <AuthButtons />
                 <Switch>
                     <Route path="/student_compass/:university/:course/:subject" component={BookListPage} />
                     <Route path="/" component={UniversityPage}/>

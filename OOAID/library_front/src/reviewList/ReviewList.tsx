@@ -1,8 +1,7 @@
 // ReviewList.jsx
 import React, {useEffect, useState} from 'react';
 import {List, Avatar} from 'antd';
-import PostService from "../postService/PostService";
-
+import "./ReviewStyle.css"
 const ReviewList = ({university, course, selectedSubject, inputReviews}) => {
     const [reviews, setReviews] = useState([]);
     useEffect(() => {
@@ -11,7 +10,7 @@ const ReviewList = ({university, course, selectedSubject, inputReviews}) => {
 
     return (
         <div>
-            <h2>Отзывы по предмету {selectedSubject}</h2>
+            <header className="reviews-header">Отзывы по предмету {selectedSubject}</header>
             <List
                 itemLayout="horizontal"
                 dataSource={reviews}
