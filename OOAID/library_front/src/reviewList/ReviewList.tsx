@@ -5,6 +5,7 @@ import "./ReviewStyle.css"
 const ReviewList = ({selectedSubject, inputReviews}) => {
     const [reviews, setReviews] = useState([]);
     useEffect(() => {
+        console.log(inputReviews)
         setReviews(inputReviews)
     }, [ selectedSubject]);
 
@@ -17,9 +18,9 @@ const ReviewList = ({selectedSubject, inputReviews}) => {
                 renderItem={(review) => (
                     <List.Item>
                         <List.Item.Meta
-                            avatar={<Avatar>{review.name.charAt(0)}</Avatar>}
-                            title={review.name}
-                            description={review.text}
+                            avatar={<Avatar>{review.user.firstName.charAt(0)}</Avatar>}
+                            title={review.user.firstName + " " + review.user.lastName}
+                            description={review.value}
                         />
                     </List.Item>
                 )}

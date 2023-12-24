@@ -1,25 +1,30 @@
 // BookList.jsx
 import React, {useState, useEffect} from 'react';
-import {List, Button, message} from 'antd';
+import {List, Button, message, Spin} from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
 import {useParams} from "react-router-dom";
 import "./MaterialStyle.css"
+import axios from "axios";
 
 const BookList = () => {
     const [data, setData]: any = useState();
     const [books, setBooks]: any = useState([]);
     const [reviews, setReviews]: any = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const {university, course, subject}: any = useParams();
 
     useEffect(() => {
         // Загрузка списка книг для выбранного предмета
         PostService.getBooks(university, course, subject).then((response: any) => {
+            console.log("start")
+            console.log(response)
             const inputData = response.data;
             setData(inputData);
             setBooks(inputData.materials)
             setReviews(inputData.reviews)
+            setLoading(false);
         });
     }, [university, course, subject]);
 
@@ -68,17 +73,23 @@ const BookList = () => {
 
     return (
         <div>
-            <header className="subjects-header">Список книг для предмета {data.name}</header>
-            <List
-                dataSource={books}
-                renderItem={(item: any) => (
-                    <List.Item>
-                        {item.title} - {item.author}
-                        <Button onClick={() => handleDownload(item)}>Скачать</Button>
-                    </List.Item>
-                )}
-            />
-            <ReviewList selectedSubject={data.name} inputReviews={reviews}/>
+            {loading ? (
+                <Spin size="large" />
+            ) : (
+                <>
+                    <header className="subjects-header">Список книг для предмета {data.name}</header>
+                    <List
+                        dataSource={books}
+                        renderItem={(item: any) => (
+                            <List.Item>
+                                {item.title} - {item.author}
+                                <Button onClick={() => handleDownload(item)}>Скачать</Button>
+                            </List.Item>
+                        )}
+                    />
+                    <ReviewList selectedSubject={data.name} inputReviews={reviews} />
+                </>
+            )}
         </div>
     );
 };
