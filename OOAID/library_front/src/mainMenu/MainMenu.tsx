@@ -1,18 +1,11 @@
-import React, {CSSProperties} from 'react';
-import {Button} from 'antd';
+import React from 'react';
+import { Button } from 'antd';
+import { useHistory } from "react-router-dom";
 // @ts-ignore
 import logoImage from './mainMenu.jpg';
-import {useHistory} from "react-router-dom";
 
 const MainMenu = () => {
-
     const history = useHistory();
-    const buttonStyle: CSSProperties = {
-        position: 'fixed',
-        top: 10,
-        left: 10,
-        zIndex: 1000,
-    };
 
     const handleButtonClick = () => {
         const booksRoute = "/";
@@ -21,8 +14,11 @@ const MainMenu = () => {
     };
 
     return (
-        <Button style={buttonStyle} onClick={handleButtonClick}>
-            <img src={logoImage} alt="Logo" style={{width: '40px', height: '40px'}}/>
+        <Button
+            style={{ padding: 0, border: 'none' }}
+            onClick={handleButtonClick}
+        >
+            <img src={logoImage} alt="Logo" style={{ width: '80px', height: '60px' }} />
         </Button>
     );
 };
