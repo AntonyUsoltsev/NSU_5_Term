@@ -3,23 +3,30 @@ import React, {useState, useEffect} from 'react';
 import {List, Button, Modal} from 'antd';
 import AuthenticationForm from '../authorizitaion/AuthPage';
 import PostService from "../postService/PostService";
-import ReviewList from "../reviewList/ReviewList"; // Импортируйте компонент AuthenticationForm
+import ReviewList from "../reviewList/ReviewList";
+import {useParams} from "react-router-dom"; // Импортируйте компонент AuthenticationForm
 
-const BookList = ({university, course, subject}) => {
-    const [books, setBooks] = useState([]);
+const BookList = () => {
+    const [data, setData]: any = useState();
+    const [books, setBooks]: any = useState([]);
+    const [reviews, setReviews]: any = useState([]);
+
+    const {university, course, subject}: any = useParams();
 
     useEffect(() => {
+        console.log("Запуск")
         // Загрузка списка книг для выбранного предмета
-        PostService.getBooks(university.name, course.number, subject.id).then((response: any) => {
+        PostService.getBooks(university, course, subject).then((response: any) => {
             const sortedCourses = response.data;
-            setBooks(sortedCourses);
+            console.log(sortedCourses)
+            setData(sortedCourses);
+            setBooks(sortedCourses.materials)
+            setReviews(sortedCourses.reviews)
         });
     }, [university, course, subject]);
 
     const handleDownload = (book: any) => {
-        // Проверка авторизации пользователя перед скачиванием книги
-        // Если пользователь авторизован, выполнить скачивание
-        // Иначе, отобразить форму авторизации/регистрации
+
         const isUserAuthenticated = checkUserAuthentication(); // Реализуйте функцию checkUserAuthentication
 
         if (isUserAuthenticated) {
@@ -37,10 +44,6 @@ const BookList = ({university, course, subject}) => {
     };
 
     const checkUserAuthentication = () => {
-        // Реализуйте логику проверки авторизации пользователя на бэкенде
-        // Верните true, если пользователь авторизован, и false в противном случае
-        // Пример: вам может потребоваться хранение токена пользователя в cookies или localStorage
-        // и проверка его валидности на бэкенде
 
         // Временная заглушка (замените на реальную логику)
         const isAuthenticated = localStorage.getItem('token') !== null;
@@ -95,14 +98,14 @@ const BookList = ({university, course, subject}) => {
             <header className="book-list-header">Список книг для {subject} предмета</header>
             <List
                 dataSource={books}
-                renderItem={(item) => (
+                renderItem={(item: any) => (
                     <List.Item>
                         {item.title} - {item.author}
                         <Button onClick={() => handleDownload(item)}>Скачать</Button>
                     </List.Item>
                 )}
             />
-            <ReviewList university={university} course={course} selectedSubject={subject} />
+            <ReviewList university={university} course={course} selectedSubject={subject} inputReviews={reviews} />
         </div>
     );
 };

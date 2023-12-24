@@ -5,27 +5,26 @@ import SubjectList from "../subjectChose/subject";
 import PostService from '../postService/PostService';
 import "./course.css";
 
-const CourseList = ({university}: any) => {
+const CourseList = ({university, selectedCourse, setSelectedCourse}: any) => {
     const [courses, setCourses] = useState([]);
-    const [selectedCourse, setSelectedCourse] = useState(null);
 
     useEffect(() => {
         // Загрузка списка курсов для выбранного университета
         PostService.getCourses(university.name).then((response: any) => {
-            const sortedCourses = response.data.sort();
+            const sortedCourses = response.data.sort((a: any, b: any) => a.number - b.number);
             setCourses(sortedCourses);
         });
     }, [university]);
 
     const handleCourseClick = (course: any) => {
-        setSelectedCourse(course);
+        setSelectedCourse(course.number);
     };
 
     return (
         <div>
             <header className="course-header">Выберите курс для {university.name}</header>
             <div className="course-buttons-container">
-                {courses.map((course: any, index: any) => (
+                {courses.map((course: any, index) => (
                     <Button
                         key={index}
                         type={selectedCourse === course ? 'primary' : 'default'}

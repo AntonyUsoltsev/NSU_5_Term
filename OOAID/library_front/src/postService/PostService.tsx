@@ -25,6 +25,7 @@ export default class PostService {
     }
 
     static async getCourses(universityName: any) {
+        console.log(`http://localhost:8080/student_compass/${universityName}`)
         try {
             const value = await axios.get(`http://localhost:8080/student_compass/${universityName}`);
             console.log(value)
@@ -35,6 +36,7 @@ export default class PostService {
     }
 
     static async getSubjects(universityName: string, courseValue: string) {
+        console.log(`http://localhost:8080/student_compass/${universityName}/${courseValue}`)
         try {
             const value = await axios.get(`http://localhost:8080/student_compass/${universityName}/${courseValue}`);
             console.log(value)
@@ -45,6 +47,7 @@ export default class PostService {
     }
 
     static async getBooks(universityName: any, courseValue: any, selectedSubject: any) {
+        console.log(`http://localhost:8080/student_compass/${universityName}/${courseValue}/${selectedSubject}`)
         try {
             const value = await axios.get(`http://localhost:8080/student_compass/${universityName}/${courseValue}/${selectedSubject}`);
             console.log(value)

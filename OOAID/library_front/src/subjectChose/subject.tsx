@@ -6,7 +6,6 @@ import './subject.css';
 import PostService from '../postService/PostService';
 
 const SubjectList = ({university, course}: any) => {
-
     const [subjects, setSubjects] = useState([]);
     const [selectedSubject, setSelectedSubject] = useState(null);
     const history = useHistory();
@@ -18,14 +17,17 @@ const SubjectList = ({university, course}: any) => {
         });
     }, [university, course]);
 
-    const handleSubjectChange = (value: any) => {
-        setSelectedSubject(value);
+    const handleSubjectChange = (value: any, option: any) => {
+        console.log(value)
+        console.log(option)
+        // Сохранение объекта предмета целиком
+        setSelectedSubject(option);
     };
 
     const handleContinueClick = () => {
         if (selectedSubject) {
             // Перенаправление на страницу с книгами, передавая параметры университета, курса и предмета
-            const booksRoute = `/student_compass/${university.name}/${course.number}/${selectedSubject.id}`;
+            const booksRoute = `/student_compass/${university.name}/${course}/${selectedSubject.data_id}`;
             history.push(booksRoute);
         }
     };
@@ -37,18 +39,16 @@ const SubjectList = ({university, course}: any) => {
                 className="subject-select"
                 placeholder="Выберите предмет"
                 onChange={handleSubjectChange}
-                value={selectedSubject}>
+                value={selectedSubject?.name} // Вывод названия выбранного предмета
+            >
                 {subjects.map((subject: any, index) => (
-                    <Select.Option key={index} value={subject.name}>
+                    <Select.Option key={index} value={subject.name}  data_id={subject.id}>
                         {subject.name}
                     </Select.Option>
                 ))}
             </Select>
             <div className="subject-buttons">
-                <Button
-                    type="primary"
-                    onClick={handleContinueClick}
-                    disabled={!selectedSubject}>
+                <Button type="primary" onClick={handleContinueClick} disabled={!selectedSubject}>
                     Продолжить
                 </Button>
             </div>

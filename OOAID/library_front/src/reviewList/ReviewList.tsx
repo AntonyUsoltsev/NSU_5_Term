@@ -3,12 +3,10 @@ import React, {useEffect, useState} from 'react';
 import {List, Avatar} from 'antd';
 import PostService from "../postService/PostService";
 
-const ReviewList = ({university, course, selectedSubject}) => {
+const ReviewList = ({university, course, selectedSubject, inputReviews}) => {
     const [reviews, setReviews] = useState([]);
     useEffect(() => {
-        PostService.getReviews(university.name, course.number, selectedSubject.id).then((response: any) => {
-            setReviews(response.data);
-        });
+        setReviews(inputReviews)
     }, [university, course, selectedSubject]);
 
     return (
