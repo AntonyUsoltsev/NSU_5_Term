@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Button, Space, Row, Avatar } from 'antd';
 import AuthModal from './AuthModal';
 import RegisterModal from './RegisterModal';
@@ -8,6 +8,14 @@ const AuthButtons = () => {
     const [registerModalVisible, setRegisterModalVisible] = useState(false);
     const [isLoggedIn, setLoggedIn] = useState(false);
     const [userInitial, setUserInitial] = useState('');
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token){
+            setLoggedIn(true);
+            setUserInitial(token.charAt(0));
+        }
+    }, []);
 
     const showAuthModal = () => {
         setAuthModalVisible(true);
@@ -42,7 +50,7 @@ const AuthButtons = () => {
     return (
         <Row justify="end" align="top" style={{ position: 'fixed', top: 10, right: 10 }}>
             {isLoggedIn ? (
-                <Avatar style={buttonStyle} size="large">
+                <Avatar>
                     {userInitial}
                 </Avatar>
             ) : (

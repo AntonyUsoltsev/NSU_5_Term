@@ -74,7 +74,7 @@ const BookList = () => {
     return (
         <div>
             {loading ? (
-                <Spin size="large" />
+                <Spin size="large"/>
             ) : (
                 <>
                     <header className="subjects-header">Список книг для предмета {data.name}</header>
@@ -87,7 +87,7 @@ const BookList = () => {
                             </List.Item>
                         )}
                     />
-                    <ReviewList  selectedSubject={subject} selectedSubjectName = {data.name} inputReviews={reviews} />
+                    <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
                 </>
             )}
         </div>

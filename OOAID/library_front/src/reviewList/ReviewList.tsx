@@ -5,7 +5,7 @@ import "./ReviewStyle.css"
 import TextArea from "antd/es/input/TextArea";
 import axios from "axios";
 
-const ReviewList = ({ selectedSubject,selectedSubjectName, inputReviews}) => {
+const ReviewList = ({ selectedSubject, selectedSubjectName, inputReviews}) => {
     const [reviews, setReviews] = useState([]);
     const [newReviewText, setNewReviewText] = useState('');
 
@@ -24,7 +24,7 @@ const ReviewList = ({ selectedSubject,selectedSubjectName, inputReviews}) => {
         }
 
         // Отправка запроса на бэкэнд с текстом отзыва и токеном пользователя
-        axios.post(`http://localhost:8080/student_compass/review/${selectedSubject}`, {
+        axios.post(`http://localhost:8080/auth/review/${selectedSubject}`, {
             text: newReviewText,
         }, {
             headers: {
@@ -48,14 +48,14 @@ const ReviewList = ({ selectedSubject,selectedSubjectName, inputReviews}) => {
     return (
         <div>
             <header className="reviews-header">Отзывы по предмету {selectedSubjectName}</header>
-            <div>
+            <div  style={{ marginBottom: '16px' }}>
                 <TextArea
                     rows={4}
                     value={newReviewText}
                     onChange={(e) => setNewReviewText(e.target.value)}
                     placeholder="Введите ваш отзыв"
                 />
-                <Button type="primary" style={{marginTop:10}} onClick={handleReviewSubmit}>
+                <Button type="primary" onClick={handleReviewSubmit} style={{ marginTop: '8px' }}>
                     Оставить отзыв
                 </Button>
             </div>

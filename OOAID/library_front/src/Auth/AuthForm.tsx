@@ -3,11 +3,10 @@ import React from 'react';
 import {Form, Input, Button, message} from 'antd';
 import axios from 'axios';
 
-const AuthForm = ({ onAuthenticationSuccess}) => {
-    const onFinish = (values) => {
+const AuthForm = ({onAuthenticationSuccess}) => {
+    const onFinish = (values: any) => {
         // Здесь обработайте отправку данных на бэкенд для авторизации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
-
         const endpoint = 'http://localhost:8080/auth/student_compass/authenticate';
 
         axios
@@ -16,7 +15,7 @@ const AuthForm = ({ onAuthenticationSuccess}) => {
                 console.log('Успешная авторизация:', response.data);
                 message.success('Успешная авторизация');
                 localStorage.setItem('token', response.data.token);
-                const username = values.firstname;
+                const username = values.email;
                 onAuthenticationSuccess(username);
             })
             .catch((error) => {

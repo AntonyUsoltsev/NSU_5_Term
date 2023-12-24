@@ -7,7 +7,6 @@ const RegisterForm = ({onRegistrationSuccess}) => {
     const onFinish = (values: any) => {
         // Здесь обработайте отправку данных на бэкенд для регистрации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
-
         const endpoint = 'http://localhost:8080/auth/student_compass/register';
 
         axios
