@@ -2,11 +2,11 @@
 import React, {useEffect, useState} from 'react';
 import {List, Avatar} from 'antd';
 import "./ReviewStyle.css"
-const ReviewList = ({university, course, selectedSubject, inputReviews}) => {
+const ReviewList = ({selectedSubject, inputReviews}) => {
     const [reviews, setReviews] = useState([]);
     useEffect(() => {
         setReviews(inputReviews)
-    }, [university, course, selectedSubject]);
+    }, [ selectedSubject]);
 
     return (
         <div>

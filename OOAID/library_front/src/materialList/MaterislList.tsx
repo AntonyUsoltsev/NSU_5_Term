@@ -52,7 +52,7 @@ const BookList = () => {
 
     return (
         <div>
-            <header className="subjects-header">Список книг для {subject} предмета</header>
+            <header className="subjects-header">Список книг для предмета {data.name}</header>
             <List
                 dataSource={books}
                 renderItem={(item: any) => (
@@ -62,7 +62,7 @@ const BookList = () => {
                     </List.Item>
                 )}
             />
-            <ReviewList university={university} course={course} selectedSubject={subject} inputReviews={reviews} />
+            <ReviewList selectedSubject={data.name} inputReviews={reviews} />
         </div>
     );
 };
