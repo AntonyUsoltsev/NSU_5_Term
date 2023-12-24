@@ -1,9 +1,9 @@
 // AuthForm.jsx
 import React from 'react';
-import { Form, Input, Button, message } from 'antd';
+import {Form, Input, Button, message} from 'antd';
 import axios from 'axios';
 
-const AuthForm = ({ onClose }) => {
+const AuthForm = ({onClose}) => {
     const onFinish = (values) => {
         // Здесь обработайте отправку данных на бэкенд для авторизации
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
@@ -15,6 +15,7 @@ const AuthForm = ({ onClose }) => {
             .then((response) => {
                 console.log('Успешная авторизация:', response.data);
                 message.success('Успешная авторизация');
+                localStorage.setItem('token', response.data.token);
                 // Вызовите колбэк для закрытия модального окна
                 onClose();
             })
@@ -26,17 +27,11 @@ const AuthForm = ({ onClose }) => {
 
     return (
         <Form onFinish={onFinish}>
-            <Form.Item
-                name="email"
-                rules={[{ required: true, message: 'Email' }]}
-            >
-                <Input placeholder="Эл. почта" />
+            <Form.Item name="email" rules={[{required: true, message: 'Введите адрес эл. почты'}]}>
+                <Input placeholder="Эл. почта"/>
             </Form.Item>
-            <Form.Item
-                name="password"
-                rules={[{ required: true, message: 'Password' }]}
-            >
-                <Input.Password placeholder="Пароль" />
+            <Form.Item name="password" rules={[{required: true, message: 'Введите пароль'}]}>
+                <Input.Password placeholder="Пароль"/>
             </Form.Item>
             <Form.Item>
                 <Button type="primary" htmlType="submit">

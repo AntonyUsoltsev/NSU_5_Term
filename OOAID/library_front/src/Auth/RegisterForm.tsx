@@ -9,12 +9,13 @@ const RegisterForm = ({onClose}) => {
         // Используйте axios или другую библиотеку для выполнения запроса к вашему API
 
         const endpoint = 'http://localhost:8080/auth/student_compass/register';
-        console.log(values)
+
         axios
             .post(endpoint, values)
             .then((response) => {
                 console.log('Успешная регистрация:', response.data);
                 message.success('Успешная регистрация');
+                localStorage.setItem('token', response.data.token);
                 // Вызовите колбэк для закрытия модального окна
                 onClose();
             })
@@ -26,16 +27,16 @@ const RegisterForm = ({onClose}) => {
 
     return (
         <Form onFinish={onFinish}>
-            <Form.Item name="firstname" rules={[{required: true, message: 'firstname'}]}>
+            <Form.Item name="firstname" rules={[{required: true, message: 'Введите Имя'}]}>
                 <Input placeholder="Имя"/>
             </Form.Item>
-            <Form.Item name="lastname" rules={[{required: true, message: 'lastname'}]}>
+            <Form.Item name="secondname" rules={[{required: true, message: 'Введите Фамилию'}]}>
                 <Input placeholder="Фамилия"/>
             </Form.Item>
-            <Form.Item name="email" rules={[{required: true, message: 'Email'}]}>
+            <Form.Item name="email" rules={[{required: true, message: 'Введите адрес эл. почты'}]}>
                 <Input placeholder="Эл. почта"/>
             </Form.Item>
-            <Form.Item name="password" rules={[{required: true, message: 'Password'}]}>
+            <Form.Item name="password" rules={[{required: true, message: 'Введите пароль'}]}>
                 <Input.Password placeholder="Пароль"/>
             </Form.Item>
 
