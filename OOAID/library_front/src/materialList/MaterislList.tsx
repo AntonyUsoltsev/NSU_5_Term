@@ -94,9 +94,6 @@ const BookList = () => {
                         )}
                     />
                     <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
-                    <Button type="primary" onClick={handleBackClick}>
-                        Назад
-                    </Button>
                 </>
             )}
         </div>

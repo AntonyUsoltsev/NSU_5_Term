@@ -53,14 +53,14 @@ const AuthButtons = () => {
 
     const buttonStyle = {width: '160px'};
     const exitButtonStyle = {width: '160px', color: "red"};
-    const avatarStyle = {cursor: 'pointer'};
+    const avatarStyle = {cursor: 'pointer', fontSize: '24px',};
 
     return (
         <Row justify="end" align="top" style={{position: 'fixed', top: 10, right: 10}}>
             <div onClick={() => setAvatarClicked(true)} style={avatarStyle}>
                 {isLoggedIn ? (
                     <div>
-                        <Avatar>
+                        <Avatar style={avatarStyle}>
                             {userInitial}
                         </Avatar>
                         {avatarClicked && (

@@ -4,6 +4,7 @@ import UniversityPage from './universityChose/university';
 import './App.css';
 import BookListPage from "./materialList/MaterislList";
 import AuthButtons from "./Auth/AuthButtons";
+import MainMenu from "./mainMenu/MainMenu";
 
 
 const App = () => {
@@ -11,6 +12,7 @@ const App = () => {
         <div className="App">
             <BrowserRouter>
                 <AuthButtons/>
+                <MainMenu/>
                 <Switch>
                     <Route path="/student_compass/:university/:course/:subject" component={BookListPage}/>
                     <Route path="/" component={UniversityPage}/>
