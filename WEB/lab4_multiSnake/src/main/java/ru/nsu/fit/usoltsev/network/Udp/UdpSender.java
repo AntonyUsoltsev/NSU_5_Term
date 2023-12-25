@@ -55,7 +55,7 @@ public class UdpSender implements Runnable {
                 }
 
             } catch (InterruptedException | IOException e) {
-                throw new RuntimeException(e);
+               log.info("Error while send");
             }
         }
     }

@@ -50,7 +50,7 @@ public class UdpController {
 
     public UdpController() throws IOException {
         udpSocket = new DatagramSocket();
-        NetworkInterface networkInterface = NetworkInterface.getByName("wlan1");
+        NetworkInterface networkInterface = NetworkInterface.getByName("eth3");
         var net = NetworkInterface.getNetworkInterfaces();
         while (net.hasMoreElements()){
             var inter = net.nextElement();
@@ -92,7 +92,7 @@ public class UdpController {
 
     public void startAnnouncement() {
         log.info("Start Anouns");
-        executor.execute(announcementAdder);
+        executor.submit(announcementAdder);
     }
 
     public void startSendRecv() {
@@ -128,8 +128,10 @@ public class UdpController {
     }
 
     public void stopPing() {
+        log.info("Ping stopped");
         System.out.println(pingExecutor.getActiveCount());
         System.out.println(pingExecutor.shutdownNow());
+        executor.submit(ackChecker);
     }
 
     public void setGamerInfoToAnons(GameController gameController) {

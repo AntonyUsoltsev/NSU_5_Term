@@ -142,7 +142,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         if (!deputyChosen && players.size() >= 2) {
             int id = -1;
             for (var player : players.values()) {
-                if (player.getID() == ID || player.getStatus() == ZOMBIE) {
+                if (player.getID() == ID || player.getStatus() == ZOMBIE || player.getRole() == VIEWER) {
                     continue;
                 }
                 id = player.getID();
@@ -324,7 +324,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
     private void sendState() {
         synchronized (players) {
             if (players.size() != 1 || !viewers.isEmpty()) {
-                SnakesProto.GameMessage.Builder message = StateMsg.createState(players, viewers, foodModel.getFoodsSet());
+                SnakesProto.GameMessage.Builder message = StateMsg.createState(players, viewers, foodModel.getFoodsSet());;
                 for (var host : players.values()) {
                     if (host.getID() != ID && host.getStatus() == ALIVE) {
                         udpController.setOutputMessage(host.getIp(), host.getPort(), message.setReceiverId(host.getID()).build());
@@ -367,7 +367,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     private void restoreStateFromMessage() {
         log.info("Restore State");
-        System.out.println(lastMessage);
+      //  System.out.println(lastMessage);
         players.clear();
         viewers.clear();
         ipPortId.clear();
@@ -392,6 +392,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
             host.setIp(ip);
             if (player.getRole().getNumber() == VIEWER) {
+                host.setModel(new SnakeModel(player.getId()));
                 viewers.put(player.getId(), host);
             } else {
                 host.setModel(new SnakeModel(player.getId()));
@@ -402,12 +403,25 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
         }
         for (var snake : lastMessage.getState().getSnakesList()) {
-            HostInfo curHost = players.get(snake.getPlayerId());
-            curHost.setDirection(snake.getHeadDirection().getNumber());
-            curHost.setStatus(snake.getState().getNumber());
-            curHost.getModel().getSnakeBody().clear();
-            for (var point : snake.getPointsList()) {
-                curHost.getModel().addPoint(point.getX(), point.getY());
+            if(players.containsKey(snake.getPlayerId())) {
+                HostInfo curHost = players.get(snake.getPlayerId());
+                curHost.setDirection(snake.getHeadDirection().getNumber());
+                curHost.setStatus(snake.getState().getNumber());
+                curHost.getModel().getSnakeBody().clear();
+                for (var point : snake.getPointsList()) {
+                    curHost.getModel().addPoint(point.getX(), point.getY());
+                }
+            }
+            if (viewers.containsKey(snake.getPlayerId())){
+                HostInfo curHost = viewers.get(snake.getPlayerId());
+                curHost.setDirection(snake.getHeadDirection().getNumber());
+                curHost.setStatus(snake.getState().getNumber());
+                curHost.getModel().getSnakeBody().clear();
+                for (var point : snake.getPointsList()) {
+                    curHost.getModel().addPoint(point.getX(), point.getY());
+                }
+                viewers.remove(snake.getPlayerId());
+                players.put(snake.getPlayerId(), curHost);
             }
         }
         foodModel.getFoodsSet().clear();
