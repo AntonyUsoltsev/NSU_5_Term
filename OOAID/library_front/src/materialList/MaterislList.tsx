@@ -1,9 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import {List, Button, message, Spin, Form, Input} from 'antd';
+import {List, Button, message, Spin, Form, Input, Modal} from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
+import AddMaterialForm from "./AddMaterailForm";
 import {useHistory, useParams} from "react-router-dom";
 import "./MaterialStyle.css";
+
 import axios from "axios";
 
 const BookList = () => {
@@ -11,9 +13,11 @@ const BookList = () => {
     const [books, setBooks]: any = useState([]);
     const [reviews, setReviews]: any = useState([]);
     const [loading, setLoading] = useState(true);
+    const [form] = Form.useForm();
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
     const {university, course, subject}: any = useParams();
-    const [form] = Form.useForm();
+
 
     useEffect(() => {
         // Загрузка списка книг для выбранного предмета
@@ -86,6 +90,13 @@ const BookList = () => {
     const handleView = (link) => {
         window.open(link, '_blank'); // Открываем ссылку в новой вкладке
     };
+    const showModal = () => {
+        setIsModalVisible(true);
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
+    };
 
     return (
         <div>
@@ -103,42 +114,25 @@ const BookList = () => {
                             </List.Item>
                         )}
                     />
-                    <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
+
 
                     {/* Форма для ввода нового материала */}
-                    <Form
-                        name="addMaterial"
-                        onFinish={handleAddMaterial}
-                        style={{marginTop: '20px'}}
-                        form={form}
+                    <Button type="primary" onClick={showModal} style={{marginTop: '20px', alignContent: "center"}}>
+                        Добавить материал
+                    </Button>
+
+                    {/* Модальное окно для ввода нового материала */}
+                    <Modal
+                        title="Добавить новый материал"
+                        visible={isModalVisible}
+                        onCancel={handleCancel}
+                        footer={null}
                     >
-                        <Form.Item
-                            label="Автор"
-                            name="author"
-                            rules={[{required: true, message: 'Пожалуйста, введите автора'}]}
-                        >
-                            <Input/>
-                        </Form.Item>
-                        <Form.Item
-                            label="Название"
-                            name="name"
-                            rules={[{required: true, message: 'Пожалуйста, введите название'}]}
-                        >
-                            <Input/>
-                        </Form.Item>
-                        <Form.Item
-                            label="Ссылка на книгу"
-                            name="link"
-                            rules={[{required: true, message: 'Пожалуйста, введите ссылку на книгу'}]}
-                        >
-                            <Input/>
-                        </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit">
-                                Добавить материал
-                            </Button>
-                        </Form.Item>
-                    </Form>
+                        <AddMaterialForm onFinish={handleAddMaterial}/>
+                    </Modal>
+
+                    <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
+
                 </>
             )}
         </div>
