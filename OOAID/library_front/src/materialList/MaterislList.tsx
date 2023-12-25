@@ -1,9 +1,9 @@
 import React, {useState, useEffect} from 'react';
-import {List, Button, message, Spin, Form, Input, Modal} from 'antd';
+import {List, Button, message, Spin, Form, Modal} from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
 import AddMaterialForm from "./AddMaterailForm";
-import {useHistory, useParams} from "react-router-dom";
+import { useParams} from "react-router-dom";
 import "./MaterialStyle.css";
 
 import axios from "axios";
@@ -42,7 +42,6 @@ const BookList = () => {
         }
     };
 
-
     const checkUserAuthentication = () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -52,7 +51,7 @@ const BookList = () => {
     };
 
     const showWarning = () => {
-        message.warning('Для просмотра необходимо авторизоваться, необходимо авторизоваться.');
+        message.warning('Для просмотра необходимо авторизоваться.');
     };
 
     const handleAddMaterial = (values) => {
@@ -110,7 +109,8 @@ const BookList = () => {
                         renderItem={(item: any) => (
                             <List.Item>
                                 {item.name} - {item.author}
-                                <Button onClick={() => handleDownload(item.link)}>Посмотреть</Button>
+                                <Button onClick={() => handleDownload(item.link)}
+                                        style={{marginLeft: '20px'}}>Посмотреть</Button>
                             </List.Item>
                         )}
                     />
@@ -132,7 +132,6 @@ const BookList = () => {
                     </Modal>
 
                     <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
-
                 </>
             )}
         </div>
