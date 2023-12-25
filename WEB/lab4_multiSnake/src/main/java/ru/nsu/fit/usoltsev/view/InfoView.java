@@ -11,8 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 import static ru.nsu.fit.usoltsev.GameConfig.*;
-import static ru.nsu.fit.usoltsev.GameConstants.SQUARE_SIZE;
-import static ru.nsu.fit.usoltsev.GameConstants.roles;
+import static ru.nsu.fit.usoltsev.GameConstants.*;
 
 public class InfoView {
 
@@ -30,13 +29,15 @@ public class InfoView {
     }
 
 
-    public void drawPlayersInfo(GraphicsContext gc, HashMap<Integer, HostInfo> players, HashMap<Integer, HostInfo> viewers) {
+    public void drawPlayersInfo(GraphicsContext gc, HashMap<Integer, HostInfo> players) {
         int i = 0;
         ArrayList<HostInfo> playersList = new java.util.ArrayList<>(players.values().stream().toList());
-        playersList.addAll(viewers.values());
         playersList.sort(Comparator.comparingInt(HostInfo::getScore).reversed());
         gc.setFont(new Font("Arial", scoreTextSize));
         for (var player : playersList) {
+            if (player.getStatus() == ZOMBIE) {
+                continue;
+            }
             drawOnePlayerInfo(player, gc, i);
             i++;
         }
@@ -48,21 +49,27 @@ public class InfoView {
         ArrayList<SnakesProto.GamePlayer> players = new ArrayList<>(msg.getState().getPlayers().getPlayersList());
         players.sort(Comparator.comparingInt(SnakesProto.GamePlayer::getScore).reversed());
         for (var player : players) {
-            gc.setFill(Color.WHITE);
-            if (player.getId() == ID) {
-                gc.setFill(Color.YELLOW);
+            if (msg.getState().getSnakesList().stream().anyMatch(snake -> snake.getPlayerId() == player.getId()
+                    && snake.getState().getNumber() != ZOMBIE) ) {
+
+                gc.setFill(Color.WHITE);
+//                System.out.println(player.getId());
+                if (player.getId() == ID) {
+                    gc.setFill(Color.YELLOW);
+                    ROLE = player.getRole().getNumber();
+                }
+                String name;
+                if (player.getName().length() > 10) {
+                    name = player.getName().substring(0, 2) + "..." + player.getName().substring(player.getName().length() - 2);
+                } else {
+                    name = player.getName();
+                }
+                gc.fillText(String.format("""
+                                %s(%s) - score = %d
+                                """, name, roles.get(player.getRole().getNumber()), player.getScore()),
+                        xStartScoreText, textScale + (i * 30));
+                i++;
             }
-            String name;
-            if (player.getName().length() > 10) {
-                name = player.getName().substring(0, 2) + "..." + player.getName().substring(player.getName().length() - 2);
-            } else {
-                name = player.getName();
-            }
-            gc.fillText(String.format("""
-                            %s(%s) - score = %d
-                            """, name, roles.get(player.getRole().getNumber()), player.getScore()),
-                    xStartScoreText, textScale + (i * 30));
-            i++;
         }
     }
 

@@ -29,7 +29,7 @@ public class DisconnectChecker implements Runnable {
           //  log.info("CHECK AFK");
             if (!lastMessageReceiveTime.isEmpty()) {
                 lastMessageReceiveTime.forEach(((inetInfo, time) -> {
-                    if (time < (System.currentTimeMillis() - (TIME_DELAY * 8L) / 10)) {
+                    if (time < (System.currentTimeMillis() - (TIME_DELAY * 8L) / 5)) {
                         try {
                             log.info(String.format("%d(%s) find that %s is AFK (time = %d)", ID, roles.get(ROLE), inetInfo, System.currentTimeMillis()));
                             String[] ipPort = inetInfo.split(":");

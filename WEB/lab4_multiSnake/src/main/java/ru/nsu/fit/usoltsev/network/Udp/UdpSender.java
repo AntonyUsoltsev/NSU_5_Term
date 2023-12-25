@@ -29,9 +29,9 @@ public class UdpSender implements Runnable {
                 udpSocket.send(outputPacket);
 
                 if (messageInfo.gameMessage().getTypeCase() == SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT){
-                    log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
-                    log.info(messageInfo.ipAddr().toString());
-                    log.info(String.valueOf(messageInfo.port()));
+//                    log.info("Send message " + messageInfo.gameMessage().getTypeCase().name() + ", msg seq = " + messageInfo.gameMessage().getMsgSeq() + ", time = " + System.currentTimeMillis());
+//                    log.info(messageInfo.ipAddr().toString());
+//                    log.info(String.valueOf(messageInfo.port()));
 
                 }
                 if (messageInfo.gameMessage().getTypeCase() != SnakesProto.GameMessage.TypeCase.STATE

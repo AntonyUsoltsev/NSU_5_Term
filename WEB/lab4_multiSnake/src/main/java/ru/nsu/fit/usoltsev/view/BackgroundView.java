@@ -1,17 +1,19 @@
 package ru.nsu.fit.usoltsev.view;
 
+import javafx.scene.Group;
+import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
-import ru.nsu.fit.usoltsev.HostInfo;
 
-import static ru.nsu.fit.usoltsev.GameConfig.*;
+import javafx.scene.paint.Color;
+
+import static ru.nsu.fit.usoltsev.GameConfig.COLUMNS;
+import static ru.nsu.fit.usoltsev.GameConfig.ROWS;
 import static ru.nsu.fit.usoltsev.GameConstants.SQUARE_SIZE;
 import static ru.nsu.fit.usoltsev.GameConstants.backgroundImage;
 
 public class BackgroundView {
-    public void drawBackground(GraphicsContext gc) {
-        gc.drawImage(backgroundImage,0,0);
+    public void drawBackground(GraphicsContext gc, Scene scene) {
+        gc.drawImage(backgroundImage, 0, 0);
         for (int i = 0; i < COLUMNS; i++) {
             for (int j = 0; j < ROWS; j++) {
                 if ((i + j) % 2 == 0) {
@@ -22,5 +24,18 @@ public class BackgroundView {
                 gc.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
             }
         }
+
+//        Button exitButton = new Button("Exit");
+//        exitButton.setOnAction(event -> {
+//            System.exit(0);
+//        });
+//        HBox hbox = new HBox(exitButton);
+//        hbox.setLayoutX((COLUMNS - 1) * SQUARE_SIZE);
+//        hbox.setLayoutY((ROWS - 1) * SQUARE_SIZE);
+//        hbox.setMargin(exitButton, new javafx.geometry.Insets(0, 0, 10, 10));
+//
+//        Group root = (Group) scene.getRoot();
+//        root.getChildren().add(hbox);
+//        exitButton.setMinWidth(100);
     }
 }

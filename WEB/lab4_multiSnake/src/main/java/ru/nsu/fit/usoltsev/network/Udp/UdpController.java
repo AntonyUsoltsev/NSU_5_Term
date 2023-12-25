@@ -114,7 +114,7 @@ public class UdpController {
         pingExecutor.submit(pingChecker);
         executor.submit(udpSender);
         executor.submit(udpReceiver);
-        executor.submit(ackChecker);
+       // executor.submit(ackChecker);
         executor.submit(disconnectChecker);
     }
 

@@ -40,7 +40,7 @@ public class AckChecker implements Runnable {
 
                                 if (entry.getKey() < (System.currentTimeMillis() - TIME_DELAY / 10)) {
 //                                    System.out.println(entry.getKey());
-                                    System.out.println("make copy of " + message.getTypeCase());
+//                                    System.out.println("make copy of " + message.getTypeCase());
                                     SnakesProto.GameMessage gameMessage = CopyOfMessage.makeMessageCopy(message);
 
                                     udpController.setOutputMessage(ip, port, gameMessage);

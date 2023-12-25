@@ -34,7 +34,7 @@ public class UdpReceiver implements Runnable {
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
     }
 
-    public void deleteHostInetInfo(String info){
+    public void deleteHostInetInfo(String info) {
         hostsPortIp.remove(info);
     }
 
@@ -86,9 +86,9 @@ public class UdpReceiver implements Runnable {
                         udpController.setOutputMessage(inputPacket.getAddress(), inputPacket.getPort(), gameAnswer);
                         if (gameMessage.hasSenderId()) {
                             udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), gameMessage.getSenderId());
-                        }
-                        else {
-                            String ipPortInfo = inputPacket.getAddress() + ":" + inputPacket.getPort();
+                        } else {
+                            String ip = NetworkUtils.cutIp(inputPacket.getAddress().toString());
+                            String ipPortInfo = ip + ":" + inputPacket.getPort();
                             udpController.notifySteerListener(gameMessage.getSteer().getDirection().getNumber(), ipPortInfo);
                         }
                     });
@@ -100,7 +100,7 @@ public class UdpReceiver implements Runnable {
                         } else {
                             hostsPortIp.add(ipPortInfo);
                             int newId = NetworkUtils.ID_JOIN.getAndIncrement();
-                            if(newId == ID){
+                            if (newId == ID) {
                                 newId = NetworkUtils.ID_JOIN.getAndIncrement();
                             }
                             boolean placingResult = false;

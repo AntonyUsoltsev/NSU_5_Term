@@ -42,7 +42,7 @@ public class GameConstants {
     public static final InetAddress MULTICAST_IP;
     public static final ArrayList<Color> COLORS = new ArrayList<>();
 
-    public static Image backgroundImage = new Image("ru/nsu/fit/usoltsev/pictures/menuBackground.png");
+    public static Image backgroundImage = new Image("ru/nsu/fit/usoltsev/pictures/menuBackground1.png");
 
     static {
         COLORS.add(Color.RED);

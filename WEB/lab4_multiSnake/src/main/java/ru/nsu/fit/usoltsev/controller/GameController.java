@@ -99,10 +99,11 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
         }
     }
+
     private void masterRun() {
         chooseDeputy();
         removeAfterCrush();
-        backgroundView.drawBackground(gc);
+        backgroundView.drawBackground(gc, scene);
         foodModel.drawFood(gc);
 
         synchronized (players) {
@@ -126,7 +127,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
         }
         checkSnakeCrush();
-        infoView.drawPlayersInfo(gc, players, viewers);
+        infoView.drawPlayersInfo(gc, players);
 
         if (players.containsKey(ID)) {
             maxScore = players.get(ID).getScore();
@@ -136,6 +137,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 //        log.info("Send state");
         sendState();
     }
+
     public void chooseDeputy() {
         if (!deputyChosen && players.size() >= 2) {
             int id = -1;
@@ -144,6 +146,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                     continue;
                 }
                 id = player.getID();
+                break;
             }
             if (id != -1) {
                 sendChangeRole(NORMAL, DEPUTY, players.get(id));
@@ -152,6 +155,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
         }
     }
+
     private void removeAfterCrush() {
         synchronized (players) {
             Iterator<HostInfo> iterator = players.values().iterator();
@@ -173,6 +177,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
             }
         }
     }
+
     private boolean eatFood(SnakeModel snakeModel) {
         HashSet<Integer> foods = foodModel.getFoodsSet();
         int snakeX = (int) snakeModel.getSnakeHead().getX();
@@ -187,6 +192,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         }
         return false;
     }
+
     private void checkSnakeCrush() {
         synchronized (players) {
             for (HostInfo snake : players.values()) {
@@ -202,6 +208,9 @@ public class GameController implements HostAddListener, SteerListener, GameState
                     for (int i = 1; i < curSnake.getModel().getSnakeBody().size(); i++) {
                         if (snake.getModel().getSnakeHead().getX() == curSnake.getModel().getSnakeBody().get(i).getX()
                                 && snake.getModel().getSnakeHead().getY() == curSnake.getModel().getSnakeBody().get(i).getY()) {
+                            if (snake.getID() == curSnake.getID()) {
+                                continue;
+                            }
                             snake.setGameOver(true);
                             curSnake.addScore(1);
                             log.info("Crush:" + snake.getID() + " into " + curSnake.getID());
@@ -233,7 +242,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 SnakesProto.GameMessage message = RoleChangeMsg.createRoleChange(DEPUTY, MASTER, host.getID());
                 udpController.setOutputMessage(host.getIp(), host.getPort(), message);
             } else if (oldRole == MASTER && newRole == VIEWER) {
-//                host.setRole(VIEWER);
+                //  host.setRole(VIEWER);
                 host.setModel(null);
                 host.setStatus(ZOMBIE);
                 viewers.put(host.getID(), host);
@@ -264,7 +273,8 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 snakeModel.setSnakeBody((int) generatePoint.getX(), (int) generatePoint.getY());
                 HostInfo hostInfo = new HostInfo(name, playerID, port, ip, role, snakeModel, 0, false, RIGHT, ALIVE);
                 players.put(playerID, hostInfo);
-                ipPortId.put(ip + ":" + port, playerID);
+                String ipString = cutIp(ip.toString());
+                ipPortId.put(ipString + ":" + port, playerID);
                 stateChanges.put(playerID, RIGHT);
                 log.info("Add new snake " + hostInfo);
                 log.info("Current snakes map = " + players);
@@ -291,6 +301,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         }
         return null;
     }
+
     @Override
     public void setNewSteer(int direction, int senderID) {
         synchronized (stateChanges) {
@@ -300,6 +311,10 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     @Override
     public void setNewSteer(int direction, String ipPortInfo) {
+        System.out.println(ipPortInfo);
+        if (!ipPortId.containsKey(ipPortInfo)) {
+            System.out.println("ipport doesnt contains");
+        }
         int id = ipPortId.get(ipPortInfo);
         synchronized (stateChanges) {
             stateChanges.put(id, direction);
@@ -308,7 +323,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     private void sendState() {
         synchronized (players) {
-            if (!players.isEmpty() || !viewers.isEmpty()) {
+            if (players.size() != 1 || !viewers.isEmpty()) {
                 SnakesProto.GameMessage.Builder message = StateMsg.createState(players, viewers, foodModel.getFoodsSet());
                 for (var host : players.values()) {
                     if (host.getID() != ID && host.getStatus() == ALIVE) {
@@ -341,7 +356,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         if (ROLE == VIEWER) {
             scene.setOnKeyPressed(null);
         }
-        backgroundView.drawBackground(gc);
+        backgroundView.drawBackground(gc, scene);
         if (lastMessage != null) {
             FoodView.drawFood(gc, lastMessage);
             SnakeView.drawSnake(gc, lastMessage);
@@ -352,6 +367,11 @@ public class GameController implements HostAddListener, SteerListener, GameState
 
     private void restoreStateFromMessage() {
         log.info("Restore State");
+        System.out.println(lastMessage);
+        players.clear();
+        viewers.clear();
+        ipPortId.clear();
+        stateChanges.clear();
         for (var player : lastMessage.getState().getPlayers().getPlayersList()) {
             HostInfo host = new HostInfo(player.getName(), player.getId(), player.getPort(),
                     null, player.getRole().getNumber(), null,
@@ -361,10 +381,10 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 ip = InetAddress.getByName("192.168.1.172");
                 if (player.hasIpAddress()) {
                     ip = NetworkUtils.parseIp(player.getIpAddress().toString());
-                    ipPortId.put(player.getIpAddress() + ":" + player.getPort(), player.getId());
+                    ipPortId.put(NetworkUtils.cutIp(player.getIpAddress()) + ":" + player.getPort(), player.getId());
                 }
                 if (player.getRole() == SnakesProto.NodeRole.MASTER) {
-                    ipPortId.put(MASTER_IP.toString() + ":" + MASTER_PORT, player.getId());
+                    ipPortId.put(NetworkUtils.cutIp(MASTER_IP.toString()) + ":" + MASTER_PORT, player.getId());
                     host.setStatus(ZOMBIE);
                 }
             } catch (UnknownHostException e) {
@@ -403,7 +423,13 @@ public class GameController implements HostAddListener, SteerListener, GameState
         if (ROLE != MASTER) {
             restoreStateFromMessage();
         }
+//        for (var value : ipPortId.keySet()) {
+//            S
+//            ipPortId.put(NetworkUtils.cutIp(value), ;
+//        }
         System.out.println(ipPortId);
+
+        inetInfo = NetworkUtils.cutIp(inetInfo);
         System.out.println(inetInfo);
         System.out.println(ipPortId.containsKey(inetInfo));
         int id = ipPortId.get(inetInfo);
@@ -424,8 +450,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                         System.out.println("Master is zombie");
                         players.remove(id);
                         viewers.put(id, player);
-                    }
-                    else{
+                    } else {
                         player.setStatus(ZOMBIE);
                     }
                     log.info("AFK was MASTER, Noticed DEPUTY");
@@ -433,7 +458,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
                 }
                 if (player.getRole() == MASTER && (ROLE == NORMAL || ROLE == VIEWER)) {
                     log.info("AFK was MASTER, noticed NORMAL");
-                    player.setStatus(ZOMBIE);
+                    // player.setStatus(ZOMBIE);
                     for (var statePlayer : lastMessage.getState().getPlayers().getPlayersList()) {
                         try {
                             if (statePlayer.getRole() == SnakesProto.NodeRole.DEPUTY) {
@@ -459,7 +484,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         }
     }
 
-    public void deputyToMaster(){
+    public void deputyToMaster() {
         scene.setOnKeyPressed(null);
         new MasterSnakeController(scene, this);
         ROLE = MASTER;
@@ -468,6 +493,7 @@ public class GameController implements HostAddListener, SteerListener, GameState
         udpController.startAnnouncement();
         deputyPretend = -1;
         deputyChosen = false;
+        FOOD_COUNT += players.size();
         STATE_SEQ.set(lastMessage.getState().getStateOrder());
         int maxKey = Integer.MIN_VALUE;
         for (int key : players.keySet()) {

@@ -21,4 +21,11 @@ public class NetworkUtils {
             return InetAddress.getByName(ipString);
         }
     }
+    public static String cutIp(String ipString) {
+        if (ipString.indexOf("/") == 0) {
+            return ipString.substring(1);
+        } else {
+            return ipString;
+        }
+    }
 }
