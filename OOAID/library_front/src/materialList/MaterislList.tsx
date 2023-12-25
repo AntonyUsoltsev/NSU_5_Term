@@ -1,10 +1,9 @@
-// BookList.jsx
 import React, {useState, useEffect} from 'react';
-import {List, Button, message, Spin} from 'antd';
+import {List, Button, message, Spin, Form, Input} from 'antd';
 import PostService from "../postService/PostService";
 import ReviewList from "../reviewList/ReviewList";
 import {useHistory, useParams} from "react-router-dom";
-import "./MaterialStyle.css"
+import "./MaterialStyle.css";
 import axios from "axios";
 
 const BookList = () => {
@@ -14,68 +13,79 @@ const BookList = () => {
     const [loading, setLoading] = useState(true);
 
     const {university, course, subject}: any = useParams();
-    const history = useHistory();
+    const [form] = Form.useForm();
 
     useEffect(() => {
         // Загрузка списка книг для выбранного предмета
         PostService.getBooks(university, course, subject).then((response: any) => {
-            console.log("start")
-            console.log(response)
             const inputData = response.data;
             setData(inputData);
-            setBooks(inputData.materials)
-            setReviews(inputData.reviews)
+            setBooks(inputData.materials);
+            setReviews(inputData.reviews);
             setLoading(false);
         });
     }, [university, course, subject]);
 
-    const handleDownload = (book: any) => {
+    const handleDownload = (bookLink: any) => {
         const isUserAuthenticated = checkUserAuthentication();
 
         if (isUserAuthenticated) {
             // Выполнить скачивание книги
-            downloadBook(book);
+            handleView(bookLink);
         } else {
             // Показать предупреждение
             showWarning();
         }
     };
 
-    const downloadBook = (book) => {
-        // Здесь реализуйте логику скачивания книги
-        console.log(`Загрузка книги: ${book.title}`);
-    };
 
     const checkUserAuthentication = () => {
         const token = localStorage.getItem('token');
         if (!token) {
             return false;
         }
+        return true;
+    };
 
-        // Выполнение запроса к бэкенду для проверки авторизации
-        return axios.get('ваш-эндпоинт-проверки-авторизации', {
+    const showWarning = () => {
+        message.warning('Для просмотра необходимо авторизоваться, необходимо авторизоваться.');
+    };
+
+    const handleAddMaterial = (values) => {
+        const {author, name, link} = values;
+        const token = localStorage.getItem('token');
+
+        // Проверка наличия токена
+        if (!token) {
+            message.warning('Чтобы добавить материал, необходимо авторизоваться.');
+            return;
+        }
+
+        // Отправка запроса на бэкэнд с данными нового материала и токеном пользователя
+        axios.post(`http://localhost:8080/auth/material/${subject}`, {
+            author: author,
+            name: name,
+            link: link,
+        }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         })
             .then(response => {
-                // В данном случае, успешный ответ считается подтверждением авторизации
-                return true;
+                message.success('Материал успешно добавлен.');
+                // Обновление списка материалов после успешной отправки
+                setBooks([...books, response.data.materials[0]]);
+                // Очистка полей ввода
+                form.resetFields();
             })
             .catch(error => {
-                // В случае ошибки, например, если токен недействителен
-                return false;
+                console.error('Ошибка при добавлении материала:', error);
+                message.error('Ошибка при добавлении материала. Пожалуйста, попробуйте еще раз.');
             });
     };
-
-    const showWarning = () => {
-        message.warning('Прежде чем скачать, необходимо авторизоваться.');
+    const handleView = (link) => {
+        window.open(link, '_blank'); // Открываем ссылку в новой вкладке
     };
-    const handleBackClick = () => {
-        const booksRoute = "/";
-        history.push(booksRoute);
-        window.location.reload();
-    }
 
     return (
         <div>
@@ -88,12 +98,47 @@ const BookList = () => {
                         dataSource={books}
                         renderItem={(item: any) => (
                             <List.Item>
-                                {item.title} - {item.author}
-                                <Button onClick={() => handleDownload(item)}>Скачать</Button>
+                                {item.name} - {item.author}
+                                <Button onClick={() => handleDownload(item.link)}>Посмотреть</Button>
                             </List.Item>
                         )}
                     />
                     <ReviewList selectedSubject={subject} selectedSubjectName={data.name} inputReviews={reviews}/>
+
+                    {/* Форма для ввода нового материала */}
+                    <Form
+                        name="addMaterial"
+                        onFinish={handleAddMaterial}
+                        style={{marginTop: '20px'}}
+                        form={form}
+                    >
+                        <Form.Item
+                            label="Автор"
+                            name="author"
+                            rules={[{required: true, message: 'Пожалуйста, введите автора'}]}
+                        >
+                            <Input/>
+                        </Form.Item>
+                        <Form.Item
+                            label="Название"
+                            name="name"
+                            rules={[{required: true, message: 'Пожалуйста, введите название'}]}
+                        >
+                            <Input/>
+                        </Form.Item>
+                        <Form.Item
+                            label="Ссылка на книгу"
+                            name="link"
+                            rules={[{required: true, message: 'Пожалуйста, введите ссылку на книгу'}]}
+                        >
+                            <Input/>
+                        </Form.Item>
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit">
+                                Добавить материал
+                            </Button>
+                        </Form.Item>
+                    </Form>
                 </>
             )}
         </div>

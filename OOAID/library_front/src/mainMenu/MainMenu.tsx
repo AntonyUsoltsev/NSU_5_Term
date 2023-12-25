@@ -15,10 +15,16 @@ const MainMenu = () => {
 
     return (
         <Button
-            style={{ padding: 0, border: 'none' }}
+            style={{
+                position: 'fixed',
+                top: 15,
+                left: 15,
+                padding: 0,
+                border: 'none',
+            }}
             onClick={handleButtonClick}
         >
-            <img src={logoImage} alt="Logo" style={{ width: '80px', height: '60px' }} />
+            <img src={logoImage} alt="Logo" style={{ width: '90px', height: '70px' }} />
         </Button>
     );
 };

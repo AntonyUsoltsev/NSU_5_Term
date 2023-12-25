@@ -5,7 +5,7 @@ import "./ReviewStyle.css"
 import TextArea from "antd/es/input/TextArea";
 import axios from "axios";
 
-const ReviewList = ({ selectedSubject, selectedSubjectName, inputReviews}) => {
+const ReviewList = ({selectedSubject, selectedSubjectName, inputReviews}) => {
     const [reviews, setReviews] = useState([]);
     const [newReviewText, setNewReviewText] = useState('');
 
@@ -48,14 +48,14 @@ const ReviewList = ({ selectedSubject, selectedSubjectName, inputReviews}) => {
     return (
         <div>
             <header className="reviews-header">Отзывы по предмету {selectedSubjectName}</header>
-            <div  style={{ marginBottom: '16px' }}>
+            <div style={{marginBottom: '16px'}}>
                 <TextArea
                     rows={4}
                     value={newReviewText}
                     onChange={(e) => setNewReviewText(e.target.value)}
                     placeholder="Введите ваш отзыв"
                 />
-                <Button type="primary" onClick={handleReviewSubmit} style={{ marginTop: '8px' }}>
+                <Button type="primary" onClick={handleReviewSubmit} style={{marginTop: '8px'}}>
                     Оставить отзыв
                 </Button>
             </div>
